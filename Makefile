@@ -6,13 +6,14 @@
 #    By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/06/06 15:02:54 by nguiard          ###   ########.fr        #
+#    Updated: 2024/06/11 17:17:59 by nguiard          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
 			main			\
+			options			\
 		))
 
 NAME	= ft_nmap
