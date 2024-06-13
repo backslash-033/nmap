@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/24 14:54:18 by nguiard           #+#    #+#             */
-/*   Updated: 2022/05/05 13:18:13 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/13 11:48:58 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ char	*get_next_line(int fd);
 
 /*	free()	*/
 void	ft_free(void *p1, void *p2, void *p3, void *p4);
-void	free_tabtab(void *dtab);
+void	free_darray(void **dtab);
 
 int		ft_abs(int x);
 

@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/12 11:23:33 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/13 11:41:17 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,9 @@ typedef struct options {
 	uint16_t	*ports;
 	uint16_t	port_amount;
 } options;
+
+#define WARNING	"\033[33mWarning:\033[0m "
+#define ERROR	"\033[31mError:\033[0m "
 
 // Options
 
