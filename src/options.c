@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 14:56:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/13 12:58:08 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/20 13:17:45 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,9 @@ static bool		opt_file(options *opts, str arg);
 static bool		opt_ip(options *opts, str arg);
 static uint8_t	get_scan(str scan);
 static uint32_t	range_size(str arg);
+static uint16_t *range_values(str arg, uint32_t *size);
+static void		add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
+									uint16_t *range, uint32_t range_size);
 
 typedef bool	(*parsing_function)(options *, str);
 
@@ -121,23 +124,77 @@ static bool opt_ports(options *opts, str arg) {
 	(void)opts;
 	uint32_t	size = 0;
 	str			*splitted = ft_split(arg, ',');
+	uint16_t	*tmp_ports = NULL;
+	uint32_t	tmp_port_amount = 0;
 
 	if (splitted == NULL)
 		return true;
 
 	for (int i = 0; splitted[i]; i++) {
-		uint32_t r_size = range_size(splitted[i]);
-		if (r_size == RANGE_ALLOCERR) {
+		errno = 0;
+		uint32_t range_size_value = range_size(splitted[i]);
+
+		if (!range_size_value && (unsigned int)errno == RANGE_ALLOCERR) {
 			free_darray((void **)splitted);
 			return true;
-		} else if (r_size == RANGE_SIZEERR) {
+		} else if (!range_size_value && (unsigned int)errno == RANGE_SIZEERR) {
 			fprintf(stderr, ERROR "The port range has to be between 0 and 65535 included.\n");
 			free_darray((void **)splitted);
 			return true;
 		}
-		size += r_size;
+		size += range_size_value;
 	}
 	printf("RANGE TOTALE: %u\n", size);
+
+	tmp_ports = ft_calloc(sizeof(uint16_t), size > 0x10000 ? 0x10000 : size);
+	if (tmp_ports == NULL) {
+		free_darray((void **)splitted);
+		return true;
+	}
+	tmp_port_amount = 0;
+
+	for (int i = 0; splitted[i]; i++) {
+		errno = 0;
+		uint32_t real_size = 0;
+		uint16_t *range = range_values(splitted[i], &real_size);
+
+		if (!range && (unsigned int)errno == RANGE_ALLOCERR) {
+			free_darray((void **)splitted);
+			free(tmp_ports);
+			return true;
+		} else if (!range && (unsigned int)errno == RANGE_SIZEERR) {
+			fprintf(stderr, ERROR "The port range has to be between 0 and 65535 included.\n");
+			free_darray((void **)splitted);
+			free(tmp_ports);
+			return true;
+		}
+
+		add_range_to_ports(tmp_ports, &tmp_port_amount, range, real_size);
+		free(range);
+	}
+
+	if (opts->ports == NULL) {
+		opts->ports = tmp_ports;
+		opts->port_amount = tmp_port_amount;
+	}
+	else {
+		uint16_t *merge = ft_calloc(sizeof(uint16_t), opts->port_amount + tmp_port_amount);
+		uint32_t merge_size = 0;
+		if (merge == NULL) {
+			free_darray((void **)splitted);
+			free(tmp_ports);
+			return true;
+		}
+		add_range_to_ports(merge, &merge_size, opts->ports, opts->port_amount);
+		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_amount);
+		free(opts->ports);
+		opts->ports = merge;
+		opts->port_amount = merge_size;
+		free(tmp_ports);
+	}
+
+
+	free_darray((void **)splitted);
 	return false;
 }
 
@@ -153,6 +210,25 @@ static bool opt_ip(options *opts, str arg) {
 	return false;
 }
 
+static void	add_range_to_ports(uint16_t *ports, uint32_t *port_amount, uint16_t *range, uint32_t range_size) {
+	bool	present;
+	
+	for (uint32_t i = 0; i < range_size; i++) {
+		present = false;
+		for (uint32_t j = 0; j < (*port_amount); j++) {
+			if (ports[j] == range[i]) {
+				present = true;
+				break;
+			}
+		}
+		if (present == false) {
+			printf("Adding %hu at index %u\n", range[i], (*port_amount));
+			ports[(*port_amount)] = range[i];
+			(*port_amount)++;
+		}
+	}
+}
+
 static uint32_t	range_size(str arg) {
 	int	low = 0;
 	int	high = 0xffff;
@@ -165,20 +241,25 @@ static uint32_t	range_size(str arg) {
 		if (ft_strlen(arg) == 1)
 			return high + 1;
 		high = ft_atoi(arg + 1);
-		if (high < 0 || high > 0xffff)
-			return RANGE_SIZEERR;
+		if (high < 0 || high > 0xffff) {
+			errno = RANGE_SIZEERR;
+			return 0;
+		}
 		return (high + 1);
 	}
 	else if (dash == arg + ft_strlen(arg) - 1) {
 		low = ft_atoi(arg);
-		if (low < 0 || low > 0xffff)
-			return RANGE_SIZEERR;
+		if (low < 0 || low > 0xffff) {
+			errno = RANGE_SIZEERR;
+			return 0;
+		}
 		return (high - low + 1);
 	}
 	else {
 		str *range = ft_split(arg, '-');
 		if (!range) {
-			return RANGE_ALLOCERR;
+			errno = RANGE_ALLOCERR;
+			return 0;
 		}
 		else if (range[2] != NULL)
 			;
@@ -188,7 +269,8 @@ static uint32_t	range_size(str arg) {
 			if ((high > 0xffff || low > 0xffff) ||
 				(low < 0 || high < 0)) {
 				free_darray((void **)range);
-				return RANGE_SIZEERR;
+				errno = RANGE_SIZEERR;
+				return 0;
 			}
 			if (low <= high && low != high) {
 				free_darray((void **)range);
@@ -198,6 +280,71 @@ static uint32_t	range_size(str arg) {
 		free_darray((void **)range);
 	}
 	return 0;
+}
+
+static uint16_t *range_values(str arg, uint32_t *size) {
+	int			low = 0;
+	int			high = 0xffff;
+	char		*dash = ft_strchr(arg, '-');
+	uint16_t	*res = NULL;
+
+	if (dash == NULL) {
+		res = ft_calloc(sizeof(uint16_t), 1);
+		if (res == NULL) {
+			errno = RANGE_ALLOCERR;
+			return NULL;
+		}
+		*size = 1;
+		res[0] = ft_atoi(arg);
+		return res;
+	}
+	else if (dash == arg) {
+		if (ft_strlen(arg) != 1) {
+			high = ft_atoi(arg + 1);
+			if (high < 0 || high > 0xffff) {
+				errno = RANGE_SIZEERR;
+				return NULL;
+			}
+		}
+	}
+	else if (dash == arg + ft_strlen(arg) - 1) {
+		low = ft_atoi(arg);
+		if (low < 0 || low > 0xffff) {
+			errno = RANGE_SIZEERR;
+			return NULL;
+		}
+	}
+	else {
+		str *range = ft_split(arg, '-');
+		if (!range) {
+			errno = RANGE_ALLOCERR;
+			return NULL;
+		}
+		else if (range[2] != NULL)
+			;
+		else {
+			low = ft_atoi(range[0]);
+			high = ft_atoi(range[1]);
+			if ((high > 0xffff || low > 0xffff) ||
+				(low < 0 || high < 0)) {
+				free_darray((void **)range);
+				errno = RANGE_SIZEERR;
+				return NULL;
+			}
+			if (low < high) {
+				free_darray((void **)range);
+			}
+		}
+	}
+	res = ft_calloc(sizeof(uint16_t), high - low + 1);
+	if (res == NULL) {
+		errno = RANGE_ALLOCERR;
+		return NULL;
+	}
+	*size = high - low + 1;
+	for (int i = 0; low + i <= high; i++)
+		res[i] = low + i;
+	return res;
 }
 
 static uint8_t	get_scan(str scan) {

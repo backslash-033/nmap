@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/13 11:41:17 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/19 16:12:36 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include <netdb.h>
 #include <pcap.h>
 #include <pthread.h>
+#include <errno.h>
 
 #include "libft.h"
 
@@ -29,7 +30,7 @@ typedef struct options {
 	uint8_t		scans;
 	uint8_t		threads;
 	uint16_t	*ports;
-	uint16_t	port_amount;
+	uint32_t	port_amount;
 } options;
 
 #define WARNING	"\033[33mWarning:\033[0m "

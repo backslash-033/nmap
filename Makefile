@@ -6,7 +6,7 @@
 #    By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/06/11 17:17:59 by nguiard          ###   ########.fr        #
+#    Updated: 2024/06/19 16:46:28 by nguiard          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,7 @@ LIBFT	= libft/libft.a
 
 INCLUDE = -Iinclude/ -Ilibft/include
 
-CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3# -g3 -fsanitize=address
+CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
 
 all: __watermark ${LIBFT} ${NAME}
 
@@ -60,7 +60,7 @@ __watermark:
 	@echo -e "\033[42m  \\ \\ \\ |\\ \\   _\\ \\   _\\ \\    \033[0m"
 	@echo -e "\033[42m   \\ \\ \\ \\\\\\ \\  \\__ \\  \\__ \\   \033[0m"
 	@echo -e "\033[42m    \\ \\ \\ \\| \\  __\\ \\  __\\ \\  \033[0m"
-	@echo -e "\033[42m(c)  \\_\\ \\____| \\____\\ \\____\\ \033[0m"
+	@echo -e "\033[42m     \\_\\ \\____| \\____\\ \\____\\ \033[0m"
 	@echo -e "\033[42m                              \033[0m\n"
 
 
