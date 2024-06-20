@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 14:56:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/20 13:17:45 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/20 13:18:49 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,7 +144,6 @@ static bool opt_ports(options *opts, str arg) {
 		}
 		size += range_size_value;
 	}
-	printf("RANGE TOTALE: %u\n", size);
 
 	tmp_ports = ft_calloc(sizeof(uint16_t), size > 0x10000 ? 0x10000 : size);
 	if (tmp_ports == NULL) {
@@ -222,7 +221,6 @@ static void	add_range_to_ports(uint16_t *ports, uint32_t *port_amount, uint16_t 
 			}
 		}
 		if (present == false) {
-			printf("Adding %hu at index %u\n", range[i], (*port_amount));
 			ports[(*port_amount)] = range[i];
 			(*port_amount)++;
 		}
