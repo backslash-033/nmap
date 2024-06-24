@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 14:56:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/24 08:28:37 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/24 10:48:01 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ static uint16_t *range_values(str arg, uint32_t *size);
 static void		add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
 									uint16_t *range, uint32_t range_size);
 static uint16_t	*sort_port_range(uint16_t *ports, uint32_t *port_amout);
+static bool		resolve_hostname(options *opts, str hostname);
 
 typedef bool	(*parsing_function)(options *, str);
 
@@ -104,6 +105,12 @@ options options_handling(int argc, char **argv) {
 void	free_options(options *opts) {
 	if (opts->port) {
 		free(opts->port);
+	}
+	if (opts->host) {
+		for (uint32_t i = 0; i < opts->host_amout; i++) {
+			free(opts->host[i].basename);
+		}
+		free(opts->host);
 	}
 }
 
@@ -208,20 +215,72 @@ static bool opt_ports(options *opts, str arg) {
 		free(tmp_ports);
 	}
 
-
 	free_darray((void **)splitted);
 	return false;
 }
 
 static bool opt_file(options *opts, str arg) {
 	(void)opts;
-	printf("in opt_file: %s\n", arg);
+	int	fd = 0;
+	str	all_file;
+	str	*splitted;
+
+	fd = open(arg, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, WARNING "Could not open file '%s'\n", arg);
+	}
+	else if (read(fd, "", 0)) {
+		fprintf(stderr, WARNING "Could not read from file '%s'\n", arg);
+		close(fd);
+	}
+	else {
+		all_file = get_whole_file(fd);
+		if (all_file == NULL) {
+			if (errno == ENOMEM)
+				return true;
+			fprintf(stderr, WARNING "Read nothing from file '%s'\n", arg);
+			return false;
+		}
+		splitted = ft_split(all_file, '\n');
+		free(all_file);
+		if (splitted == NULL)
+			return true;
+		for (size_t i = 0; splitted[i]; i++) {
+			if (resolve_hostname(opts, splitted[i])) {
+				free_darray((void **)splitted);
+				return true;
+			}
+		}
+		free_darray((void **)splitted);
+	}
 	return false;
 }
 
 static bool opt_ip(options *opts, str arg) {
-	(void)opts;
-	printf("in opt_ip: %s\n", arg);
+	return resolve_hostname(opts, arg);
+}
+
+static bool	resolve_hostname(options *opts, str hostname) {
+	host_data	to_add;
+	host_data	*tmp;
+
+	to_add.basename = ft_strdup(hostname);
+	if (to_add.basename == NULL)
+		return true;
+
+	tmp = ft_calloc(opts->host_amout + 1, sizeof(host_data));
+	if (tmp == NULL) {
+		free(to_add.basename);
+		return true;
+	}
+
+	if (opts->host != NULL) {
+		ft_memcpy(tmp, opts->host, sizeof(host_data) * opts->host_amout);
+		free(opts->host);
+	}
+	opts->host = tmp;
+	opts->host[opts->host_amout] = to_add;
+	opts->host_amout += 1;
 	return false;
 }
 
@@ -256,7 +315,7 @@ static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
 			}
 		}
 	}
-	
+
 	return ports;
 }
 
@@ -464,7 +523,8 @@ static void print_help_message() {
 static options default_options() {
 	options ret;
 
-	ret.addresses = NULL;
+	ret.host = NULL;
+	ret.host_amout = 0;
 	ret.scans = SCAN_NOTHING;
 	ret.threads = 0;
 	ret.port = NULL;

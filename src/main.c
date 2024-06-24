@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 13:54:44 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/24 08:33:04 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/24 10:44:59 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,5 +88,10 @@ static void	display_options(options opt) {
 			}
 		}
 		printf("%hu\n", opt.port[opt.port_amount - 1]);
+	}
+
+	printf("Hosts:\n");
+	for (uint32_t i = 0; i < opt.host_amout; i++) {
+		printf("- %s\n", opt.host[i].basename);
 	}
 }

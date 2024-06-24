@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/24 08:24:04 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/24 09:52:23 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,17 +20,23 @@
 #include <pcap.h>
 #include <pthread.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "libft.h"
 
 typedef char *	str;
 
+typedef	struct host_data {
+	str	basename;
+} host_data;
+
 typedef struct options {
-	char *		*addresses;
-	uint8_t		scans;
-	uint8_t		threads;
-	uint16_t	*port;
-	uint32_t	port_amount;
+	host_data		*host;
+	uint32_t		host_amout;
+	uint8_t			scans;
+	uint8_t			threads;
+	uint16_t		*port;
+	uint32_t		port_amount;
 } options;
 
 #define WARNING	"\033[33mWarning:\033[0m "
