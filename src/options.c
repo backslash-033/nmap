@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 14:56:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/20 13:18:49 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/24 08:28:37 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ static uint32_t	range_size(str arg);
 static uint16_t *range_values(str arg, uint32_t *size);
 static void		add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
 									uint16_t *range, uint32_t range_size);
+static uint16_t	*sort_port_range(uint16_t *ports, uint32_t *port_amout);
 
 typedef bool	(*parsing_function)(options *, str);
 
@@ -69,6 +70,7 @@ options options_handling(int argc, char **argv) {
 			args_status = get_option(argv[i]);
 		} else {
 			if (handlers[args_status](&res, argv[i])) {
+				fprintf(stderr, ERROR "Error allocating memory\n");
 				free_options(&res);
 				exit(1);
 			}
@@ -82,12 +84,26 @@ options options_handling(int argc, char **argv) {
 			!(res.scans & 0x10000000))
 		res.scans = SCAN_ALL;
 
+	uint16_t *sorted = sort_port_range(res.port, &res.port_amount);
+
+	if (sorted == NULL && (unsigned)errno == RANGE_ALLOCERR) {
+		fprintf(stderr, ERROR "Error allocating memory\n");
+		free_options(&res);
+		exit(1);
+	} else if (sorted == NULL && (unsigned)errno == RANGE_SIZEERR) {
+		fprintf(stderr, ERROR "Cannot scan more than 1024 ports.\n");
+		free_options(&res);
+		exit(1);
+	}
+
+	res.port = sorted;
+
 	return res;
 }
 
 void	free_options(options *opts) {
-	if (opts->ports) {
-		free(opts->ports);
+	if (opts->port) {
+		free(opts->port);
 	}
 }
 
@@ -172,8 +188,8 @@ static bool opt_ports(options *opts, str arg) {
 		free(range);
 	}
 
-	if (opts->ports == NULL) {
-		opts->ports = tmp_ports;
+	if (opts->port == NULL) {
+		opts->port = tmp_ports;
 		opts->port_amount = tmp_port_amount;
 	}
 	else {
@@ -184,10 +200,10 @@ static bool opt_ports(options *opts, str arg) {
 			free(tmp_ports);
 			return true;
 		}
-		add_range_to_ports(merge, &merge_size, opts->ports, opts->port_amount);
+		add_range_to_ports(merge, &merge_size, opts->port, opts->port_amount);
 		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_amount);
-		free(opts->ports);
-		opts->ports = merge;
+		free(opts->port);
+		opts->port = merge;
 		opts->port_amount = merge_size;
 		free(tmp_ports);
 	}
@@ -207,6 +223,41 @@ static bool opt_ip(options *opts, str arg) {
 	(void)opts;
 	printf("in opt_ip: %s\n", arg);
 	return false;
+}
+
+static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
+	uint16_t tmp;
+
+	if (!ports || (port_amout && *port_amout == 0)) {
+		if (ports)
+			free(ports);
+		ports = ft_calloc(1024, sizeof(uint16_t));
+		if (!ports) {
+			errno = RANGE_ALLOCERR;
+			return NULL;
+		}
+		for (uint16_t i = 1; i < 1025; i++)
+			ports[i - 1] = i;
+		*port_amout = 1024;
+		return ports;
+	}
+
+	if (*port_amout > 1024) {
+		errno = RANGE_SIZEERR;
+		return NULL;
+	}
+
+	for (uint32_t _ = 0; _ < *port_amout; _++) {
+		for (uint32_t i = 0; i < (*port_amout - 1); i++) {
+			if (ports[i] > ports[i + 1]) {
+				tmp = ports[i + 1];
+				ports[i + 1] = ports[i];
+				ports[i] = tmp;
+			}
+		}
+	}
+	
+	return ports;
 }
 
 static void	add_range_to_ports(uint16_t *ports, uint32_t *port_amount, uint16_t *range, uint32_t range_size) {
@@ -416,7 +467,7 @@ static options default_options() {
 	ret.addresses = NULL;
 	ret.scans = SCAN_NOTHING;
 	ret.threads = 0;
-	ret.ports = NULL;
+	ret.port = NULL;
 	ret.port_amount = 0;
 
 	return ret;
