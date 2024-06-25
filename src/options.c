@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 14:56:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/24 10:48:01 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/25 08:47:51 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #define ARGS_PORTS		2
 #define ARGS_FILE		3
 #define ARGS_IP			4
+#define ARGS_HELP		5
 #define SCAN_NOTHING	0
 #define SCAN_SYN		0b00000001
 #define SCAN_NULL		0b00000010
@@ -29,21 +30,22 @@
 #define RANGE_ALLOCERR	0xffff0000
 #define RANGE_SIZEERR	0xff000000
 
-static void		print_help_message();
-static options	default_options();
-static int		get_option(char const *arg);
-static bool		opt_speed(options *opts, str arg);
-static bool		opt_scans(options *opts, str arg);
-static bool		opt_ports(options *opts, str arg);
-static bool		opt_file(options *opts, str arg);
-static bool		opt_ip(options *opts, str arg);
-static uint8_t	get_scan(str scan);
-static uint32_t	range_size(str arg);
-static uint16_t *range_values(str arg, uint32_t *size);
-static void		add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
+static void			print_help_message();
+static options		default_options();
+static int			get_option(char const *arg);
+static bool			opt_speed(options *opts, str arg);
+static bool			opt_scans(options *opts, str arg);
+static bool			opt_ports(options *opts, str arg);
+static bool			opt_file(options *opts, str arg);
+static bool			opt_ip(options *opts, str arg);
+static uint8_t		get_scan(str scan);
+static uint32_t		range_size(str arg);
+static uint16_t 	*range_values(str arg, uint32_t *size);
+static void			add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
 									uint16_t *range, uint32_t range_size);
-static uint16_t	*sort_port_range(uint16_t *ports, uint32_t *port_amout);
-static bool		resolve_hostname(options *opts, str hostname);
+static uint16_t		*sort_port_range(uint16_t *ports, uint32_t *port_amout);
+static bool			add_hostname(options *opts, str hostname);
+static host_data	resolve_hostname(const str hostname) ;
 
 typedef bool	(*parsing_function)(options *, str);
 
@@ -60,7 +62,7 @@ options options_handling(int argc, char **argv) {
 	int		args_status = ARGS_NOTHING;
 
 	if (argc == 1) {
-		fprintf(stderr, ERROR "no arguments.\n\n");
+		fprintf(stderr, ERROR "No arguments.\n\n");
 		print_help_message();
 		exit(2);
 	}
@@ -69,8 +71,13 @@ options options_handling(int argc, char **argv) {
 	for (int i = 1; i < argc; i++) {
 		if (args_status == ARGS_NOTHING) {
 			args_status = get_option(argv[i]);
+			if (args_status == ARGS_HELP) {
+				print_help_message();
+				free_options(&res);
+				exit(0);
+			}
 		} else {
-			if (handlers[args_status](&res, argv[i])) {
+			if (handlers[args_status](&res, argv[i]) == true) {
 				fprintf(stderr, ERROR "Error allocating memory\n");
 				free_options(&res);
 				exit(1);
@@ -99,6 +106,12 @@ options options_handling(int argc, char **argv) {
 
 	res.port = sorted;
 
+	if (res.host_amout == 0 || res.host == NULL) {
+		fprintf(stderr, ERROR "No valid IP address or FQDN provided\n");
+		free_options(&res);
+		exit(1);
+	}
+
 	return res;
 }
 
@@ -119,7 +132,7 @@ static bool opt_speed(options *opts, str arg) {
 	if (thread_nb > 250 || thread_nb < 0) {
 		fprintf(stderr, WARNING "--speedup can only be between 0 and 250 included. "
 						"Argument given: %d. "
-						"Defaulting to 0 additional threads.\n", thread_nb);
+						"Default to 0 additional threads.\n", thread_nb);
 		opts->threads = 0;
 		return false;
 	}
@@ -144,7 +157,6 @@ static bool opt_scans(options *opts, str arg) {
 }
 
 static bool opt_ports(options *opts, str arg) {
-	(void)opts;
 	uint32_t	size = 0;
 	str			*splitted = ft_split(arg, ',');
 	uint16_t	*tmp_ports = NULL;
@@ -220,7 +232,6 @@ static bool opt_ports(options *opts, str arg) {
 }
 
 static bool opt_file(options *opts, str arg) {
-	(void)opts;
 	int	fd = 0;
 	str	all_file;
 	str	*splitted;
@@ -246,7 +257,7 @@ static bool opt_file(options *opts, str arg) {
 		if (splitted == NULL)
 			return true;
 		for (size_t i = 0; splitted[i]; i++) {
-			if (resolve_hostname(opts, splitted[i])) {
+			if (add_hostname(opts, splitted[i])) {
 				free_darray((void **)splitted);
 				return true;
 			}
@@ -257,16 +268,19 @@ static bool opt_file(options *opts, str arg) {
 }
 
 static bool opt_ip(options *opts, str arg) {
-	return resolve_hostname(opts, arg);
+	return add_hostname(opts, arg);
 }
 
-static bool	resolve_hostname(options *opts, str hostname) {
+static bool	add_hostname(options *opts, const str hostname) {
 	host_data	to_add;
 	host_data	*tmp;
 
-	to_add.basename = ft_strdup(hostname);
-	if (to_add.basename == NULL)
-		return true;
+	to_add = resolve_hostname(hostname);
+	if (to_add.basename == NULL) {
+		if (errno == ENOMEM)
+			return true;
+		return false;
+	}
 
 	tmp = ft_calloc(opts->host_amout + 1, sizeof(host_data));
 	if (tmp == NULL) {
@@ -282,6 +296,55 @@ static bool	resolve_hostname(options *opts, str hostname) {
 	opts->host[opts->host_amout] = to_add;
 	opts->host_amout += 1;
 	return false;
+}
+
+static host_data	resolve_hostname(const str hostname) {
+	host_data		ret;
+	struct addrinfo	hints, *result, *result_base;
+	char			buff[INET6_ADDRSTRLEN + 1];
+	void			*ptr = NULL;
+
+	ft_bzero(&ret, sizeof(host_data));
+	ft_bzero(&hints, sizeof(struct addrinfo));
+	ft_bzero(buff, INET6_ADDRSTRLEN + 1);
+
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags |= AI_CANONNAME;
+
+	ret.basename = ft_strdup(hostname);
+	if (!ret.basename)
+		return ret;
+
+	if (getaddrinfo(hostname, NULL, &hints, &result_base)) {
+		fprintf(stderr, WARNING "Could not get address info of '%s'\n", hostname);
+		free(ret.basename);
+		ret.basename = NULL;
+		return ret;
+	}
+
+	result = result_base;
+
+	while (result) {
+		inet_ntop(result->ai_family, result->ai_addr->sa_data, buff, INET6_ADDRSTRLEN + 1);
+
+		switch (result->ai_family) {
+		case AF_INET:
+			ptr = &((struct sockaddr_in *) result->ai_addr)->sin_addr;
+			break;
+        case AF_INET6:
+			ptr = &((struct sockaddr_in6 *) result->ai_addr)->sin6_addr;
+			break;
+		}
+		inet_ntop (result->ai_family, ptr, buff, 100);
+
+		ret.info = *result;
+		result = result->ai_next;
+	}
+
+	freeaddrinfo(result_base);
+
+	return ret;
 }
 
 static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
@@ -498,6 +561,8 @@ static int	get_option(char const *arg) {
 			return ARGS_FILE;
 		if (!ft_strncmp(arg, "ip", 2))
 			return ARGS_IP;
+		if (!ft_strncmp(arg, "help", 4))
+			return ARGS_HELP;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
@@ -514,8 +579,8 @@ static void print_help_message() {
 	puts("Options:");
 	puts("--help         Shows this help message");
 	puts("--ports        Range of ports to scan");
-	puts("--file         File name to read the list of IP addresses from");
-	puts("--ip           IP address of FQDN to scan");
+	puts("--file         File name to read the list of IP addresses from (one per line)");
+	puts("--ip           IP address or FQDN to scan");
 	puts("--speedup      Number of threads to use. Default: 1");
 	puts("--scan         Type of scan to use. Default: ALL");
 }

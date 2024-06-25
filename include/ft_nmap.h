@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/24 09:52:23 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/25 08:16:37 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@
 typedef char *	str;
 
 typedef	struct host_data {
-	str	basename;
+	str				basename;
+	struct addrinfo	info;
 } host_data;
 
 typedef struct options {
