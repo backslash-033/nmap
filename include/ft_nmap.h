@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/25 08:16:37 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/25 19:02:16 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,11 @@
 
 typedef char *	str;
 
+#define WARNING	"\033[33mWarning:\033[0m "
+#define ERROR	"\033[31mError:\033[0m "
+
+// Options
+
 typedef	struct host_data {
 	str				basename;
 	struct addrinfo	info;
@@ -33,17 +38,12 @@ typedef	struct host_data {
 
 typedef struct options {
 	host_data		*host;
-	uint32_t		host_amout;
+	uint32_t		host_len;
 	uint8_t			scans;
 	uint8_t			threads;
 	uint16_t		*port;
-	uint32_t		port_amount;
+	uint32_t		port_len;
 } options;
-
-#define WARNING	"\033[33mWarning:\033[0m "
-#define ERROR	"\033[31mError:\033[0m "
-
-// Options
 
 #define IS_SCAN_NOTHING(x)	(x == 0)
 #define IS_SCAN_SYN(x)		((x & 0b00000001) == 0b00000001)
@@ -56,5 +56,29 @@ typedef struct options {
 
 options options_handling(int argc, char **argv);
 void	free_options(options *opts);
+void	free_host_data(host_data data);
+
+// Threads
+
+#define NEVER_ZERO(x) (x ? x : 1)
+
+typedef struct host_and_port {
+	host_data	host;
+	uint16_t	port;
+} host_and_port;
+
+typedef struct tdata_out {
+	str	data;
+} tdata_out;
+
+typedef struct tdata_in {
+	host_and_port	*hnp;
+	uint32_t		hnp_len;
+	uint8_t			scans;
+	uint8_t			id;
+	tdata_out		*output;
+} tdata_in;
+
+void	threads(const options opt);
 
 #endif
