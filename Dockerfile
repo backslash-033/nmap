@@ -7,10 +7,13 @@ RUN apt-get update && apt-get install -y \
     nmap \
     libpcap-dev \
     zsh \
+    nginx \
     && apt-get clean
 
 RUN mkdir -p /opt/nmap
 
+EXPOSE 80
+
 WORKDIR /opt/nmap
 
-ENTRYPOINT ["bash"]
+CMD ["sh", "-c", "service nginx start && bash"]

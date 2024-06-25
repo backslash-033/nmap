@@ -4,5 +4,7 @@ services:
     container_name: nmap-container
     volumes:
       - ./nmap:/opt/nmap
+    ports:
+      - "8080:80"
     stdin_open: true
     tty: true
