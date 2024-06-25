@@ -1,0 +1,10 @@
+
+# C
+*.o
+*.d
+
+# 42
+libft.a
+
+# VSCode
+.vscode

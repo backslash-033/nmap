@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+         #
+#    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/06/19 16:46:28 by nguiard          ###   ########.fr        #
+#    Updated: 2024/06/25 13:41:00 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,7 @@ CC		= gcc
 
 LIBFT	= libft/libft.a
 
+# TODO add dependencies
 INCLUDE = -Iinclude/ -Ilibft/include
 
 CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
