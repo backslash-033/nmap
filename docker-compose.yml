@@ -1,0 +1,8 @@
+services:
+  nmap-container:
+    build: .
+    container_name: nmap-container
+    volumes:
+      - ./nmap:/opt/nmap
+    stdin_open: true
+    tty: true
