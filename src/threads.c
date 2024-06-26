@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/25 08:53:47 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/25 19:04:43 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/26 17:44:54 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 static tdata_in			*build_chunks(const options opt, uint8_t *th_amount);
 static host_and_port	*every_host_and_port(const options opt, uint32_t *size);
 static void				free_chunks(tdata_in *chunks, uint8_t size);
+static void 			launch_threads(tdata_in *chunks, uint8_t amount);
 
 void	threads(const options opt) {
 	tdata_in	*chunks;
@@ -32,8 +33,22 @@ void	threads(const options opt) {
 	for (int i = 0; i < th_amount; i++)
 		chunks[i].output = out;
 
+	launch_threads(chunks, th_amount);
+
 	free_chunks(chunks, th_amount);
 	free(out);
+}
+
+static void launch_threads(tdata_in *chunks, uint8_t amount) {
+	pthread_t	tid[256];
+
+	for (uint8_t i = 0; i < amount; i++) {
+		pthread_create(&(tid[i]), NULL, routine, &(chunks[i]));
+	}
+
+	for (uint8_t i = 0; i < amount; i++) {
+		pthread_join(tid[i], NULL);
+	}
 }
 
 static void	free_chunks(tdata_in *chunks, uint8_t size) {

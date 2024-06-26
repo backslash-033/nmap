@@ -6,7 +6,7 @@
 /*   By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/25 19:02:16 by nguiard          ###   ########.fr       */
+/*   Updated: 2024/06/26 17:39:45 by nguiard          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,5 +80,10 @@ typedef struct tdata_in {
 } tdata_in;
 
 void	threads(const options opt);
+
+// Routine
+
+void	*routine(void *thread_arg);
+
 
 #endif
