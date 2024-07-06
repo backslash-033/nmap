@@ -6,14 +6,13 @@
 #    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/06/25 13:41:00 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/06 17:05:23 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
-			main			\
-			options			\
+			scanner			\
 		))
 
 NAME	= ft_nmap
