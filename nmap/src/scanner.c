@@ -104,9 +104,9 @@ void print_tcp_header(tcpheader_t tcph) {
     printf("TCP Data Offset: %u\n", tcph.offset);
     printf("TCP Reserved: %d\n", tcph.reserved);
     print_tcp_flags(tcph.flags);
-    printf("TCP Window Size: %u\n", tcph.win);
-    printf("TCP Checksum: %u\n", tcph.chksum);
-    printf("TCP Urgent Pointer: %u\n", tcph.urgptr);
+    printf("TCP Window Size: %u\n", tcph.win); // TODO why the same output?
+    printf("TCP Checksum: %u\n", tcph.chksum); // TODO why the same output?
+    printf("TCP Urgent Pointer: %u\n", tcph.urgptr); // TODO why the same output?
 }
 
 int main() {
