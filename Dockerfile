@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     libpcap-dev \
     zsh \
     nginx \
+    netcat-traditional \
     && apt-get clean
 
 RUN mkdir -p /opt/nmap
