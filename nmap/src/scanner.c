@@ -97,16 +97,16 @@ void print_tcp_flags(unsigned char flags) {
 
 void print_tcp_header(tcpheader_t tcph) {
     printf("=============================TCP HEADER=============================\n");
-    printf("TCP Source Port: %hu\n", tcph.srcport);
-    printf("TCP Destination Port: %hu\n", tcph.destport);
+    printf("TCP Source Port: %u\n", tcph.srcport);
+    printf("TCP Destination Port: %u\n", tcph.destport);
     printf("TCP Sequence Number: %u\n", tcph.seqnum);
     printf("TCP Acknowledgment Number: %u\n", tcph.acknum);
     printf("TCP Data Offset: %u\n", tcph.offset);
     printf("TCP Reserved: %d\n", tcph.reserved);
     print_tcp_flags(tcph.flags);
-    printf("TCP Window Size: %hu\n", tcph.win);
-    printf("TCP Checksum: %hu\n", tcph.chksum);
-    printf("TCP Urgent Pointer: %hu\n", tcph.urgptr);
+    printf("TCP Window Size: %u\n", tcph.win);
+    printf("TCP Checksum: %u\n", tcph.chksum);
+    printf("TCP Urgent Pointer: %u\n", tcph.urgptr);
 }
 
 int main() {
