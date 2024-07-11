@@ -46,7 +46,15 @@ void sigint_handler() {
     exit(1);
 }
 
+void ip_to_string(unsigned int ip, char *buffer, size_t buffer_size) {
+    struct in_addr ip_addr;
+    ip_addr.s_addr = ip;
+    inet_ntop(AF_INET, &ip_addr, buffer, buffer_size);
+}
+
 void print_ip_header(ipheader_t iph) {
+    char ip_addr[INET_ADDRSTRLEN];
+
     printf("=============================IP  HEADER=============================\n");
     printf("IP Version: %d\n", iph.ver);
     printf("IP Header Length: %d\n", iph.ihl);
@@ -58,8 +66,10 @@ void print_ip_header(ipheader_t iph) {
     printf("IP Time To Live: %d\n", iph.ttl);
     printf("IP Protocol: %d\n", iph.protocol);
     printf("IP Checksum: %d\n", iph.chksum);
-    printf("IP Source IP: %u\n", iph.sourceip); // TODO convert me
-    printf("IP Destination IP: %u\n", iph.destip); // TODO convert me
+    ip_to_string(iph.sourceip, ip_addr, INET_ADDRSTRLEN);
+    printf("IP Source IP: %s\n", ip_addr);
+    ip_to_string(iph.destip, ip_addr, INET_ADDRSTRLEN);
+    printf("IP Destination IP: %s\n", ip_addr);
 }
 
 void print_tcp_flags(unsigned char flags) {
