@@ -6,7 +6,7 @@
 /*   By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/06/25 15:19:44 by tgernez          ###   ########.fr       */
+/*   Updated: 2024/07/12 02:27:54 by tgernez          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,56 @@ typedef struct options {
 #define IS_SCAN_UDP(x)		((x & 0b00100000) == 0b00100000)
 #define IS_SCAN_ALL(x)		((x & 0b10111111) == 0b10111111)
 
+enum e_tcp_flags
+{
+	FIN = 1,
+	SYN = FIN << 1,
+	RST = SYN << 1,
+	PSH = RST << 1,
+    ACK = PSH << 1,
+    URG = ACK << 1,
+    ECE = URG << 1,
+    CWR = ECE << 1,
+    NS = ECE << 1
+};
+
+// IP header structure
+typedef struct ipheader_s {
+    unsigned char       ihl:4, ver:4;
+    unsigned char       tos;
+    unsigned short int  len;
+    unsigned short int  ident;
+    unsigned short int  flag:3, offset:13;
+    unsigned char       ttl;
+    unsigned char       protocol;
+    unsigned short int  chksum;
+    unsigned int        sourceip;
+    unsigned int        destip;
+}                       ipheader_t;
+
+// TCP header structure
+typedef struct tcpheader_s {
+    unsigned short int  srcport;
+    unsigned short int  destport;
+    unsigned int        seqnum;
+    unsigned int        acknum;
+    unsigned char       reserved:4, offset:4;
+    unsigned char       flags;
+    unsigned short int  win;
+    unsigned short int  chksum;
+    unsigned short int  urgptr;
+}                       tcpheader_t;
+
+// TODO maybe remove later
+#define PORTS_SCANNED 90
+#define IP_ADDRESS "127.0.0.1"
+#define BUFFER_SIZE 4096
+#define DEBUG false
+#define NMAP_PORT "3490"
+
 options options_handling(int argc, char **argv);
 void	free_options(options *opts);
+void	getaddrinfolocal();
+
 
 #endif

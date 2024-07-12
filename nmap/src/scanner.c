@@ -7,38 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
-
-// IP header structure
-typedef struct ipheader_s {
-    unsigned char       ihl:4, ver:4;
-    unsigned char       tos;
-    unsigned short int  len;
-    unsigned short int  ident;
-    unsigned short int  flag:3, offset:13;
-    unsigned char       ttl;
-    unsigned char       protocol;
-    unsigned short int  chksum;
-    unsigned int        sourceip;
-    unsigned int        destip;
-}                       ipheader_t;
-
-// TCP header structure
-typedef struct tcpheader_s {
-    unsigned short int  srcport;
-    unsigned short int  destport;
-    unsigned int        seqnum;
-    unsigned int        acknum;
-    unsigned char       reserved:4, offset:4;
-    unsigned char       flags;
-    unsigned short int  win;
-    unsigned short int  chksum;
-    unsigned short int  urgptr;
-}                       tcpheader_t;
-
-#define PORTS_SCANNED 90
-#define IP_ADDRESS "127.0.0.1"
-#define BUFFER_SIZE 4096
-
+#include <stdbool.h>
 
 // TODO use getprotobyname() for different protocols
 
@@ -125,20 +94,27 @@ int main() {
 
     signal(SIGINT, sigint_handler);
 
+    
+    getaddrinfolocal();
+
     // TODO create a structure to retrieve the network information about the incoming packet
-    ssize_t recvfrom_bytes = recvfrom(sockfd, buff, BUFFER_SIZE, 0, NULL, NULL);
-    if (recvfrom_bytes > 0) {
-        ipheader_t *iph = (ipheader_t *)buff;
-        // Print the data in iph
-        print_ip_header(*iph);
+    if (DEBUG) {
+        for (;;) {
+            ssize_t recvfrom_bytes = recvfrom(sockfd, buff, BUFFER_SIZE, 0, NULL, NULL);
+            if (recvfrom_bytes > 0) {
+                ipheader_t *iph = (ipheader_t *)buff;
+                // Print the data in iph
+                print_ip_header(*iph);
 
-        tcpheader_t *tcph = (tcpheader_t *)(buff + 4 * iph->ihl);
-        // Print the data in tcph
-        print_tcp_header(*tcph);
+                tcpheader_t *tcph = (tcpheader_t *)(buff + 4 * iph->ihl);
+                // Print the data in tcph
+                print_tcp_header(*tcph);
 
-        // TODO maybe check if UDP?
-        (void)tcph;
-        buff = buff + sizeof(ipheader_t) + sizeof(tcpheader_t);
-        printf("%s\n%ld\n", buff, recvfrom_bytes);
+                // TODO maybe check if UDP?
+                (void)tcph;
+                buff = buff + sizeof(ipheader_t) + sizeof(tcpheader_t);
+                printf("%s\n%ld\n", buff, recvfrom_bytes);
+            }
+        }
     }
 }
