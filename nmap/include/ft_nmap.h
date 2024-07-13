@@ -6,7 +6,7 @@
 /*   By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/07/12 02:27:54 by tgernez          ###   ########.fr       */
+/*   Updated: 2024/07/13 20:48:47 by tgernez          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,13 @@
 #include <pthread.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <signal.h>
 
 #include "libft.h"
 
@@ -104,6 +111,7 @@ typedef struct tcpheader_s {
 options options_handling(int argc, char **argv);
 void	free_options(options *opts);
 void	getaddrinfolocal();
-
+void    print_tcp_header(tcpheader_t tcph);
+void    print_ip_header(ipheader_t iph);
 
 #endif
