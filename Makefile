@@ -47,7 +47,7 @@ access:
 
 clear_volumes:
 	@echo "Removing all Docker volumes..."
-	docker volume rm $(shell docker volume ls -q | ft_transcendence_ )
+	docker volume rm $(shell docker volume ls -q | ft_nmap_ )
 	@echo "All volumes have been removed."
 
 start:
