@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ft_nmap.h                                          :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/07/14 18:09:05 by tgernez          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef FT_NMAP_H
 #define FT_NMAP_H
 
@@ -109,6 +97,11 @@ typedef struct tcpheader_s {
     unsigned short int  chksum;
     unsigned short int  urgptr;
 }                       tcpheader_t;
+
+typedef struct ip_addr_s {
+    char    printable[INET_ADDRSTRLEN];
+    int     network;
+}           ip_addr_t;
 
 // TODO maybe remove later
 #define PORTS_SCANNED 90
