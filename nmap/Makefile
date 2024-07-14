@@ -6,7 +6,7 @@
 #    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/14 15:02:54 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/14 16:27:13 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,6 @@ SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
 			scanner			\
 			sender			\
-			decoder			\
 		))
 
 NAME	= ft_nmap
@@ -65,6 +64,10 @@ __watermark:
 	@echo -e "\033[42m    \\ \\ \\ \\| \\  __\\ \\  __\\ \\  \033[0m"
 	@echo -e "\033[42m     \\_\\ \\____| \\____\\ \\____\\ \033[0m"
 	@echo -e "\033[42m                              \033[0m\n"
+
+
+decoder:
+	@${CC} ${CFLAGS} -o decoder src/decoder.c
 
 
 clean:

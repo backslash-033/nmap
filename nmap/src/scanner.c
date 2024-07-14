@@ -18,36 +18,36 @@ void sigint_handler() {
 }
 
 int main() {
-    int sockfd;
+    // int sockfd;
+    // ssize_t recvfrom_bytes;
     // int results[PORTS_SCANNED];
     // char *data = malloc(BUFFER_SIZE);
     // if (!data)
     //     return 1;
     // memset(data, 0, BUFFER_SIZE);
     // memcpy(data, "Hello, World!", 14);
-    char data[] = "Hello, World!";
-    create_raw_packet("127.0.0.1", "127.0.0.1", 12345, 80, 0, data, sizeof(data));
+    // char *buff = malloc(BUFFER_SIZE);
+    // if (!buff)
+    //     return 1;
 
-    char *buff = malloc(BUFFER_SIZE);
-    if (!buff)
-        return 1;
-
-    sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
-    if (sockfd < 0) {
-        perror("Error creating socket");
-        exit(EXIT_FAILURE);
-    }
+    // sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+    // if (sockfd < 0) {
+    //     perror("Error creating socket");
+    //     exit(EXIT_FAILURE);
+    // }
 
     signal(SIGINT, sigint_handler);
+    char data[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    create_raw_packet("127.0.0.1", "127.0.0.1", 12345, 80, 0, data, sizeof(data));
 
-    
-    getaddrinfolocal();
 
+    // getaddrinfolocal();
 
+    // printf("I am here\n");
     // // TODO create a structure to retrieve the network information about the incoming packet
     // if (DEBUG) {
     //     for (;;) {
-    //         ssize_t recvfrom_bytes = recvfrom(sockfd, buff, BUFFER_SIZE, 0, NULL, NULL);
+    //         recvfrom_bytes = recvfrom(sockfd, buff, BUFFER_SIZE, 0, NULL, NULL);
     //         if (recvfrom_bytes > 0) {
     //             ipheader_t *iph = (ipheader_t *)buff;
     //             // Print the data in iph
@@ -64,4 +64,6 @@ int main() {
     //         }
     //     }
     // }
+
+
 }

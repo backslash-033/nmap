@@ -66,11 +66,11 @@ static tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
     tcph.src_port = htons(src_port);
     tcph.dest_port = htons(dest_port);
     tcph.seqnum = 0; // TODO make me random
-    tcph.acknum = 0; // TODO make me rando; or not
+    tcph.acknum = 0; // TODO make me random or not
     tcph.reserved = 0;
-    tcph.offset = 5; // TODO compute dynamiccaly
-    tcph.flags = 0; // TODO set me with desired scan
-    tcph.win = htons(5840); // TODO maybe make me adjustable
+    tcph.offset = 5; // TODO compute dynamically
+    tcph.flags = SYN + ACK; // TODO set me with desired scan
+    tcph.win = htons(1024); // TODO maybe make me adjustable
     tcph.chksum = 0; // TODO compute me dynamically later
     tcph.urgptr = 0; // TODO set me with desired scan
     return tcph;
