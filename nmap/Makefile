@@ -6,7 +6,7 @@
 #    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/13 20:47:54 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/14 15:02:54 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,8 @@ LIBFT	= libft/libft.a
 # TODO add dependencies
 INCLUDE = -Iinclude/ -Ilibft/include
 
-CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
+CFLAGS	=  -Wall -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
+# CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
 
 all: __watermark ${LIBFT} ${NAME}
 

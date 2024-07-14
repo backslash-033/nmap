@@ -54,7 +54,7 @@ void create_raw_tcp_ip_packet(ipheader_t *ip, tcpheader_t *tcp, char *data, int 
     // Calculate TCP checksum
     tcp->chksum = 0;
     struct pseudo_header psh;
-    psh.source_address = ip->sourceip;
+    psh.source_address = ip->srcip;
     psh.dest_address = ip->destip;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_TCP;
@@ -103,7 +103,7 @@ int main() {
     ip.ttl = 255;
     ip.protocol = IPPROTO_TCP;
     ip.chksum = 0;
-    ip.sourceip = inet_addr("127.0.0.1"); // Source IP address (localhost)
+    ip.srcip = inet_addr("127.0.0.1"); // Source IP address (localhost)
     ip.destip = inet_addr("127.0.0.1"); // Destination IP address (localhost)
 
     // Fill in TCP Header

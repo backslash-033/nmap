@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     nginx \
     netcat-traditional \
     tcpdump \
+    curl \
     && apt-get clean
 
 RUN mkdir -p /opt/nmap

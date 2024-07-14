@@ -6,7 +6,7 @@
 /*   By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/07/13 20:48:47 by tgernez          ###   ########.fr       */
+/*   Updated: 2024/07/14 14:55:46 by tgernez          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,14 +84,14 @@ typedef struct ipheader_s {
     unsigned char       ttl;
     unsigned char       protocol;
     unsigned short int  chksum;
-    unsigned int        sourceip;
-    unsigned int        destip;
+    unsigned int        src_ip;
+    unsigned int        dest_ip;
 }                       ipheader_t;
 
 // TCP header structure
 typedef struct tcpheader_s {
-    unsigned short int  srcport;
-    unsigned short int  destport;
+    unsigned short int  src_port;
+    unsigned short int  dest_port;
     unsigned int        seqnum;
     unsigned int        acknum;
     unsigned char       reserved:4, offset:4;
@@ -105,7 +105,7 @@ typedef struct tcpheader_s {
 #define PORTS_SCANNED 90
 #define IP_ADDRESS "127.0.0.1"
 #define BUFFER_SIZE 4096
-#define DEBUG false
+#define DEBUG true
 #define NMAP_PORT "3490"
 
 options options_handling(int argc, char **argv);
@@ -113,5 +113,6 @@ void	free_options(options *opts);
 void	getaddrinfolocal();
 void    print_tcp_header(tcpheader_t tcph);
 void    print_ip_header(ipheader_t iph);
+char    *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len);
 
 #endif

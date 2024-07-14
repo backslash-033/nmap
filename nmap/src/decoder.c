@@ -21,9 +21,9 @@ void print_ip_header(ipheader_t iph) {
     printf("IP Time To Live: %d\n", iph.ttl);
     printf("IP Protocol: %d\n", iph.protocol);
     printf("IP Checksum: %d\n", iph.chksum);
-    ip_to_string(iph.sourceip, ip_addr, INET_ADDRSTRLEN);
+    ip_to_string(iph.src_ip, ip_addr, INET_ADDRSTRLEN);
     printf("IP Source IP: %s\n", ip_addr);
-    ip_to_string(iph.destip, ip_addr, INET_ADDRSTRLEN);
+    ip_to_string(iph.dest_ip, ip_addr, INET_ADDRSTRLEN);
     printf("IP Destination IP: %s\n", ip_addr);
 }
 
@@ -52,8 +52,8 @@ static void print_tcp_flags(unsigned char flags) {
 
 void print_tcp_header(tcpheader_t tcph) {
     printf("=============================TCP HEADER=============================\n");
-    printf("TCP Source Port: %u\n", tcph.srcport);
-    printf("TCP Destination Port: %u\n", tcph.destport);
+    printf("TCP Source Port: %u\n", tcph.src_port);
+    printf("TCP Destination Port: %u\n", tcph.dest_port);
     printf("TCP Sequence Number: %u\n", tcph.seqnum);
     printf("TCP Acknowledgment Number: %u\n", tcph.acknum);
     printf("TCP Data Offset: %u\n", tcph.offset);
