@@ -6,7 +6,7 @@
 /*   By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/10 08:55:53 by nguiard           #+#    #+#             */
-/*   Updated: 2024/07/14 14:55:46 by tgernez          ###   ########.fr       */
+/*   Updated: 2024/07/14 18:09:05 by tgernez          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,15 @@ enum e_tcp_flags
     ECE = URG << 1,
     CWR = ECE << 1,
     NS = ECE << 1
+};
+
+enum e_scans {
+    SYN_SCAN = SYN,
+    NULL_SCAN = 0,
+    ACK_SCAN = ACK,
+    FIN_SCAN = FIN,
+    XMAS_SCAN = FIN + URG  + PSH,
+    UDP_SCAN = -1
 };
 
 // IP header structure

@@ -142,23 +142,23 @@ char *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port
     tcph.chksum = checksum(pseudogram, psize);
     free(pseudogram);
 
-    // Send the packet
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    if (sockfd < 0) {
-        perror("socket");
-        return NULL;
-    }
+    // // Send the packet
+    // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    // if (sockfd < 0) {
+    //     perror("socket");
+    //     return NULL;
+    // }
 
-    // TODO fill me with getaddrinfo()
-    struct sockaddr_in dest;
-    dest.sin_family = AF_INET;
-    dest.sin_addr.s_addr = iph.dest_ip;
+    // // TODO fill me with getaddrinfo()
+    // struct sockaddr_in dest;
+    // dest.sin_family = AF_INET;
+    // dest.sin_addr.s_addr = iph.dest_ip;
 
-    if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
-        perror("sendto");
-    close(sockfd);
+    // if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
+    //     perror("sendto");
+    // close(sockfd);
     
-    return NULL;
+    return packet;
 }
 
 
