@@ -51,7 +51,7 @@ static int  tcp_packet_handler(char *src_ip, char *dest_ip,
     close(sockfd);
 }
 
-
+// TODO change char ** and char* for IP address to ip_addr_t
 void    scanner(char **ip_list, int *port_list,
                 char *src_ip, int src_port,
                 e_scans scan, char *data, int data_len) {
