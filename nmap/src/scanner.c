@@ -38,7 +38,7 @@ static int  tcp_packet_handler(char *src_ip, char *dest_ip,
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (sockfd < 0) {
         perror("socket");
-        return NULL;
+        return -1;
     }
     // TODO fill dest with getaddrinfo()
     struct sockaddr_in dest;
@@ -49,12 +49,13 @@ static int  tcp_packet_handler(char *src_ip, char *dest_ip,
     if (sendto(sockfd, packet, ntohs(0 /* TODO must be iph.len */), 0 /* TODO put necessary sendto() flags */, (struct sockaddr *)&dest, sizeof(dest)) < 0)
         perror("sendto");
     close(sockfd);
+	return -1;
 }
 
 // TODO change char ** and char* for IP address to ip_addr_t
 void    scanner(char **ip_list, int *port_list,
                 char *src_ip, int src_port,
-                e_scans scan, char *data, int data_len) {
+                int scan, char *data, int data_len) {
     /*
     Core function of the Nmap scanner. Calls the necessary functions to perform
     the different scans proposed by the utilitary. The parameters MUST be
@@ -69,7 +70,7 @@ void    scanner(char **ip_list, int *port_list,
         char *src_ip: the IP address to emit the packets from.
             The IP (char *) MUST be \0 terminated.
         int src_port: the port to emit the packets from.
-        e_scans scan: the scan to be performed on the hosts and ports.
+        int scan: the scan to be performed on the hosts and ports.
         char *data: the data to transmit when sending a packet
             Doesn't need to be \0 terminated.
         int data_len: the length (in bytes) of the passed data
