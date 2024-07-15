@@ -106,15 +106,18 @@ typedef struct ip_addr_s {
 // TODO maybe remove later
 #define PORTS_SCANNED 90
 #define IP_ADDRESS "127.0.0.1"
+#define TEST_ADDRESS "127.127.127.127"
 #define BUFFER_SIZE 4096
 #define DEBUG true
 #define NMAP_PORT "3490"
 
-options options_handling(int argc, char **argv);
-void	free_options(options *opts);
-void	getaddrinfolocal();
-void    print_tcp_header(tcpheader_t tcph);
-void    print_ip_header(ipheader_t iph);
-char    *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len);
+options 	options_handling(int argc, char **argv);
+void		free_options(options *opts);
+void		getaddrinfolocal();
+void    	print_tcp_header(tcpheader_t tcph);
+void    	print_ip_header(ipheader_t iph);
+char    	*create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len);
+ip_addr_t	**parse_ips(char **ips);
+void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 #endif

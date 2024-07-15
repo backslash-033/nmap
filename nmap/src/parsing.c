@@ -1,11 +1,6 @@
 #include "ft_nmap.h"
 
-typedef struct ip_addr_s {
-    char    printable[INET_ADDRSTRLEN];
-    int     network;
-}           ip_addr_t;
-
-int convert_ip(char *ip, ip_addr_t *ip_addr) {
+static int convert_ip(char *ip, ip_addr_t *ip_addr) {
 	struct sockaddr_in sockaddr;
 	int ret;
 
@@ -18,8 +13,41 @@ int convert_ip(char *ip, ip_addr_t *ip_addr) {
         perror("Error turning source IP to network format");
         return -1;
     }
-	strlcpy(ip_addr->printable, ip, strlen(ip));
-	ip_addr->printable[INET_ADDRSTRLEN] = 0;
+	memset(ip_addr->printable, 0, INET_ADDRSTRLEN);
+	ft_strlcpy(ip_addr->printable, ip, strlen(ip) + 1);
 	ip_addr->network = sockaddr.sin_addr.s_addr;
 	return 0;
+}
+
+ip_addr_t **parse_ips(char **ips) {
+	int ret = 0;
+	char *ip = *ips;
+	int len_list = 0;
+	ip_addr_t **formatted_ips;
+
+	while (*(ips + len_list))
+		len_list++;
+	formatted_ips = malloc((len_list + 1) * sizeof(ip_addr_t *));
+	if (!formatted_ips) {
+		perror("malloc");
+		return NULL;
+	}
+	formatted_ips[len_list] = NULL;
+	len_list = 0;
+	while (ip) {
+		formatted_ips[len_list] = malloc(sizeof(ip_addr_t));
+		if (!formatted_ips[len_list]) {
+			perror("malloc");
+			free_formatted_ips(formatted_ips);
+			return NULL;
+		}
+		ret = convert_ip(ip, formatted_ips[len_list]);
+		if (ret == -1) {
+			free_formatted_ips(formatted_ips);
+			return NULL;
+		}
+		len_list++;
+		ip  = *(++ips);
+	}
+	return formatted_ips;
 }

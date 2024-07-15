@@ -6,7 +6,7 @@
 #    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/14 16:27:13 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/15 16:22:07 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,6 +14,8 @@ SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
 			scanner			\
 			sender			\
+			parsing			\
+			utils			\
 		))
 
 NAME	= ft_nmap

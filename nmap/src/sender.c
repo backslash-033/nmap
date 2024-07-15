@@ -106,7 +106,7 @@ char *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port
     // TODO do UDP scan
     tcph = setup_tcph(src_port, dest_port, data);
 
-    char packet[4096]; // TODO make me variable
+    char packet[4096]; // TODO make me variable AND on the HEAP
     memset(packet, 0, 4096 /* TODO replace by the actual size*/);
 
     // Copy IP Header

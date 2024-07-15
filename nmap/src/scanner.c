@@ -53,7 +53,8 @@ static int  tcp_packet_handler(char *src_ip, char *dest_ip,
 }
 
 // TODO change char ** and char* for IP address to ip_addr_t
-void    scanner(char **ip_list, int *port_list,
+void    scanner(ip_addr_t **ip_list,
+				int *port_list, int len_port_list,
                 char *src_ip, int src_port,
                 int scan, char *data, int data_len) {
     /*
@@ -80,8 +81,24 @@ void    scanner(char **ip_list, int *port_list,
     */
     (void)ip_list;
     (void)port_list;
+	(void)len_port_list;
+	(void)src_ip;
+	(void)src_port;
     (void)scan;
+	(void)data;
+	(void)data_len;
     
+	ip_addr_t *ip = *ip_list;
+	int port = port_list[0];
+	char *packet = NULL;
+
+	while (ip) {
+		for (int j = 0; j < len_port_list; j++) {
+			if (scan == UDP_SCAN)
+				continue;
+		}
+	}
+
     // =====Process IPs====
     // For IP in IPs:
     //   ====Process ports====
@@ -125,8 +142,22 @@ int main() {
 
     signal(SIGINT, sigint_handler);
     char data[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-    create_raw_packet("127.0.0.1", "127.0.0.1", 12345, 80, 0, data, sizeof(data));
+    // create_raw_packet("127.0.0.1", "127.0.0.1", 12345, 80, 0, data, sizeof(data));
+	int port = 80;
+	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n127.0.0.2\n", '\n'));
 
+	if (!ips_to_scan) {
+		fprintf(stderr, "Error parsing IPs\n");
+		return 1;
+	}
+	ip_addr_t *addr = *ips_to_scan;
+	while (addr) {
+		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
+		addr = *(++ips_to_scan);
+	}
+
+
+	scanner(ips_to_scan, &port, 1, IP_ADDRESS, 12345, SYN_SCAN, data, sizeof(data));
 
     // getaddrinfolocal();
 
