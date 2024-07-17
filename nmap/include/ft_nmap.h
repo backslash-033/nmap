@@ -116,7 +116,6 @@ void		free_options(options *opts);
 void		getaddrinfolocal();
 void    	print_tcp_header(tcpheader_t tcph);
 void    	print_ip_header(ipheader_t iph);
-char    	*create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len);
 ip_addr_t	**parse_ips(char **ips);
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
