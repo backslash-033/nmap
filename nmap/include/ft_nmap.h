@@ -120,4 +120,20 @@ char    	*create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_
 ip_addr_t	**parse_ips(char **ips);
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
+
+// sender.c
+char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
+ipheader_t setup_iph(int src_ip, int dest_ip, char *data);
+tcpheader_t setup_tcph(int src_port, int dest_port, char *data);
+int send_packet(ipheader_t iph, char *packet);
+
+// scans.c
+int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int null_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int ack_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int fin_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int xmas_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+
+
 #endif

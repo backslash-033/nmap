@@ -12,50 +12,71 @@
 #include "ft_nmap.h"
 
 
-static int  tcp_packet_handler(char *src_ip, char *dest_ip,
-                            int src_port, int dest_port,
-                            unsigned char scan,
-                            char *data, int data_len) {
-    /*
-    Creates, opens a connection and sends a TCP packet with the desired 
-    flags and data.
+// static int  udp_packet_handler(ip_addr_t src_ip, ip_addr_t dest_ip,
+//                             int src_port, int dest_port,
+//                             unsigned char scan,
+//                             char *data, int data_len) {
+// 	(void)src_ip;
+// 	(void)dest_ip;
+// 	(void)src_port;
+// 	(void)dest_port;
+// 	(void)scan;
+// 	(void)data;
+// 	(void)data_len;
+// 	return 1;
+// }
+
+// static int  tcp_packet_handler(ip_addr_t src_ip, ip_addr_t dest_ip,
+//                             int src_port, int dest_port,
+//                             unsigned char scan,
+//                             char *data, int data_len) {
+//     /*
+//     Creates, opens a connection and sends a TCP packet with the desired 
+//     flags and data.
         
-    WARNING: Do NOT use this function for UDP scan or IPv6
+//     WARNING: Do NOT use this function for UDP scan or IPv6
 
-    Args:
-        char *src_ip: the source IP
-        char *dest_ip: the destination IP
-        int src_port: the source port
-        int dest_port: the destination port
-        unsigned char scan: the scan to perform (NO UDP)
-        char *data: the data to be transmitted alongside the IP and TCP headers
-        int data_len: the length (in bytes) of the data to be transmitted
-    */
-    // FIXME might not work yet
-    char *packet = create_raw_packet(src_ip, dest_ip, src_port, dest_port, scan, data, data_len);
-    if (!packet)
-        return -1;
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    if (sockfd < 0) {
-        perror("socket");
-        return -1;
-    }
-    // TODO fill dest with getaddrinfo()
-    struct sockaddr_in dest;
-    dest.sin_family = AF_INET;
-    // FIXME Operation done twice. Once in create_raw_socket, and here. Find a fix 
-    dest.sin_addr.s_addr = 0;
+//     Args:
+//         char *src_ip: the source IP
+//         char *dest_ip: the destination IP
+//         int src_port: the source port
+//         int dest_port: the destination port
+//         unsigned char scan: the scan to perform (NO UDP)
+//         char *data: the data to be transmitted alongside the IP and TCP headers
+//         int data_len: the length (in bytes) of the data to be transmitted
+//     */
+//     // FIXME might not work yet
+//     // char *packet = create_raw_packet(src_ip, dest_ip, src_port, dest_port, scan, data, data_len);
+//     // if (!packet)
+//     //     return -1;
+// 	(void)src_ip;
+// 	(void)dest_ip;
+// 	(void)src_port;
+// 	(void)dest_port;
+// 	(void)scan;
+// 	(void)data;
+// 	(void)data_len;
+// 	char *packet = NULL;
+//     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+//     if (sockfd < 0) {
+//         perror("socket");
+//         return -1;
+//     }
+//     // TODO fill dest with getaddrinfo()
+//     struct sockaddr_in dest;
+//     dest.sin_family = AF_INET;
+//     // FIXME Operation done twice. Once in create_raw_socket, and here. Find a fix 
+//     dest.sin_addr.s_addr = 0;
 
-    if (sendto(sockfd, packet, ntohs(0 /* TODO must be iph.len */), 0 /* TODO put necessary sendto() flags */, (struct sockaddr *)&dest, sizeof(dest)) < 0)
-        perror("sendto");
-    close(sockfd);
-	return -1;
-}
+//     if (sendto(sockfd, packet, ntohs(0 /* TODO must be iph.len */), 0 /* TODO put necessary sendto() flags */, (struct sockaddr *)&dest, sizeof(dest)) < 0)
+//         perror("sendto");
+//     close(sockfd);
+// 	return -1;
+// }
 
-// TODO change char ** and char* for IP address to ip_addr_t
 void    scanner(ip_addr_t **ip_list,
 				int *port_list, int len_port_list,
-                char *src_ip, int src_port,
+                ip_addr_t src_ip, int src_port,
                 int scan, char *data, int data_len) {
     /*
     Core function of the Nmap scanner. Calls the necessary functions to perform
@@ -63,13 +84,11 @@ void    scanner(ip_addr_t **ip_list,
     already parsed, or set to default values (see args)
 
     Args:
-        char **ip_list: the list of IP to be scanned. 
-            The array (char **) MUST be NULL terminated. The IPs (char *) MUST
-            be \0 terminated.
+        ip_addr_t **ip_list: the list of IPs to be scanned
+			The array of ip_addr_t * MUST be NULL-terminated.
         int *port_list: the list of ports to be scanned.
-            The array (int *) MUST be 0 terminated.
-        char *src_ip: the IP address to emit the packets from.
-            The IP (char *) MUST be \0 terminated.
+        int len_port_list: the length of the list of ports to be scanned.
+        ip_addr_t src_ip: the IP address to emit the packets from.
         int src_port: the port to emit the packets from.
         int scan: the scan to be performed on the hosts and ports.
         char *data: the data to transmit when sending a packet
@@ -79,6 +98,7 @@ void    scanner(ip_addr_t **ip_list,
     Returns:
         Nothing    
     */
+	int ret;
     (void)ip_list;
     (void)port_list;
 	(void)len_port_list;
@@ -88,15 +108,43 @@ void    scanner(ip_addr_t **ip_list,
 	(void)data;
 	(void)data_len;
     
-	ip_addr_t *ip = *ip_list;
-	int port = port_list[0];
-	char *packet = NULL;
 
-	while (ip) {
+	ip_addr_t *dest_ip = *ip_list;
+	int dest_port;
+	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, char *, int) = NULL;
+
+	// Can be done in a single line
+	switch (scan) {
+		case SYN_SCAN:
+			scanner_func = syn_scan;
+			break;
+		case NULL_SCAN:
+			scanner_func = null_scan;
+			break;
+		case ACK_SCAN:
+			scanner_func = ack_scan;
+			break;
+		case FIN_SCAN:
+			scanner_func = fin_scan;
+			break;
+		case XMAS_SCAN:
+			scanner_func = xmas_scan;
+			break;
+		case UDP_SCAN:
+			scanner_func = udp_scan;
+			break;
+		default:
+			fprintf(stderr, "Please choose valid scan option.\n");
+			return ;
+	}
+
+	while (dest_ip) {
 		for (int j = 0; j < len_port_list; j++) {
-			if (scan == UDP_SCAN)
-				continue;
+			dest_port = port_list[j];
+			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, data, data_len);
+			printf("IP: %s\nPort: %d\nRet: %d\n", dest_ip->printable, dest_port, ret);
 		}
+		dest_ip = *(++ip_list);
 	}
 
     // =====Process IPs====
@@ -143,21 +191,28 @@ int main() {
     signal(SIGINT, sigint_handler);
     char data[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     // create_raw_packet("127.0.0.1", "127.0.0.1", 12345, 80, 0, data, sizeof(data));
-	int port = 80;
+	int *port = malloc(sizeof(int) * 1);
+	port[0] = 80;
 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n127.0.0.2\n", '\n'));
 
 	if (!ips_to_scan) {
 		fprintf(stderr, "Error parsing IPs\n");
 		return 1;
 	}
+	ip_addr_t **copy_ips = ips_to_scan;
 	ip_addr_t *addr = *ips_to_scan;
 	while (addr) {
 		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
 		addr = *(++ips_to_scan);
 	}
 
+	ips_to_scan = copy_ips;
+	ip_addr_t src_ip;
+	memset(&src_ip, 0, sizeof(src_ip));
+	strncpy(src_ip.printable, IP_ADDRESS, INET_ADDRSTRLEN);
+	src_ip.network = INADDR_LOOPBACK;
 
-	scanner(ips_to_scan, &port, 1, IP_ADDRESS, 12345, SYN_SCAN, data, sizeof(data));
+	scanner(ips_to_scan, port, 1, src_ip, 12345, SYN_SCAN, data, sizeof(data));
 
     // getaddrinfolocal();
 

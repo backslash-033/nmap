@@ -23,7 +23,50 @@ static unsigned short checksum(void *b, int len) {
     return result;
 }
 
-static ipheader_t setup_iph(int src_ip, int dest_ip, char *data) {
+char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len) {
+	char *packet;
+
+	packet = calloc(4096, sizeof(char)); // TODO adapt me
+	if (!packet) {
+		perror("calloc");
+		return NULL;
+	}
+	// Copy IP Header
+    memcpy(packet, iph, sizeof(ipheader_t));
+
+    // Copy TCP Header
+    memcpy(packet + sizeof(ipheader_t), tcph, sizeof(tcpheader_t));
+
+    // Copy data
+    memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len);
+
+    iph->chksum = checksum(packet, sizeof(ipheader_t));
+
+    // Compute TCP checksum
+    struct pseudo_header psh;
+    psh.src_ip = iph->src_ip;
+    psh.dest_ip = iph->dest_ip;
+    psh.placeholder = 0; // TODO wtf
+    psh.protocol = IPPROTO_TCP;
+    psh.tcp_length = htons(sizeof(tcpheader_t) + data_len); 
+    
+    int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; 
+    char *pseudogram = malloc(psize);
+    if (!pseudogram) {
+        fprintf(stderr, "Malloc failed in creating pseudogram\n");
+        return NULL;
+    }
+    
+    memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
+    memcpy(pseudogram + sizeof(struct pseudo_header), &tcph, sizeof(tcpheader_t) + data_len);
+
+    tcph->chksum = checksum(pseudogram, psize);
+    free(pseudogram);
+
+	return packet;
+}
+
+ipheader_t setup_iph(int src_ip, int dest_ip, char *data) {
     /*
     Setup basic parameters for the IP Header. Does NOT calculate the checksum.
 
@@ -49,7 +92,7 @@ static ipheader_t setup_iph(int src_ip, int dest_ip, char *data) {
     return iph;
 }
 
-static tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
+tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
     /*
     Setup basic parameters for the TCP Header. Does NOT calculate the checksum,
     nor sets sequence number, acknowledgment number, offset, flags, variable
@@ -76,96 +119,121 @@ static tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
     return tcph;
 }
 
-char *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len) {
-    struct sockaddr_in sa_src, sa_dest;
-    ipheader_t iph;
-    tcpheader_t tcph;
-    int ret;
 
-    (void) scan;
 
-    // Get the source address into int format
-    ret = inet_pton(AF_INET, src_ip, &(sa_src.sin_addr));
-    if (ret == 0) {
-        fprintf(stderr, "%s is not a valid source IP address\n", src_ip);
-        return NULL;
-    } else if (ret == -1) {
-        perror("Error turning source IP to network format");
-        return NULL;
-    }
-    ret = inet_pton(AF_INET, dest_ip, &(sa_dest.sin_addr));
-    if (ret == 0) {
-        fprintf(stderr, "%s is not a valid destination IP address\n", src_ip);
-        return NULL;
-    } else if (ret == -1) {
-        perror("Error turning destination IP to network format");
-        return NULL;
-    }
-    iph = setup_iph(sa_src.sin_addr.s_addr, sa_dest.sin_addr.s_addr, data);
-    // If scan is TCP-related
-    // TODO do UDP scan
-    tcph = setup_tcph(src_port, dest_port, data);
+// char *create_raw_packet(char *src_ip, char *dest_ip, int src_port, int dest_port, unsigned char scan, char *data, int data_len) {
+//     struct sockaddr_in sa_src, sa_dest;
+//     ipheader_t iph;
+//     tcpheader_t tcph;
 
-    char packet[4096]; // TODO make me variable AND on the HEAP
-    memset(packet, 0, 4096 /* TODO replace by the actual size*/);
+//     (void) scan;
+// 	(void)src_ip;
+// 	(void)dest_ip;
+// 	(void)src_port;
+// 	(void)dest_port;
+// 	(void)scan;
+// 	(void)data;
+// 	(void)data_len;
 
-    // Copy IP Header
-    memcpy(packet, &iph, sizeof(ipheader_t));
+//     // Get the source address into int format
+// 	// COMMENTED BECAUSE CALCULATED PREVIOUSLY
+//     // ret = inet_pton(AF_INET, src_ip, &(sa_src.sin_addr));
+//     // if (ret == 0) {
+//     //     fprintf(stderr, "%s is not a valid source IP address\n", src_ip);
+//     //     return NULL;
+//     // } else if (ret == -1) {
+//     //     perror("Error turning source IP to network format");
+//     //     return NULL;
+//     // }
+//     // ret = inet_pton(AF_INET, dest_ip, &(sa_dest.sin_addr));
+//     // if (ret == 0) {
+//     //     fprintf(stderr, "%s is not a valid destination IP address\n", src_ip);
+//     //     return NULL;
+//     // } else if (ret == -1) {
+//     //     perror("Error turning destination IP to network format");
+//     //     return NULL;
+//     // }
+
+// 	// Common to TCP and UDP
+//     iph = setup_iph(sa_src.sin_addr.s_addr, sa_dest.sin_addr.s_addr, data);
+//     // If scan is TCP-related
+//     // TODO do UDP scan
+//     tcph = setup_tcph(src_port, dest_port, data);
+
+//     char packet[4096]; // TODO make me variable AND on the HEAP
+//     memset(packet, 0, 4096 /* TODO replace by the actual size*/);
+
+//     // Copy IP Header
+//     memcpy(packet, &iph, sizeof(ipheader_t));
     
-    // Copy TCP Header
-    memcpy(packet + sizeof(ipheader_t), &tcph, sizeof(tcpheader_t));
+//     // Copy TCP Header
+//     memcpy(packet + sizeof(ipheader_t), &tcph, sizeof(tcpheader_t));
 
-    // Copy data
-    memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len); // TODO store size of data in var
+//     // Copy data
+//     memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len); // TODO store size of data in var
 
-    // Compute IP checksum
-    iph.chksum = checksum(packet, sizeof(ipheader_t));
+//     // Compute IP checksum
+//     iph.chksum = checksum(packet, sizeof(ipheader_t));
 
-    // Compute TCP checksum
-    struct pseudo_header psh;
-    psh.src_ip = iph.src_ip;
-    psh.dest_ip = iph.dest_ip;
-    psh.placeholder = 0; // TODO wtf
-    psh.protocol = IPPROTO_TCP;
-    psh.tcp_length = htons(sizeof(tcpheader_t) + data_len); // TODO store size of data in var
+//     // Compute TCP checksum
+//     struct pseudo_header psh;
+//     psh.src_ip = iph.src_ip;
+//     psh.dest_ip = iph.dest_ip;
+//     psh.placeholder = 0; // TODO wtf
+//     psh.protocol = IPPROTO_TCP;
+//     psh.tcp_length = htons(sizeof(tcpheader_t) + data_len); // TODO store size of data in var
     
-    int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; // TODO store size of data in var
-    char *pseudogram = malloc(psize);
-    if (!pseudogram) {
-        fprintf(stderr, "Malloc failed in creating pseudogram\n");
-        return NULL;
-    }
+//     int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; // TODO store size of data in var
+//     char *pseudogram = malloc(psize);
+//     if (!pseudogram) {
+//         fprintf(stderr, "Malloc failed in creating pseudogram\n");
+//         return NULL;
+//     }
     
-    memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
-    memcpy(pseudogram + sizeof(struct pseudo_header), &tcph, sizeof(tcpheader_t) + data_len);
+//     memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
+//     memcpy(pseudogram + sizeof(struct pseudo_header), &tcph, sizeof(tcpheader_t) + data_len);
 
-    tcph.chksum = checksum(pseudogram, psize);
-    free(pseudogram);
+//     tcph.chksum = checksum(pseudogram, psize);
+//     free(pseudogram);
 
-    // // Send the packet
-    // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    // if (sockfd < 0) {
-    //     perror("socket");
-    //     return NULL;
-    // }
+//     // // Send the packet
+//     // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+//     // if (sockfd < 0) {
+//     //     perror("socket");
+//     //     return NULL;
+//     // }
 
-    // // TODO fill me with getaddrinfo()
-    // struct sockaddr_in dest;
-    // dest.sin_family = AF_INET;
-    // dest.sin_addr.s_addr = iph.dest_ip;
+//     // // TODO fill me with getaddrinfo()
+//     // struct sockaddr_in dest;
+//     // dest.sin_family = AF_INET;
+//     // dest.sin_addr.s_addr = iph.dest_ip;
 
-    // if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
-    //     perror("sendto");
-    // close(sockfd);
+//     // if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0)
+//     //     perror("sendto");
+//     // close(sockfd);
     
-    return packet;
+//     return NULL;
+// }
+
+
+int send_packet(ipheader_t iph, char *packet) {
+	int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	if (sockfd < 0) {
+		perror("socket");
+		return -1;
+	}
+
+	struct sockaddr_in dest;
+	dest.sin_family = AF_INET;
+	dest.sin_addr.s_addr = iph.dest_ip;
+
+	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
+		perror("sendto");
+		return -1;
+	}
+	close(sockfd);
+	return 0;
 }
-
-
-
-
-
-
 
 
 
