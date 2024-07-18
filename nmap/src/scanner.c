@@ -81,8 +81,8 @@ int main() {
     signal(SIGINT, sigint_handler);
     char data[] = "GET / HTTP/1.1";
 	int *port = malloc(sizeof(int) * 1);
-	port[0] = 80;
-	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n127.0.0.2\n", '\n'));
+	port[0] = 90;
+	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
 
 	if (!ips_to_scan) {
 		fprintf(stderr, "Error parsing IPs\n");

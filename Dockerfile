@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     netcat-traditional \
     tcpdump \
     curl \
+	hping3 \
     && apt-get clean
 
 RUN mkdir -p /opt/nmap

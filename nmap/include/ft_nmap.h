@@ -122,9 +122,10 @@ void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 // sender.c
 char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
-ipheader_t setup_iph(int src_ip, int dest_ip, char *data);
-tcpheader_t setup_tcph(int src_port, int dest_port, char *data);
+ipheader_t setup_iph(int src_ip, int dest_ip, int data_len);
+tcpheader_t setup_tcph(int src_port, int dest_port);
 int send_packet(ipheader_t iph, char *packet);
+int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // scans.c
 int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
@@ -134,5 +135,8 @@ int fin_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, c
 int xmas_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
 
+// debug.c
+void print_ip_header(ipheader_t iph);
+void print_tcp_header(tcpheader_t tcph);
 
 #endif

@@ -66,33 +66,33 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 	return packet;
 }
 
-ipheader_t setup_iph(int src_ip, int dest_ip, char *data) {
+ipheader_t setup_iph(int src_ip, int dest_ip, int data_len) {
     /*
     Setup basic parameters for the IP Header. Does NOT calculate the checksum.
 
     Args:
         int src_ip: source IP, result of inet_pton()
         int dest_ip: destination IP, result of inet_pton()
-        char *data: the data to be sent in the TCP packet
+		int data_len: the length (in bytes) of the data to be transmitted
     */
     ipheader_t iph;
 
     iph.ihl = 5;
     iph.ver = 4;
     iph.tos = 0;
-    iph.len = htons(sizeof(ipheader_t) + sizeof(tcpheader_t) + sizeof(data));
+    iph.len = htons(sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len);
     iph.ident = htons(54321); // TODO make me random
     iph.flag = 0; // TODO study me
     iph.offset = 0; // TODO study me
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
     iph.protocol = IPPROTO_TCP; // TODO make me variable (UDP scan)
-    iph.chksum = 0; // Computed later
+    iph.chksum = 0; // TODO Computed later
     iph.src_ip = src_ip; // TODO code me
     iph.dest_ip = dest_ip; // TODO same
     return iph;
 }
 
-tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
+tcpheader_t setup_tcph(int src_port, int dest_port) {
     /*
     Setup basic parameters for the TCP Header. Does NOT calculate the checksum,
     nor sets sequence number, acknowledgment number, offset, flags, variable
@@ -101,18 +101,17 @@ tcpheader_t setup_tcph(int src_port, int dest_port, char *data) {
     Args:
         int src_port: source port
         int dest_port: destination port
-        char *data: the data to be sent to the remote host
+
     */
-   (void)data;
     tcpheader_t tcph;
 
     tcph.src_port = htons(src_port);
     tcph.dest_port = htons(dest_port);
-    tcph.seqnum = 0; // TODO make me random
-    tcph.acknum = 0; // TODO make me random or not
+    tcph.seqnum = 0; // Made random automatically
+    tcph.acknum = 0; // Made random automatically
     tcph.reserved = 0;
-    tcph.offset = 5; // TODO compute dynamically
-    tcph.flags = SYN + ACK; // TODO set me with desired scan
+    tcph.offset = 5; // Normally, is fixed
+    tcph.flags = 0; 
     tcph.win = htons(1024); // TODO maybe make me adjustable
     tcph.chksum = 0; // TODO compute me dynamically later
     tcph.urgptr = 0; // TODO set me with desired scan
@@ -135,5 +134,30 @@ int send_packet(ipheader_t iph, char *packet) {
 		return -1;
 	}
 	close(sockfd);
+	return 0;
+}
+
+
+int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph) {
+	int sockfd;
+	ssize_t recvfrom_bytes;
+	*response = malloc(BUFFER_SIZE);
+	if (!(*response)) {
+		perror("malloc");
+		return -1;
+	}
+	sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+	if (sockfd < 0) {
+		perror("socket");
+		return -1;
+	}
+	recvfrom_bytes = recvfrom(sockfd, *response, BUFFER_SIZE, 0, NULL, NULL);
+	if (recvfrom_bytes > 0) {
+		response_iph = (ipheader_t *)*response;
+		response_tcph = (tcpheader_t *)(*response + 4 * response_iph->ihl);
+		*response = *response + sizeof(ipheader_t) + sizeof(tcpheader_t);
+	}
+	print_ip_header(*response_iph);
+	print_tcp_header(*response_tcph);
 	return 0;
 }

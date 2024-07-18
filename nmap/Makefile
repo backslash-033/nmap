@@ -6,7 +6,7 @@
 #    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/17 15:06:48 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/18 23:43:50 by tgernez          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,6 +17,7 @@ SRC	=	$(addsuffix .c,		\
 			sender			\
 			parsing			\
 			utils			\
+			debug			\
 		))
 
 NAME	= ft_nmap

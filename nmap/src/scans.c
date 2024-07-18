@@ -23,13 +23,30 @@ int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	ipheader_t iph;
 	tcpheader_t tcph;
 	char *packet;
+	char *response;
+	ipheader_t response_iph;
+	tcpheader_t response_tcph;
 
-	iph = setup_iph(src_ip.network, dest_ip.network, data);
-	tcph = setup_tcph(src_port, dest_port, data); // TODO add flags and all
+	// Setup the IP Header
+	iph = setup_iph(src_ip.network, dest_ip.network, data_len);
+
+	// Setup the TCP Header
+	tcph = setup_tcph(src_port, dest_port); // TODO add flags and all
+
+	// Set the appropriate flag for the SYN scan
+	tcph.flags = SYN_SCAN;
+
 	packet = create_tcp_packet(&iph, &tcph, data, data_len);
 	if (!packet)
 		return -1;
-	return send_packet(iph, packet);
+	printf("Created packet\n");
+	if (send_packet(iph, packet) == -1)
+		return -1;
+	printf("Sent packet\n");
+	if (wait_for_tcp_response(&response, &response_iph, &response_tcph) == -1)
+		return -1;
+	printf("Received packet\n");
+	return 0;
 }
 
 int null_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
