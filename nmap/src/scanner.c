@@ -25,14 +25,7 @@ void    scanner(ip_addr_t **ip_list,
         Nothing    
     */
 	int ret;
-    (void)ip_list;
-    (void)port_list;
-	(void)len_port_list;
-	(void)src_ip;
-	(void)src_port;
-    (void)scan;
-	(void)data;
-	(void)data_len;
+
     
 
 	ip_addr_t *dest_ip = *ip_list;
@@ -79,9 +72,10 @@ void sigint_handler() {
 
 int main() {
     signal(SIGINT, sigint_handler);
-    char data[] = "GET / HTTP/1.1";
+    // char data[] = "GET / HTTP/1.1";
+	char data[] = "\0";
 	int *port = malloc(sizeof(int) * 1);
-	port[0] = 90;
+	port[0] = 80;
 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
 
 	if (!ips_to_scan) {
@@ -96,10 +90,14 @@ int main() {
 	}
 
 	ips_to_scan = copy_ips;
-	ip_addr_t src_ip;
-	memset(&src_ip, 0, sizeof(src_ip));
-	strncpy(src_ip.printable, IP_ADDRESS, INET_ADDRSTRLEN);
-	src_ip.network = INADDR_LOOPBACK;
 
-	scanner(ips_to_scan, port, 1, src_ip, 12345, SYN_SCAN, data, sizeof(data));
+
+	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
+
+	if (!source_ips) {
+		fprintf(stderr, "Error parsing IPs\n");
+		return 1;
+	}
+
+	scanner(ips_to_scan, port, 1, **source_ips, 12345, SYN_SCAN, data, 0);
 }

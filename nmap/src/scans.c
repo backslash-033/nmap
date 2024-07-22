@@ -39,6 +39,7 @@ int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	packet = create_tcp_packet(&iph, &tcph, data, data_len);
 	if (!packet)
 		return -1;
+	
 	printf("Created packet\n");
 	if (send_packet(iph, packet) == -1)
 		return -1;

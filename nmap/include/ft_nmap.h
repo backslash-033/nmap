@@ -39,7 +39,6 @@ typedef struct options {
 #define ERROR	"\033[31mError:\033[0m "
 
 // Options
-
 #define IS_SCAN_NOTHING(x)	(x == 0)
 #define IS_SCAN_SYN(x)		((x & 0b00000001) == 0b00000001)
 #define IS_SCAN_NULL(x)		((x & 0b00000010) == 0b00000010)
@@ -113,7 +112,6 @@ typedef struct ip_addr_s {
 
 options 	options_handling(int argc, char **argv);
 void		free_options(options *opts);
-void		getaddrinfolocal();
 void    	print_tcp_header(tcpheader_t tcph);
 void    	print_ip_header(ipheader_t iph);
 ip_addr_t	**parse_ips(char **ips);
@@ -121,22 +119,22 @@ void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 
 // sender.c
-char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
-ipheader_t setup_iph(int src_ip, int dest_ip, int data_len);
-tcpheader_t setup_tcph(int src_port, int dest_port);
-int send_packet(ipheader_t iph, char *packet);
-int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
+char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
+ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len);
+tcpheader_t	setup_tcph(int src_port, int dest_port);
+int			send_packet(ipheader_t iph, char *packet);
+int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // scans.c
-int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int null_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int ack_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int fin_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int xmas_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		null_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		ack_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		fin_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		xmas_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int 		udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
 
 // debug.c
-void print_ip_header(ipheader_t iph);
-void print_tcp_header(tcpheader_t tcph);
+void 		print_ip_header(ipheader_t iph);
+void 		print_tcp_header(tcpheader_t tcph);
 
 #endif

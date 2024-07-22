@@ -25,8 +25,9 @@ static unsigned short checksum(void *b, int len) {
 
 char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len) {
 	char *packet;
+    int packet_size = sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len;
 
-	packet = calloc(4096, sizeof(char)); // TODO adapt me
+	packet = calloc(packet_size, sizeof(char)); // TODO adapt me
 	if (!packet) {
 		perror("calloc");
 		return NULL;
@@ -38,9 +39,10 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
     memcpy(packet + sizeof(ipheader_t), tcph, sizeof(tcpheader_t));
 
     // Copy data
-    memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len);
+	if (data_len > 0)
+    	memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len);
 
-    iph->chksum = checksum(packet, sizeof(ipheader_t));
+    iph->chksum = checksum(iph, sizeof(ipheader_t));
 
     // Compute TCP checksum
     struct pseudo_header psh;
@@ -54,15 +56,19 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
     char *pseudogram = malloc(psize);
     if (!pseudogram) {
         fprintf(stderr, "Malloc failed in creating pseudogram\n");
+		free(packet);
         return NULL;
     }
     
     memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
-    memcpy(pseudogram + sizeof(struct pseudo_header), &tcph, sizeof(tcpheader_t) + data_len);
-
+    memcpy(pseudogram + sizeof(struct pseudo_header), tcph, sizeof(tcpheader_t));
+	if (data_len)
+		memcpy(pseudogram + sizeof(struct pseudo_header) + sizeof(tcpheader_t), data, data_len);
     tcph->chksum = checksum(pseudogram, psize);
     free(pseudogram);
+	memcpy(packet + sizeof(ipheader_t) + offsetof(tcpheader_t, chksum), &tcph->chksum, sizeof(tcph->chksum));
 
+	printf("TCP Checksum: %d\n", tcph->chksum);
 	return packet;
 }
 
@@ -107,30 +113,33 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
 
     tcph.src_port = htons(src_port);
     tcph.dest_port = htons(dest_port);
-    tcph.seqnum = 0; // Made random automatically
-    tcph.acknum = 0; // Made random automatically
+    tcph.seqnum = 15564; // TODO Make me random automatically
+    tcph.acknum = 0; // TODO Make me random automatically
     tcph.reserved = 0;
     tcph.offset = 5; // Normally, is fixed
     tcph.flags = 0; 
-    tcph.win = htons(1024); // TODO maybe make me adjustable
-    tcph.chksum = 0; // TODO compute me dynamically later
+    tcph.win = htons(33280); // TODO maybe make me adjustable
+    tcph.chksum = 0;
     tcph.urgptr = 0; // TODO set me with desired scan
-    return tcph;
+    printf("Setting up TCP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
+
+	return tcph;
 }
 
 int send_packet(ipheader_t iph, char *packet) {
-	int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	int sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
 	if (sockfd < 0) {
 		perror("socket");
 		return -1;
 	}
-
 	struct sockaddr_in dest;
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = iph.dest_ip;
+	printf("Sending packet to IP: %s\n", inet_ntoa(*(struct in_addr *)&iph.dest_ip));
 
 	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
 		perror("sendto");
+		close(sockfd);
 		return -1;
 	}
 	close(sockfd);
