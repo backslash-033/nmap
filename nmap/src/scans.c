@@ -31,6 +31,13 @@ int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 		- Nothing: the port is FILTERED
 	3. If received SYN/ACK, Nmap sends a RST packet to close the connection 
 	*/
+	/*
+	Thoughts:
+		The listening thread is going to be doing all the listening handling (obivously)
+		For SYN scan, a pipe table might be required to handle the RST packet sending
+
+	*/
+
 	// unsigned char flags = SYN_SCAN;
 	(void) src_ip;
 	(void) dest_ip;
@@ -132,6 +139,7 @@ int null_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	ipheader_t response_iph;
 	tcpheader_t response_tcph;
 	pid_t pid;
+	int ret;
 
 	printf("NULL SCAN\n");
 
@@ -158,7 +166,9 @@ int null_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	}
 	// Handle Child Process: listener, wait for TCP Response
 	if (pid == 0) {
-		if (wait_for_tcp_response(&response, &response_iph, &response_tcph) == -1) {
+		ret = wait_for_tcp_response(&response, &response_iph, &response_tcph);
+		// TODO do the scan itself, the scanner or something higher prints the state?
+		if (ret == -1) {
 			free(response);
 			exit(EXIT_FAILURE); // TODO Free packet?
 		}

@@ -71,6 +71,13 @@ enum e_scans {
     UDP_SCAN = -1
 };
 
+// Results of the scans. Sum the port states to form open|filtered...
+enum e_port_states {
+	OPEN = 1,
+	CLOSED = 1 << 1,
+	FILTERED = 1 << 2,
+};
+
 // IP header structure
 typedef struct ipheader_s {
     unsigned char       ihl:4, ver:4;
