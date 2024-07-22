@@ -26,6 +26,7 @@ int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	char *response;
 	ipheader_t response_iph;
 	tcpheader_t response_tcph;
+	pid_t pid;
 
 	// Setup the IP Header
 	iph = setup_iph(src_ip.network, dest_ip.network, data_len);
@@ -39,14 +40,32 @@ int syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	packet = create_tcp_packet(&iph, &tcph, data, data_len);
 	if (!packet)
 		return -1;
-	
 	printf("Created packet\n");
-	if (send_packet(iph, packet) == -1)
+	
+	// Fork to setup sender and listener
+	pid = fork();
+	if (pid < 0) {
+		perror("fork");
+		free(packet);
 		return -1;
-	printf("Sent packet\n");
-	if (wait_for_tcp_response(&response, &response_iph, &response_tcph) == -1)
-		return -1;
-	printf("Received packet\n");
+	}
+	// Handle Child Process: listener, wait for TCP Response
+	if (pid == 0) {
+		if (wait_for_tcp_response(&response, &response_iph, &response_tcph) == -1)
+			exit(EXIT_FAILURE); // TODO Free packet?
+		printf("Packet received\n");
+		exit(EXIT_SUCCESS);
+	} else {
+		if (send_packet(iph, packet) == -1) {
+			kill(pid, SIGKILL);
+			wait(NULL);
+			free(packet);
+			return -1;
+		}
+		printf("Sent packet\n");
+		wait(NULL);
+	}
+	free(packet);
 	return 0;
 }
 

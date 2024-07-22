@@ -160,13 +160,17 @@ int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t
 		perror("socket");
 		return -1;
 	}
-	recvfrom_bytes = recvfrom(sockfd, *response, BUFFER_SIZE, 0, NULL, NULL);
-	if (recvfrom_bytes > 0) {
-		response_iph = (ipheader_t *)*response;
-		response_tcph = (tcpheader_t *)(*response + 4 * response_iph->ihl);
-		*response = *response + sizeof(ipheader_t) + sizeof(tcpheader_t);
+	printf("Entering RECVFROM\n");
+	// FIXME sometimes fails to catch the requests, maybe wait for child process to be ready in parent process?
+	for (;;) {
+		recvfrom_bytes = recvfrom(sockfd, *response, BUFFER_SIZE, 0, NULL, NULL);
+		if (recvfrom_bytes > 0) {
+			response_iph = (ipheader_t *)*response;
+			response_tcph = (tcpheader_t *)(*response + 4 * response_iph->ihl);
+			*response = *response + sizeof(ipheader_t) + sizeof(tcpheader_t);
+		}
+		print_ip_header(*response_iph);
+		print_tcp_header(*response_tcph);
 	}
-	print_ip_header(*response_iph);
-	print_tcp_header(*response_tcph);
 	return 0;
 }
