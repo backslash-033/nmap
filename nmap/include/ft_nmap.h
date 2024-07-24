@@ -90,7 +90,7 @@ typedef struct ipheader_s {
     unsigned short int  chksum;
     unsigned int        src_ip;
     unsigned int        dest_ip;
-}                       ipheader_t;
+} __attribute__((packed)) ipheader_t;
 
 // TCP header structure
 typedef struct tcpheader_s {
@@ -103,7 +103,7 @@ typedef struct tcpheader_s {
     unsigned short int  win;
     unsigned short int  chksum;
     unsigned short int  urgptr;
-}                       tcpheader_t;
+} __attribute__((packed)) tcpheader_t;
 
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
