@@ -30,36 +30,17 @@ void    scanner(ip_addr_t **ip_list,
 
 	ip_addr_t *dest_ip = *ip_list;
 	int dest_port;
-	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, char *, int) = NULL;
+	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int) = NULL;
 
-	switch (scan) {
-		case SYN_SCAN:
-			scanner_func = syn_scan;
-			break;
-		case NULL_SCAN:
-			scanner_func = null_scan;
-			break;
-		case ACK_SCAN:
-			scanner_func = ack_scan;
-			break;
-		case FIN_SCAN:
-			scanner_func = fin_scan;
-			break;
-		case XMAS_SCAN:
-			scanner_func = xmas_scan;
-			break;
-		case UDP_SCAN:
-			scanner_func = udp_scan;
-			break;
-		default:
-			fprintf(stderr, "Please choose valid scan option.\n");
-			return ;
-	}
+	if (scan != -1)
+		scanner_func = tcp_scan;
+	else
+		scanner_func = udp_scan;
 
 	while (dest_ip) {
 		for (int j = 0; j < len_port_list; j++) {
 			dest_port = port_list[j];
-			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, data, data_len);
+			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, scan, data, data_len);
 			printf("IP: %s\nPort: %d\nRet: %d\n", dest_ip->printable, dest_port, ret);
 		}
 		dest_ip = *(++ip_list);
@@ -72,11 +53,11 @@ void sigint_handler() {
 
 int main() {
     signal(SIGINT, sigint_handler);
-    // char data[] = "GET / HTTP/1.1";
 	char data[] = "\0";
 	int *port = malloc(sizeof(int) * 1);
 	port[0] = 80;
 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
+	int scan = NULL_SCAN;
 
 	if (!ips_to_scan) {
 		fprintf(stderr, "Error parsing IPs\n");
@@ -99,5 +80,5 @@ int main() {
 		return 1;
 	}
 
-	scanner(ips_to_scan, port, 1, **source_ips, 12345, SYN_SCAN, data, 0);
+	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, 0);
 }

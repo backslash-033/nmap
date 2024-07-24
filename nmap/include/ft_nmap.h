@@ -134,12 +134,15 @@ int			send_packet(ipheader_t iph, char *packet);
 int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // scans.c
-int 		syn_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int 		null_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int 		ack_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int 		fin_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int 		xmas_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
-int 		udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip, int src_port, int dest_port, char *data, int data_len);
+int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
+            int src_port, int dest_port,
+			int scan,
+            char *data, int data_len);
+int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
+            int src_port, int dest_port,
+			int scan __attribute__((unused)),
+            char *data, int data_len);
+
 
 // debug.c
 void 		print_ip_header(ipheader_t iph);
