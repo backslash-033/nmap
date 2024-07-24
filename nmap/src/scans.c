@@ -1,7 +1,5 @@
 #include "ft_nmap.h"
 
-// TODO refactor code (lots of boiler plate code)
-
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan,

@@ -25,9 +25,6 @@ void    scanner(ip_addr_t **ip_list,
         Nothing    
     */
 	int ret;
-
-    
-
 	ip_addr_t *dest_ip = *ip_list;
 	int dest_port;
 	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int) = NULL;
@@ -57,28 +54,22 @@ int main() {
 	int *port = malloc(sizeof(int) * 1);
 	port[0] = 80;
 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
+	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
+	ip_addr_t **copy_ips;
+	ip_addr_t *addr;
 	int scan = NULL_SCAN;
 
-	if (!ips_to_scan) {
+	if (!ips_to_scan || !source_ips) {
 		fprintf(stderr, "Error parsing IPs\n");
 		return 1;
 	}
-	ip_addr_t **copy_ips = ips_to_scan;
-	ip_addr_t *addr = *ips_to_scan;
+	copy_ips = ips_to_scan;
+	addr = *ips_to_scan;
 	while (addr) {
 		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
 		addr = *(++ips_to_scan);
 	}
-
 	ips_to_scan = copy_ips;
-
-
-	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
-
-	if (!source_ips) {
-		fprintf(stderr, "Error parsing IPs\n");
-		return 1;
-	}
 
 	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, 0);
 }
