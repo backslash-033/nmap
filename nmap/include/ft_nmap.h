@@ -146,11 +146,13 @@ void 		free_formatted_ips(ip_addr_t **formatted_ips);
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
 char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
+int			send_packet(ipheader_t iph, char *packet);
+int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
+
+// setup.c
 ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol);
 tcpheader_t	setup_tcph(int src_port, int dest_port);
 udpheader_t setup_udph(int src_port, int dest_port, int data_len);
-int			send_packet(ipheader_t iph, char *packet);
-int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // scans.c
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
