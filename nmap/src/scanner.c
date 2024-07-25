@@ -50,14 +50,14 @@ void sigint_handler() {
 
 int main() {
     signal(SIGINT, sigint_handler);
-	char data[] = "\0";
+	char data[] = "HELLO\0";
 	int *port = malloc(sizeof(int) * 1);
 	port[0] = 80;
 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
 	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
 	ip_addr_t **copy_ips;
 	ip_addr_t *addr;
-	int scan = NULL_SCAN;
+	int scan = UDP_SCAN;
 
 	if (!ips_to_scan || !source_ips) {
 		fprintf(stderr, "Error parsing IPs\n");
@@ -71,5 +71,5 @@ int main() {
 	}
 	ips_to_scan = copy_ips;
 
-	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, 0);
+	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, strlen(data));
 }

@@ -94,15 +94,15 @@ typedef struct ipheader_s {
 
 // TCP header structure
 typedef struct tcpheader_s {
-    unsigned short int  src_port;
-    unsigned short int  dest_port;
-    unsigned int        seqnum;
-    unsigned int        acknum;
-    unsigned char       reserved:4, offset:4;
-    unsigned char       flags;
-    unsigned short int  win;
-    unsigned short int  chksum;
-    unsigned short int  urgptr;
+    uint16_t src_port;
+    uint16_t dest_port;
+    uint32_t seqnum;
+    uint32_t acknum;
+    uint8_t  reserved:4, offset:4;
+    uint8_t  flags;
+    uint16_t win;
+    uint16_t chksum;
+    uint16_t urgptr;
 } __attribute__((packed)) tcpheader_t;
 
 // UDP header structure
@@ -120,7 +120,7 @@ struct pseudo_header {
     uint8_t placeholder;
     uint8_t protocol;
     uint16_t length;
-};
+} __attribute__((packed));
 
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
@@ -145,8 +145,10 @@ void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
-ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len);
+char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
+ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol);
 tcpheader_t	setup_tcph(int src_port, int dest_port);
+udpheader_t setup_udph(int src_port, int dest_port, int data_len);
 int			send_packet(ipheader_t iph, char *packet);
 int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 

@@ -16,52 +16,60 @@ static unsigned short checksum(void *b, int len) {
 }
 
 char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len) {
-	char *packet;
-	int packet_size = sizeof(ipheader_t) + sizeof(udph) + data_len;
+    char *packet;
+    int packet_size = sizeof(ipheader_t) + sizeof(udpheader_t) + data_len;
 
-	packet = calloc(packet_size, sizeof(char));
-	if (!packet) {
-		perror("calloc");
-		return NULL;
-	}
-	// Copy IP Header
+    packet = calloc(packet_size, sizeof(char));
+    if (!packet) {
+        perror("calloc");
+        return NULL;
+    }
+
+    // Copy IP Header
     memcpy(packet, iph, sizeof(ipheader_t));
 
     // Copy UDP Header
     memcpy(packet + sizeof(ipheader_t), udph, sizeof(udpheader_t));
 
     // Copy data
-	if (data_len > 0)
-    	memcpy(packet + sizeof(ipheader_t) + sizeof(udpheader_t), data, data_len);
+    if (data_len > 0) {
+        memcpy(packet + sizeof(ipheader_t) + sizeof(udpheader_t), data, data_len);
+    }
 
-	// Calculate IP Checksum
+    // Calculate IP Checksum
     iph->chksum = checksum(iph, sizeof(ipheader_t));
 
     // Compute UDP checksum
     struct pseudo_header psh;
     psh.src_ip = iph->src_ip;
     psh.dest_ip = iph->dest_ip;
-    psh.placeholder = 0; 
+    psh.placeholder = 0;
     psh.protocol = IPPROTO_UDP;
-    psh.length = htons(sizeof(udpheader_t) + data_len); 
-    
-    int psize = sizeof(struct pseudo_header) + sizeof(udpheader_t) + data_len; 
+    psh.length = udph->len; // Length is already in network byte order
+
+    int psize = sizeof(struct pseudo_header) + ntohs(udph->len);
     char *pseudogram = malloc(psize);
     if (!pseudogram) {
         perror("malloc");
-		free(packet);
+        free(packet);
         return NULL;
     }
-    
+
     memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
-    memcpy(pseudogram + sizeof(struct pseudo_header), udph, sizeof(tcpheader_t));
-	if (data_len)
-		memcpy(pseudogram + sizeof(struct pseudo_header) + sizeof(tcpheader_t), data, data_len);
+    memcpy(pseudogram + sizeof(struct pseudo_header), udph, sizeof(udpheader_t));
+    if (data_len) {
+        memcpy(pseudogram + sizeof(struct pseudo_header) + sizeof(udpheader_t), data, data_len);
+    }
     udph->chksum = checksum(pseudogram, psize);
     free(pseudogram);
-	memcpy(packet + sizeof(ipheader_t) + offsetof(udpheader_t, chksum), &udph->chksum, sizeof(udph->chksum));
-	return packet;
+
+    // Update packet with calculated checksums
+    memcpy(packet + offsetof(ipheader_t, chksum), &iph->chksum, sizeof(iph->chksum));
+    memcpy(packet + sizeof(ipheader_t) + offsetof(udpheader_t, chksum), &udph->chksum, sizeof(udph->chksum));
+
+    return packet;
 }
+
 
 char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len) {
 	char *packet;
@@ -107,13 +115,14 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 		memcpy(pseudogram + sizeof(struct pseudo_header) + sizeof(tcpheader_t), data, data_len);
     tcph->chksum = checksum(pseudogram, psize);
     free(pseudogram);
+	memcpy(packet + offsetof(ipheader_t, chksum), &iph->chksum, sizeof(iph->chksum));
 	memcpy(packet + sizeof(ipheader_t) + offsetof(tcpheader_t, chksum), &tcph->chksum, sizeof(tcph->chksum));
 
 	printf("TCP Checksum: %d\n", tcph->chksum);
 	return packet;
 }
 
-ipheader_t setup_iph(int src_ip, int dest_ip, int data_len) {
+ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     /*
     Setup basic parameters for the IP Header. Does NOT calculate the checksum.
 
@@ -121,18 +130,23 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len) {
         int src_ip: source IP, result of inet_pton()
         int dest_ip: destination IP, result of inet_pton()
 		int data_len: the length (in bytes) of the data to be transmitted
+		int protocol: the protocol used to transmit the packet (IPPROTO_TCP or IPPROTO_UDP)
     */
     ipheader_t iph;
 
     iph.ihl = 5;
     iph.ver = 4;
     iph.tos = 0;
-    iph.len = htons(sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len);
-    iph.ident = htons(54321); // TODO make me random
+    if (protocol == IPPROTO_TCP) {
+        iph.len = htons(sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len);
+    } else if (protocol == IPPROTO_UDP) {
+        iph.len = htons(sizeof(ipheader_t) + sizeof(udpheader_t) + data_len);
+    }
+	iph.ident = htons(54321); // TODO make me random
     iph.flag = 0; // TODO study me
     iph.offset = 0; // TODO study me
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
-    iph.protocol = IPPROTO_TCP; // TODO make me variable (UDP scan)
+    iph.protocol = protocol; // TODO make me variable (UDP scan)
     iph.chksum = 0; // TODO Computed later
     iph.src_ip = src_ip; // TODO code me
     iph.dest_ip = dest_ip; // TODO same
@@ -165,6 +179,18 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
     printf("Setting up TCP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
 
 	return tcph;
+}
+
+udpheader_t setup_udph(int src_port, int dest_port, int data_len) {
+    udpheader_t udph;
+
+    udph.src_port = htons(src_port);
+    udph.dest_port = htons(dest_port);
+    udph.len = htons(sizeof(udpheader_t) + data_len);
+    udph.chksum = 0; // Calculated later
+    printf("Setting up UDP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
+
+    return udph;
 }
 
 int send_packet(ipheader_t iph, char *packet) {
