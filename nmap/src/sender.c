@@ -15,11 +15,59 @@ static unsigned short checksum(void *b, int len) {
     return result;
 }
 
+char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len) {
+	char *packet;
+	int packet_size = sizeof(ipheader_t) + sizeof(udph) + data_len;
+
+	packet = calloc(packet_size, sizeof(char));
+	if (!packet) {
+		perror("calloc");
+		return NULL;
+	}
+	// Copy IP Header
+    memcpy(packet, iph, sizeof(ipheader_t));
+
+    // Copy UDP Header
+    memcpy(packet + sizeof(ipheader_t), udph, sizeof(udpheader_t));
+
+    // Copy data
+	if (data_len > 0)
+    	memcpy(packet + sizeof(ipheader_t) + sizeof(udpheader_t), data, data_len);
+
+	// Calculate IP Checksum
+    iph->chksum = checksum(iph, sizeof(ipheader_t));
+
+    // Compute UDP checksum
+    struct pseudo_header psh;
+    psh.src_ip = iph->src_ip;
+    psh.dest_ip = iph->dest_ip;
+    psh.placeholder = 0; 
+    psh.protocol = IPPROTO_UDP;
+    psh.length = htons(sizeof(udpheader_t) + data_len); 
+    
+    int psize = sizeof(struct pseudo_header) + sizeof(udpheader_t) + data_len; 
+    char *pseudogram = malloc(psize);
+    if (!pseudogram) {
+        perror("malloc");
+		free(packet);
+        return NULL;
+    }
+    
+    memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
+    memcpy(pseudogram + sizeof(struct pseudo_header), udph, sizeof(tcpheader_t));
+	if (data_len)
+		memcpy(pseudogram + sizeof(struct pseudo_header) + sizeof(tcpheader_t), data, data_len);
+    udph->chksum = checksum(pseudogram, psize);
+    free(pseudogram);
+	memcpy(packet + sizeof(ipheader_t) + offsetof(udpheader_t, chksum), &udph->chksum, sizeof(udph->chksum));
+	return packet;
+}
+
 char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len) {
 	char *packet;
     int packet_size = sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len;
 
-	packet = calloc(packet_size, sizeof(char)); // TODO adapt me
+	packet = calloc(packet_size, sizeof(char)); 
 	if (!packet) {
 		perror("calloc");
 		return NULL;
@@ -34,20 +82,21 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 	if (data_len > 0)
     	memcpy(packet + sizeof(ipheader_t) + sizeof(tcpheader_t), data, data_len);
 
+	// Calculate IP Checksum
     iph->chksum = checksum(iph, sizeof(ipheader_t));
 
     // Compute TCP checksum
     struct pseudo_header psh;
     psh.src_ip = iph->src_ip;
     psh.dest_ip = iph->dest_ip;
-    psh.placeholder = 0; // TODO wtf
+    psh.placeholder = 0; 
     psh.protocol = IPPROTO_TCP;
     psh.length = htons(sizeof(tcpheader_t) + data_len); 
     
     int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; 
     char *pseudogram = malloc(psize);
     if (!pseudogram) {
-        fprintf(stderr, "Malloc failed in creating pseudogram\n");
+        perror("malloc");
 		free(packet);
         return NULL;
     }
