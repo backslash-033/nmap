@@ -105,6 +105,23 @@ typedef struct tcpheader_s {
     unsigned short int  urgptr;
 } __attribute__((packed)) tcpheader_t;
 
+// UDP header structure
+typedef struct udpheader_s {
+    uint16_t src_port;  // Source port
+    uint16_t dest_port; // Destination port
+    uint16_t len;       // Datagram length
+    uint16_t chksum;    // Checksum
+} __attribute__((packed)) udpheader_t;
+
+// Pseudo-header for checksum calculation
+struct pseudo_header {
+    uint32_t src_ip;
+    uint32_t dest_ip;
+    uint8_t placeholder;
+    uint8_t protocol;
+    uint16_t length;
+};
+
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
     int     network;

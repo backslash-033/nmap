@@ -1,13 +1,5 @@
 #include "ft_nmap.h"
 
-struct pseudo_header {
-    unsigned int src_ip;
-    unsigned int dest_ip;
-    unsigned char placeholder;
-    unsigned char protocol;
-    unsigned short tcp_length;
-};
-
 static unsigned short checksum(void *b, int len) {
     unsigned short *buff = b;
     unsigned int sum = 0;
@@ -50,7 +42,7 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
     psh.dest_ip = iph->dest_ip;
     psh.placeholder = 0; // TODO wtf
     psh.protocol = IPPROTO_TCP;
-    psh.tcp_length = htons(sizeof(tcpheader_t) + data_len); 
+    psh.length = htons(sizeof(tcpheader_t) + data_len); 
     
     int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; 
     char *pseudogram = malloc(psize);
