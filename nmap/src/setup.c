@@ -24,10 +24,10 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     iph.flag = 0; // TODO study me
     iph.offset = 0; // TODO study me
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
-    iph.protocol = protocol; // TODO make me variable (UDP scan)
-    iph.chksum = 0; // TODO Computed later
-    iph.src_ip = src_ip; // TODO code me
-    iph.dest_ip = dest_ip; // TODO same
+    iph.protocol = protocol;
+    iph.chksum = 0;
+    iph.src_ip = src_ip;
+    iph.dest_ip = dest_ip;
     return iph;
 }
 
