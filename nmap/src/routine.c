@@ -6,12 +6,10 @@ void *routine(void * arg) {
 	tdata_in in = *(tdata_in *)arg;
 	str s;
 	uint32_t a = 0;
-	
+
 	in.output->data = calloc(1000, 1);
 
 	s = in.output->data;
-
-	sprintf(s, "-----\nIm in a thread!\n");
 
 	for (int i = 0; in.hnp[i].ports; i++) {
 		a += sprintf((s + a), "Host: %s\n", in.hnp[i].host.basename);

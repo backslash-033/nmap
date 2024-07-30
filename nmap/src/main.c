@@ -1,25 +1,59 @@
 #include "ft_nmap.h"
 
 static void	display_options(options opt);
+static void	print_exec_time(struct timeval before, struct timeval after);
 
 int main(int argc, char **argv) {
-	options 	opt;
-	tdata_out	*thread_output;
+	options 		opt;
+	tdata_out		*thread_output;
+	struct timeval	before, after;
 
 	opt = options_handling(argc, argv);
 
 	display_options(opt);
 
-	thread_output = threads(&opt);
+	thread_output = threads(&opt, &before, &after);
 
-	printf("\n\033[31mExecution endend:\033[0m\n\n");
+	printf("\n\033[31mExecution ended: ");
+	print_exec_time(before, after);
+	printf("\033[0m\n\n");
 
-	for (int i = 0; i < opt.threads; i++) {
-		printf("\033[90mthread %d\033[0m\n%s", i, thread_output[i].data);
-	}
+	// for (int i = 0; i < opt.threads; i++) {
+	// 	printf("\033[90mthread %d\033[0m\n%s", i, thread_output[i].data);
+	// }
 
-	free(thread_output);
+	free_tdata_out_array(thread_output, opt.threads);
 	free_options(&opt);
+}
+
+void	free_tdata_out(tdata_out d) {
+	if (d.data) {
+		free(d.data);
+	}
+}
+
+void	free_tdata_out_array(tdata_out *array, const uint8_t size) {
+	for (uint8_t i = 0; i < size; i++) {
+		free_tdata_out(array[i]);
+	}
+	free(array);
+}
+
+static void	print_exec_time(struct timeval before, struct timeval after) {
+	uint64_t	msec = ((after.tv_sec - before.tv_sec) * 1000) + ((after.tv_usec - before.tv_usec) / 1000);
+	uint64_t	sec = msec / 1000;
+	uint64_t	min = sec / 60;
+
+	if (min) {
+		printf("%lum ", min);
+	}
+	if (sec) {
+		printf("%lus ", sec % 60);
+		printf("%03lums", msec % 1000);
+	}
+	else {
+		printf("%lums", msec % 1000);
+	}
 }
 
 static void	display_options(options opt) {

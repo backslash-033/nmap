@@ -144,13 +144,15 @@ void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 // main.c
 void		display_port_range(uint16_t *array, uint32_t size);
+void		free_tdata_out_array(tdata_out *array, const uint8_t size);
+void		free_tdata_out(tdata_out d);
 
 // options.c
 options 	options_handling(int argc, char **argv);
 void		free_options(options *opts);
 
 // threads.c
-tdata_out	*threads(options *opt);
+tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after);
 
 // routine.c
 void		*routine(void *);

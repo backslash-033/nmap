@@ -9,10 +9,10 @@ static void				free_host_and_ports_array(host_and_ports *array);
 static void				free_tdata_in(tdata_in d);
 static void				free_tdata_in_array(tdata_in *array, uint8_t size);
 
-tdata_out	*threads(options *opt) {
-	tdata_in	*threads_input;
-	uint8_t		th_amount = NEVER_ZERO(opt->threads);
-	tdata_out	*out;
+tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after) {
+	tdata_in		*threads_input;
+	uint8_t			th_amount = NEVER_ZERO(opt->threads);
+	tdata_out		*out;
 
 	threads_input = build_threads_input(*opt, &th_amount);
 
@@ -25,7 +25,9 @@ tdata_out	*threads(options *opt) {
 	for (int i = 0; i < th_amount; i++)
 		threads_input[i].output = &(out[i]);
 
+	gettimeofday(before, NULL);
 	launch_threads(threads_input, th_amount);
+	gettimeofday(after, NULL);
 
 	free_tdata_in_array(threads_input, th_amount);
 	opt->threads = th_amount;
