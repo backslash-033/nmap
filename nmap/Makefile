@@ -3,21 +3,19 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: tgernez <tgernez@student.42.fr>            +#+  +:+       +#+         #
+#    By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/18 23:43:50 by tgernez          ###   ########.fr        #
+#    Updated: 2024/07/30 14:58:18 by nguiard          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
-			scanner			\
-			scans			\
-			sender			\
-			parsing			\
-			utils			\
-			debug			\
+			main			\
+			options			\
+			threads			\
+			routine			\
 		))
 
 NAME	= ft_nmap
@@ -33,8 +31,7 @@ LIBFT	= libft/libft.a
 # TODO add dependencies
 INCLUDE = -Iinclude/ -Ilibft/include
 
-CFLAGS	=  -Wall -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
-# CFLAGS	= -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3# -fsanitize=address
+CFLAGS	=  -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
 
 all: __watermark ${LIBFT} ${NAME}
 

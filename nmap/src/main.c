@@ -3,18 +3,27 @@
 static void	display_options(options opt);
 
 int main(int argc, char **argv) {
-	options opt;
+	options 	opt;
+	tdata_out	*thread_output;
 
 	opt = options_handling(argc, argv);
 
 	display_options(opt);
 
+	thread_output = threads(&opt);
+
+	printf("\n\033[31mExecution endend:\033[0m\n\n");
+
+	for (int i = 0; i < opt.threads; i++) {
+		printf("\033[90mthread %d\033[0m\n%s", i, thread_output[i].data);
+	}
+
+	free(thread_output);
 	free_options(&opt);
 }
 
 static void	display_options(options opt) {
 	bool	already_displayed_a_scan = false;
-	bool	in_range = false;
 	printf("Threads: %d\n", opt.threads);
 	printf("Scans: ");
 	
@@ -59,27 +68,34 @@ static void	display_options(options opt) {
 
 	printf("Ports: ");
 
-	if (opt.port_amount == 1) {
-		printf("%hu\n", opt.port[0]);
+	display_port_range(opt.port, opt.port_len);
+	puts("");
+
+	printf("Hosts:\n");
+	for (uint32_t i = 0; i < opt.host_len; i++) {
+		printf("- %s\n", opt.host[i].basename);
+	}
+}
+
+void	display_port_range(uint16_t *array, uint32_t size) {
+	bool	in_range = false;
+
+	if (size == 1) {
+		printf("%hu\n", array[0]);
 	}
 	else {
-		for (uint32_t i = 0; i != (opt.port_amount - 1); i++) {
+		for (uint32_t i = 0; i != (size - 1); i++) {
 			if (!in_range)
-				printf("%hu", opt.port[i]);
-			if (opt.port[i] + 1 == opt.port[i + 1] && !in_range) {
+				printf("%hu", array[i]);
+			if (array[i] + 1 == array[i + 1] && !in_range) {
 				in_range = true;
 				printf("-");
 			}
-			if (opt.port[i] + 1 != opt.port[i + 1] && in_range) {
+			if (array[i] + 1 != array[i + 1] && in_range) {
 				in_range = false;
-				printf("%hu,", opt.port[i]);
+				printf("%hu,", array[i]);
 			}
 		}
-		printf("%hu\n", opt.port[opt.port_amount - 1]);
-	}
-
-	printf("Hosts:\n");
-	for (uint32_t i = 0; i < opt.host_amout; i++) {
-		printf("- %s\n", opt.host[i].basename);
+		printf("%hu", array[size - 1]);
 	}
 }

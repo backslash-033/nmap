@@ -80,7 +80,7 @@ options options_handling(int argc, char **argv) {
 			!(res.scans & 0x10000000))
 		res.scans = SCAN_ALL;
 
-	uint16_t *sorted = sort_port_range(res.port, &res.port_amount);
+	uint16_t *sorted = sort_port_range(res.port, &res.port_len);
 
 	if (sorted == NULL && (unsigned)errno == RANGE_ALLOCERR) {
 		fprintf(stderr, ERROR "Error allocating memory\n");
@@ -94,7 +94,7 @@ options options_handling(int argc, char **argv) {
 
 	res.port = sorted;
 
-	if (res.host_amout == 0 || res.host == NULL) {
+	if (res.host_len == 0 || res.host == NULL) {
 		fprintf(stderr, ERROR "No valid IP address or FQDN provided\n");
 		free_options(&res);
 		exit(1);
@@ -108,7 +108,7 @@ void	free_options(options *opts) {
 		free(opts->port);
 	}
 	if (opts->host) {
-		for (uint32_t i = 0; i < opts->host_amout; i++) {
+		for (uint32_t i = 0; i < opts->host_len; i++) {
 			free(opts->host[i].basename);
 		}
 		free(opts->host);
@@ -116,7 +116,7 @@ void	free_options(options *opts) {
 }
 
 static bool opt_speed(options *opts, str arg) {
-	int thread_nb = ft_atoi(arg);
+	int thread_nb = atoi(arg);
 	if (thread_nb > 250 || thread_nb < 0) {
 		fprintf(stderr, WARNING "--speedup can only be between 0 and 250 included. "
 						"Argument given: %d. "
@@ -168,7 +168,7 @@ static bool opt_ports(options *opts, str arg) {
 		size += range_size_value;
 	}
 
-	tmp_ports = ft_calloc(sizeof(uint16_t), size > 0x10000 ? 0x10000 : size);
+	tmp_ports = calloc(sizeof(uint16_t), size > 0x10000 ? 0x10000 : size);
 	if (tmp_ports == NULL) {
 		free_darray((void **)splitted);
 		return true;
@@ -197,21 +197,21 @@ static bool opt_ports(options *opts, str arg) {
 
 	if (opts->port == NULL) {
 		opts->port = tmp_ports;
-		opts->port_amount = tmp_port_amount;
+		opts->port_len = tmp_port_amount;
 	}
 	else {
-		uint16_t *merge = ft_calloc(sizeof(uint16_t), opts->port_amount + tmp_port_amount);
+		uint16_t *merge = calloc(sizeof(uint16_t), opts->port_len + tmp_port_amount);
 		uint32_t merge_size = 0;
 		if (merge == NULL) {
 			free_darray((void **)splitted);
 			free(tmp_ports);
 			return true;
 		}
-		add_range_to_ports(merge, &merge_size, opts->port, opts->port_amount);
+		add_range_to_ports(merge, &merge_size, opts->port, opts->port_len);
 		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_amount);
 		free(opts->port);
 		opts->port = merge;
-		opts->port_amount = merge_size;
+		opts->port_len = merge_size;
 		free(tmp_ports);
 	}
 
@@ -270,19 +270,19 @@ static bool	add_hostname(options *opts, const str hostname) {
 		return false;
 	}
 
-	tmp = ft_calloc(opts->host_amout + 1, sizeof(host_data));
+	tmp = calloc(opts->host_len + 1, sizeof(host_data));
 	if (tmp == NULL) {
 		free(to_add.basename);
 		return true;
 	}
 
 	if (opts->host != NULL) {
-		ft_memcpy(tmp, opts->host, sizeof(host_data) * opts->host_amout);
+		memcpy(tmp, opts->host, sizeof(host_data) * opts->host_len);
 		free(opts->host);
 	}
 	opts->host = tmp;
-	opts->host[opts->host_amout] = to_add;
-	opts->host_amout += 1;
+	opts->host[opts->host_len] = to_add;
+	opts->host_len += 1;
 	return false;
 }
 
@@ -292,15 +292,15 @@ static host_data	resolve_hostname(const str hostname) {
 	char			buff[INET6_ADDRSTRLEN + 1];
 	void			*ptr = NULL;
 
-	ft_bzero(&ret, sizeof(host_data));
-	ft_bzero(&hints, sizeof(struct addrinfo));
-	ft_bzero(buff, INET6_ADDRSTRLEN + 1);
+	bzero(&ret, sizeof(host_data));
+	bzero(&hints, sizeof(struct addrinfo));
+	bzero(buff, INET6_ADDRSTRLEN + 1);
 
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags |= AI_CANONNAME;
 
-	ret.basename = ft_strdup(hostname);
+	ret.basename = strdup(hostname);
 	if (!ret.basename)
 		return ret;
 
@@ -341,7 +341,7 @@ static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
 	if (!ports || (port_amout && *port_amout == 0)) {
 		if (ports)
 			free(ports);
-		ports = ft_calloc(1024, sizeof(uint16_t));
+		ports = calloc(1024, sizeof(uint16_t));
 		if (!ports) {
 			errno = RANGE_ALLOCERR;
 			return NULL;
@@ -391,23 +391,23 @@ static void	add_range_to_ports(uint16_t *ports, uint32_t *port_amount, uint16_t 
 static uint32_t	range_size(str arg) {
 	int	low = 0;
 	int	high = 0xffff;
-	char *dash = ft_strchr(arg, '-');
+	char *dash = strchr(arg, '-');
 
 	if (dash == NULL) {
 		return 1;
 	}
 	else if (dash == arg) {
-		if (ft_strlen(arg) == 1)
+		if (strlen(arg) == 1)
 			return high + 1;
-		high = ft_atoi(arg + 1);
+		high = atoi(arg + 1);
 		if (high < 0 || high > 0xffff) {
 			errno = RANGE_SIZEERR;
 			return 0;
 		}
 		return (high + 1);
 	}
-	else if (dash == arg + ft_strlen(arg) - 1) {
-		low = ft_atoi(arg);
+	else if (dash == arg + strlen(arg) - 1) {
+		low = atoi(arg);
 		if (low < 0 || low > 0xffff) {
 			errno = RANGE_SIZEERR;
 			return 0;
@@ -423,8 +423,8 @@ static uint32_t	range_size(str arg) {
 		else if (range[2] != NULL)
 			;
 		else {
-			low = ft_atoi(range[0]);
-			high = ft_atoi(range[1]);
+			low = atoi(range[0]);
+			high = atoi(range[1]);
 			if ((high > 0xffff || low > 0xffff) ||
 				(low < 0 || high < 0)) {
 				free_darray((void **)range);
@@ -444,30 +444,30 @@ static uint32_t	range_size(str arg) {
 static uint16_t *range_values(str arg, uint32_t *size) {
 	int			low = 0;
 	int			high = 0xffff;
-	char		*dash = ft_strchr(arg, '-');
+	char		*dash = strchr(arg, '-');
 	uint16_t	*res = NULL;
 
 	if (dash == NULL) {
-		res = ft_calloc(sizeof(uint16_t), 1);
+		res = calloc(sizeof(uint16_t), 1);
 		if (res == NULL) {
 			errno = RANGE_ALLOCERR;
 			return NULL;
 		}
 		*size = 1;
-		res[0] = ft_atoi(arg);
+		res[0] = atoi(arg);
 		return res;
 	}
 	else if (dash == arg) {
-		if (ft_strlen(arg) != 1) {
-			high = ft_atoi(arg + 1);
+		if (strlen(arg) != 1) {
+			high = atoi(arg + 1);
 			if (high < 0 || high > 0xffff) {
 				errno = RANGE_SIZEERR;
 				return NULL;
 			}
 		}
 	}
-	else if (dash == arg + ft_strlen(arg) - 1) {
-		low = ft_atoi(arg);
+	else if (dash == arg + strlen(arg) - 1) {
+		low = atoi(arg);
 		if (low < 0 || low > 0xffff) {
 			errno = RANGE_SIZEERR;
 			return NULL;
@@ -482,8 +482,8 @@ static uint16_t *range_values(str arg, uint32_t *size) {
 		else if (range[2] != NULL)
 			;
 		else {
-			low = ft_atoi(range[0]);
-			high = ft_atoi(range[1]);
+			low = atoi(range[0]);
+			high = atoi(range[1]);
 			if ((high > 0xffff || low > 0xffff) ||
 				(low < 0 || high < 0)) {
 				free_darray((void **)range);
@@ -495,7 +495,7 @@ static uint16_t *range_values(str arg, uint32_t *size) {
 			}
 		}
 	}
-	res = ft_calloc(sizeof(uint16_t), high - low + 1);
+	res = calloc(sizeof(uint16_t), high - low + 1);
 	if (res == NULL) {
 		errno = RANGE_ALLOCERR;
 		return NULL;
@@ -510,19 +510,19 @@ static uint8_t	get_scan(str scan) {
 	if (!scan)
 		return SCAN_NOTHING;
 
-	if (!ft_strncmp(scan, "ALL", 3))
+	if (!strncmp(scan, "ALL", 3))
 		return SCAN_ALL;
-	if (!ft_strncmp(scan, "SYN", 3))
+	if (!strncmp(scan, "SYN", 3))
 		return SCAN_SYN;
-	if (!ft_strncmp(scan, "NULL", 4))
+	if (!strncmp(scan, "NULL", 4))
 		return SCAN_NULL;
-	if (!ft_strncmp(scan, "ACK", 3))
+	if (!strncmp(scan, "ACK", 3))
 		return SCAN_ACK;
-	if (!ft_strncmp(scan, "FIN", 3))
+	if (!strncmp(scan, "FIN", 3))
 		return SCAN_FIN;
-	if (!ft_strncmp(scan, "XMAS", 4))
+	if (!strncmp(scan, "XMAS", 4))
 		return SCAN_XMAS;
-	if (!ft_strncmp(scan, "UDP", 3))
+	if (!strncmp(scan, "UDP", 3))
 		return SCAN_UDP;
 
 	fprintf(stderr, WARNING "Unknown scan type: '%s'\n", scan);
@@ -532,24 +532,24 @@ static uint8_t	get_scan(str scan) {
 static int	get_option(char const *arg) {
 	if (!arg)
 		return ARGS_NOTHING;
-	if (ft_strncmp(arg, "--", 2)) {
+	if (strncmp(arg, "--", 2)) {
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg);
 		return ARGS_NOTHING;
 	}
 
-	if (ft_strlen(arg) > 2) {
+	if (strlen(arg) > 2) {
 		arg = arg + 2;
-		if (!ft_strncmp(arg, "speedup", 7))
+		if (!strncmp(arg, "speedup", 7))
 			return ARGS_SPEED;
-		if (!ft_strncmp(arg, "scan", 4))
+		if (!strncmp(arg, "scan", 4))
 			return ARGS_SCANS;
-		if (!ft_strncmp(arg, "ports", 5))
+		if (!strncmp(arg, "ports", 5))
 			return ARGS_PORTS;
-		if (!ft_strncmp(arg, "file", 4))
+		if (!strncmp(arg, "file", 4))
 			return ARGS_FILE;
-		if (!ft_strncmp(arg, "ip", 2))
+		if (!strncmp(arg, "ip", 2))
 			return ARGS_IP;
-		if (!ft_strncmp(arg, "help", 4))
+		if (!strncmp(arg, "help", 4))
 			return ARGS_HELP;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
@@ -577,11 +577,11 @@ static options default_options() {
 	options ret;
 
 	ret.host = NULL;
-	ret.host_amout = 0;
+	ret.host_len = 0;
 	ret.scans = SCAN_NOTHING;
 	ret.threads = 0;
 	ret.port = NULL;
-	ret.port_amount = 0;
+	ret.port_len = 0;
 
 	return ret;
 }
