@@ -8,6 +8,8 @@ static void				free_host_and_ports(host_and_ports h);
 static void				free_host_and_ports_array(host_and_ports *array);
 static void				free_tdata_in(tdata_in d);
 static void				free_tdata_in_array(tdata_in *array, uint8_t size);
+static void				already_open_ports(uint16_t *array);
+static uint16_t			assign_port(uint16_t *already_open_ports);
 
 tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after) {
 	tdata_in		*threads_input;
@@ -36,8 +38,14 @@ tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after) 
 
 static void launch_threads(tdata_in *threads_input, uint8_t amount) {
 	pthread_t	tid[256];
+	uint16_t	taken_ports[PORT_RANGE + 1];
+
+	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
+	already_open_ports(taken_ports);
+	srand(time(0));
 
 	for (uint8_t i = 0; i < amount; i++) {
+		threads_input[i].port = assign_port(taken_ports);
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
@@ -45,6 +53,54 @@ static void launch_threads(tdata_in *threads_input, uint8_t amount) {
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
+	}
+}
+
+static void	already_open_ports(uint16_t *array) {
+	uint16_t	i = 0;
+	FILE		*f;
+	char		buff[256];
+	uint16_t	port;
+
+	f = fopen("/proc/net/tcp", "r");
+	if (f != NULL) {
+		if (fgets(buff, 256, f) == NULL) {
+			return;
+		}
+		while (fgets(buff, 256, f)) {
+			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
+			if (port >= LOWEST_PORT && port <= HIGHEST_PORT) {
+				array[i] = port;
+				i++;
+			}
+		}
+	}
+	f = fopen("/proc/net/udp", "r");
+	if (f != NULL) {
+		if (fgets(buff, 256, f) == NULL) {
+			return;
+		}
+		while (fgets(buff, 256, f)) {
+			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
+			if (port >= LOWEST_PORT && port <= HIGHEST_PORT) {
+				array[i] = port;
+				i++;
+			}
+		}
+	}
+}
+
+static uint16_t	assign_port(uint16_t *already_open_ports) {
+	uint16_t res;
+
+	while (true) {
+		res = LOWEST_PORT + (rand() % PORT_RANGE);
+
+		for (int i = 0; already_open_ports[i]; i++) {
+			if (already_open_ports[i] == res)
+				continue;
+		}
+		return res;
 	}
 }
 
@@ -58,7 +114,7 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
 
 	res = calloc(*th_amount, sizeof(tdata_in));
 	if (res == NULL) {
-		// Free every hnp
+		// TODO: Free every hnp
 		return NULL;
 	}
 

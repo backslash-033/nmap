@@ -11,6 +11,8 @@ void *routine(void * arg) {
 
 	s = in.output->data;
 
+	printf("My port: %d\n", in.port);
+
 	for (int i = 0; in.hnp[i].ports; i++) {
 		a += sprintf((s + a), "Host: %s\n", in.hnp[i].host.basename);
 		a += sprintf((s + a), "Range: ");

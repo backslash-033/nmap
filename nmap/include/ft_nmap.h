@@ -50,6 +50,7 @@ typedef struct tdata_in {
 	host_and_ports	*hnp;
 	uint8_t			scans;
 	uint8_t			id;
+	uint16_t		port;
 	tdata_out		*output;
 } tdata_in;
 
@@ -67,6 +68,10 @@ typedef struct tdata_in {
 #define IS_SCAN_XMAS(x)		((x & 0b00010000) == 0b00010000)
 #define IS_SCAN_UDP(x)		((x & 0b00100000) == 0b00100000)
 #define IS_SCAN_ALL(x)		((x & 0b10111111) == 0b10111111)
+
+#define LOWEST_PORT			15000
+#define HIGHEST_PORT		34999
+#define PORT_RANGE			(HIGHEST_PORT - LOWEST_PORT)
 
 enum e_tcp_flags
 {
