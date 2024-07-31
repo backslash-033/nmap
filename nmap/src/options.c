@@ -66,7 +66,6 @@ options options_handling(int argc, char **argv) {
 			}
 		} else {
 			if (handlers[args_status](&res, argv[i]) == true) {
-				fprintf(stderr, ERROR "Error allocating memory\n");
 				free_options(&res);
 				exit(1);
 			}
@@ -95,7 +94,13 @@ options options_handling(int argc, char **argv) {
 	res.port = sorted;
 
 	if (res.host_len == 0 || res.host == NULL) {
-		fprintf(stderr, ERROR "No valid IP address or FQDN provided\n");
+		fprintf(stderr, ERROR "No valid IP address or FQDN provided.\n");
+		free_options(&res);
+		exit(1);
+	}
+
+	if (res.host_len > 20) {
+		fprintf(stderr, ERROR "Too much hosts provided, max: 20.\n");
 		free_options(&res);
 		exit(1);
 	}
@@ -155,9 +160,16 @@ static bool opt_ports(options *opts, str arg) {
 
 	for (int i = 0; splitted[i]; i++) {
 		errno = 0;
+		if (!strcmp("-", splitted[i])) {
+			fprintf(stderr, ERROR "Cannot scan more than 1024 ports.\n");
+			free_darray((void **)splitted);
+			return true;
+		}
+
 		uint32_t range_size_value = range_size(splitted[i]);
 
 		if (!range_size_value && (unsigned int)errno == RANGE_ALLOCERR) {
+			fprintf(stderr, ERROR "Error allocating memory\n");
 			free_darray((void **)splitted);
 			return true;
 		} else if (!range_size_value && (unsigned int)errno == RANGE_SIZEERR) {
@@ -170,6 +182,7 @@ static bool opt_ports(options *opts, str arg) {
 
 	tmp_ports = calloc(sizeof(uint16_t), size > 0x10000 ? 0x10000 : size);
 	if (tmp_ports == NULL) {
+		fprintf(stderr, ERROR "Error allocating memory\n");
 		free_darray((void **)splitted);
 		return true;
 	}
@@ -181,6 +194,7 @@ static bool opt_ports(options *opts, str arg) {
 		uint16_t *range = range_values(splitted[i], &real_size);
 
 		if (!range && (unsigned int)errno == RANGE_ALLOCERR) {
+			fprintf(stderr, ERROR "Error allocating memory\n");
 			free_darray((void **)splitted);
 			free(tmp_ports);
 			return true;
@@ -203,6 +217,7 @@ static bool opt_ports(options *opts, str arg) {
 		uint16_t *merge = calloc(sizeof(uint16_t), opts->port_len + tmp_port_amount);
 		uint32_t merge_size = 0;
 		if (merge == NULL) {
+			fprintf(stderr, ERROR "Error allocating memory\n");
 			free_darray((void **)splitted);
 			free(tmp_ports);
 			return true;

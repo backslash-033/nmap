@@ -154,6 +154,9 @@ void		free_options(options *opts);
 // threads.c
 tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after);
 
+// main_thread.c
+void		main_thread();
+
 // routine.c
 void		*routine(void *);
 

@@ -6,7 +6,7 @@
 #    By: nguiard <nguiard@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/06/06 12:46:32 by nguiard           #+#    #+#              #
-#    Updated: 2024/07/30 14:58:18 by nguiard          ###   ########.fr        #
+#    Updated: 2024/07/31 09:58:08 by nguiard          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,6 +16,7 @@ SRC	=	$(addsuffix .c,		\
 			options			\
 			threads			\
 			routine			\
+			main_thread		\
 		))
 
 NAME	= ft_nmap

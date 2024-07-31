@@ -41,6 +41,8 @@ static void launch_threads(tdata_in *threads_input, uint8_t amount) {
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
+	main_thread();
+
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
 	}
