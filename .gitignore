@@ -6,6 +6,7 @@
 # 42
 libft.a
 ft_nmap
+decoder
 
 # VSCode
 .vscode
