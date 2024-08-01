@@ -69,8 +69,8 @@ typedef struct tdata_in {
 #define IS_SCAN_UDP(x)		((x & 0b00100000) == 0b00100000)
 #define IS_SCAN_ALL(x)		((x & 0b10111111) == 0b10111111)
 
-#define LOWEST_PORT			15000
-#define HIGHEST_PORT		34999
+#define LOWEST_PORT			1025
+#define HIGHEST_PORT		UINT16_MAX
 #define PORT_RANGE			(HIGHEST_PORT - LOWEST_PORT)
 
 enum e_tcp_flags

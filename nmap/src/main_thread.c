@@ -20,6 +20,4 @@ void	main_thread() {
 		pcap_freealldevs(interface);
 		return;
 	}
-
-
 }

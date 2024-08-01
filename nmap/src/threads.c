@@ -69,12 +69,13 @@ static void	already_open_ports(uint16_t *array) {
 		}
 		while (fgets(buff, 256, f)) {
 			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
-			if (port >= LOWEST_PORT && port <= HIGHEST_PORT) {
+			if (port >= LOWEST_PORT && port < HIGHEST_PORT) {
 				array[i] = port;
 				i++;
 			}
 		}
 	}
+	fclose(f);
 	f = fopen("/proc/net/udp", "r");
 	if (f != NULL) {
 		if (fgets(buff, 256, f) == NULL) {
@@ -82,12 +83,13 @@ static void	already_open_ports(uint16_t *array) {
 		}
 		while (fgets(buff, 256, f)) {
 			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
-			if (port >= LOWEST_PORT && port <= HIGHEST_PORT) {
+			if (port >= LOWEST_PORT && port < HIGHEST_PORT) {
 				array[i] = port;
 				i++;
 			}
 		}
 	}
+	fclose(f);
 }
 
 static uint16_t	assign_port(uint16_t *already_open_ports) {
