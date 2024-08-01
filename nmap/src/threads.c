@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount);
-static void 			launch_threads(tdata_in *threads_input, uint8_t amount);
+static void 			launch_threads(tdata_in *threads_input, uint8_t amount, enum e_scans scan);
 static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amount);
 static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
 static void				free_host_and_ports(host_and_ports h);
@@ -10,33 +10,74 @@ static void				free_tdata_in(tdata_in d);
 static void				free_tdata_in_array(tdata_in *array, uint8_t size);
 static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
+static enum e_scans		convert_option_scan(uint8_t opt_scan);
 
-tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after) {
+tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after) {
 	tdata_in		*threads_input;
 	uint8_t			th_amount = NEVER_ZERO(opt->threads);
 	tdata_out		*out;
+	tdata_out		**every_output;
 
+	every_output = calloc(6, sizeof(tdata_out *));
+	if (every_output == NULL)
+		return NULL;
+
+	bzero(every_output, 6 * sizeof(tdata_out *));
+	
 	threads_input = build_threads_input(*opt, &th_amount);
-
-	out = calloc((size_t)th_amount, sizeof(tdata_out));
-	if (out == NULL) {
-		free_tdata_in_array(threads_input, th_amount);
+	if (threads_input == NULL) {
+		free(every_output);
 		return NULL;
 	}
 
-	for (int i = 0; i < th_amount; i++)
-		threads_input[i].output = &(out[i]);
-
 	gettimeofday(before, NULL);
-	launch_threads(threads_input, th_amount);
+
+	for (int scan = 0b00000001, i = 0; scan != 0b10000000; scan <<= 1) {
+		if (scan & opt->scans) {
+			out = calloc((size_t)th_amount, sizeof(tdata_out));
+			if (out == NULL) {
+				for (int j = 0; j < 6; j++) {
+					if (every_output[j])
+						free_tdata_out_array(every_output[j], th_amount);
+				}
+				free(every_output);
+				free_tdata_in_array(threads_input, th_amount);
+				return NULL;
+			}
+			for (int i = 0; i < th_amount; i++)
+				threads_input[i].output = &(out[i]);
+
+			launch_threads(threads_input, th_amount, convert_option_scan(scan));
+
+			every_output[i] = out;
+		}
+		i++;
+	}
+
 	gettimeofday(after, NULL);
 
 	free_tdata_in_array(threads_input, th_amount);
 	opt->threads = th_amount;
-	return out;
+	return every_output;
 }
 
-static void launch_threads(tdata_in *threads_input, uint8_t amount) {
+static enum e_scans	convert_option_scan(uint8_t opt_scan) {
+	if (IS_SCAN_SYN(opt_scan))
+		return SYN_SCAN;
+	else if (IS_SCAN_FIN(opt_scan))
+		return FIN_SCAN;
+	else if (IS_SCAN_NULL(opt_scan))
+		return NULL_SCAN;
+	else if (IS_SCAN_ACK(opt_scan))
+		return ACK_SCAN;
+	else if (IS_SCAN_XMAS(opt_scan))
+		return XMAS_SCAN;
+	else if (IS_SCAN_UDP(opt_scan))
+		return UDP_SCAN;
+	return 0;
+}	
+
+static void launch_threads(tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 
@@ -46,6 +87,7 @@ static void launch_threads(tdata_in *threads_input, uint8_t amount) {
 
 	for (uint8_t i = 0; i < amount; i++) {
 		threads_input[i].port = assign_port(taken_ports);
+		threads_input[i].scans = scan;
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
@@ -123,7 +165,7 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
 	for (uint8_t i = 0; i < *th_amount; i++) {
 		res[i].hnp = every_hnp[i];
 		res[i].id = i;
-		res[i].scans = opt.scans;
+		res[i].scans = 0;
 		res[i].output = NULL;
 	}
 	free(every_hnp);

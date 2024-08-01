@@ -5,7 +5,7 @@ static void	print_exec_time(struct timeval before, struct timeval after);
 
 int main(int argc, char **argv) {
 	options 		opt;
-	tdata_out		*thread_output;
+	tdata_out		**thread_output;
 	struct timeval	before, after;
 
 	opt = options_handling(argc, argv);
@@ -18,11 +18,17 @@ int main(int argc, char **argv) {
 	print_exec_time(before, after);
 	printf("\033[0m\n\n");
 
-	// for (int i = 0; i < opt.threads; i++) {
-	// 	printf("\033[90mthread %d\033[0m\n%s", i, thread_output[i].data);
-	// }
+	for (int j = 0; j < SCAN_AMOUNT; j++) {
+		for (int i = 0; i < opt.threads; i++) {
+			printf("\033[90mthread %d scan %d\033[0m\n%s", i, j, thread_output[j][i].data);
+		}
+	}
 
-	free_tdata_out_array(thread_output, opt.threads);
+	for (int i = 0; i < SCAN_AMOUNT; i++) {
+		free_tdata_out_array(thread_output[i], opt.threads);
+	}
+
+	free(thread_output);
 	free_options(&opt);
 }
 
@@ -33,6 +39,8 @@ void	free_tdata_out(tdata_out d) {
 }
 
 void	free_tdata_out_array(tdata_out *array, const uint8_t size) {
+	if (!array)
+		return;
 	for (uint8_t i = 0; i < size; i++) {
 		free_tdata_out(array[i]);
 	}
