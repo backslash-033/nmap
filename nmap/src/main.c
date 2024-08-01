@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
 	printf("\033[0m\n\n");
 
 	for (int j = 0; j < SCAN_AMOUNT; j++) {
+		if (thread_output[j] == NULL)
+			continue;
 		for (int i = 0; i < opt.threads; i++) {
 			printf("\033[90mthread %d scan %d\033[0m\n%s", i, j, thread_output[j][i].data);
 		}
