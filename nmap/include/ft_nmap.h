@@ -207,6 +207,7 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 
 // utils.c
 uint32_t random_uint32(uint32_t min, uint32_t max);
+uint16_t random_uint16(uint16_t min, uint16_t max);
 
 // debug.c
 void 		print_ip_header(ipheader_t iph);
