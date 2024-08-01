@@ -16,7 +16,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include<sys/wait.h>
+#include <sys/wait.h>
 
 #include "libft.h"
 
@@ -29,15 +29,35 @@ typedef	struct host_data {
 
 typedef struct options {
 	host_data		*host;
-	uint32_t		host_amout;
+	uint32_t		host_len;
 	uint8_t			scans;
 	uint8_t			threads;
 	uint16_t		*port;
-	uint32_t		port_amount;
+	uint32_t		port_len;
 } options;
+
+typedef struct tdata_out {
+	str	data;
+} tdata_out;
+
+typedef struct host_and_ports {
+	host_data	host;
+	uint16_t	*ports;
+	uint32_t	ports_len;
+} host_and_ports;
+
+typedef struct tdata_in {
+	host_and_ports	*hnp;
+	uint8_t			scans;
+	uint8_t			id;
+	uint16_t		port;
+	tdata_out		*output;
+} tdata_in;
 
 #define WARNING	"\033[33mWarning:\033[0m "
 #define ERROR	"\033[31mError:\033[0m "
+
+#define NEVER_ZERO(x) (x ? x : 1)
 
 // Options
 #define IS_SCAN_NOTHING(x)	(x == 0)
@@ -48,6 +68,10 @@ typedef struct options {
 #define IS_SCAN_XMAS(x)		((x & 0b00010000) == 0b00010000)
 #define IS_SCAN_UDP(x)		((x & 0b00100000) == 0b00100000)
 #define IS_SCAN_ALL(x)		((x & 0b10111111) == 0b10111111)
+
+#define LOWEST_PORT			1025
+#define HIGHEST_PORT		UINT16_MAX
+#define PORT_RANGE			(HIGHEST_PORT - LOWEST_PORT)
 
 enum e_tcp_flags
 {
@@ -135,13 +159,28 @@ typedef struct ip_addr_s {
 #define DEBUG true
 #define NMAP_PORT "3490"
 
-options 	options_handling(int argc, char **argv);
-void		free_options(options *opts);
 void    	print_tcp_header(tcpheader_t tcph);
 void    	print_ip_header(ipheader_t iph);
 ip_addr_t	**parse_ips(char **ips);
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
+// main.c
+void		display_port_range(uint16_t *array, uint32_t size);
+void		free_tdata_out_array(tdata_out *array, const uint8_t size);
+void		free_tdata_out(tdata_out d);
+
+// options.c
+options 	options_handling(int argc, char **argv);
+void		free_options(options *opts);
+
+// threads.c
+tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after);
+
+// main_thread.c
+void		main_thread();
+
+// routine.c
+void		*routine(void *);
 
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);

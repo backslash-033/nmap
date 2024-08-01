@@ -1,146 +1,266 @@
 #include "ft_nmap.h"
 
-static tdata_in			*build_chunks(const options opt, uint8_t *th_amount);
-static host_and_port	*every_host_and_port(const options opt, uint32_t *size);
-static void				free_chunks(tdata_in *chunks, uint8_t size);
-static void 			launch_threads(tdata_in *chunks, uint8_t amount);
+static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount);
+static void 			launch_threads(tdata_in *threads_input, uint8_t amount);
+static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amount);
+static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
+static void				free_host_and_ports(host_and_ports h);
+static void				free_host_and_ports_array(host_and_ports *array);
+static void				free_tdata_in(tdata_in d);
+static void				free_tdata_in_array(tdata_in *array, uint8_t size);
+static void				already_open_ports(uint16_t *array);
+static uint16_t			assign_port(uint16_t *already_open_ports);
 
-void	threads(const options opt) {
-	tdata_in	*chunks;
-	uint8_t		th_amount = NEVER_ZERO(opt.threads);
-	tdata_out	*out;
+tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after) {
+	tdata_in		*threads_input;
+	uint8_t			th_amount = NEVER_ZERO(opt->threads);
+	tdata_out		*out;
 
-	chunks = build_chunks(opt, &th_amount);
+	threads_input = build_threads_input(*opt, &th_amount);
 
-	out = ft_calloc(th_amount, sizeof(tdata_out));
+	out = calloc((size_t)th_amount, sizeof(tdata_out));
 	if (out == NULL) {
-		free_chunks(chunks, th_amount);
-		return;
+		free_tdata_in_array(threads_input, th_amount);
+		return NULL;
 	}
 
 	for (int i = 0; i < th_amount; i++)
-		chunks[i].output = out;
+		threads_input[i].output = &(out[i]);
 
-	launch_threads(chunks, th_amount);
+	gettimeofday(before, NULL);
+	launch_threads(threads_input, th_amount);
+	gettimeofday(after, NULL);
 
-	free_chunks(chunks, th_amount);
-	free(out);
+	free_tdata_in_array(threads_input, th_amount);
+	opt->threads = th_amount;
+	return out;
 }
 
-static void launch_threads(tdata_in *chunks, uint8_t amount) {
+static void launch_threads(tdata_in *threads_input, uint8_t amount) {
 	pthread_t	tid[256];
+	uint16_t	taken_ports[PORT_RANGE + 1];
+
+	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
+	already_open_ports(taken_ports);
+	srand(time(0));
 
 	for (uint8_t i = 0; i < amount; i++) {
-		pthread_create(&(tid[i]), NULL, routine, &(chunks[i]));
+		threads_input[i].port = assign_port(taken_ports);
+		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
+
+	main_thread();
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
 	}
 }
 
-static void	free_chunks(tdata_in *chunks, uint8_t size) {
-	for (int i = 0; i < size; i++) {
-		for (uint32_t j = 0; j < chunks[i].hnp_len; j++)
-			free_host_data(chunks[i].hnp[j].host);
-		free(chunks[i].hnp);
+static void	already_open_ports(uint16_t *array) {
+	uint16_t	i = 0;
+	FILE		*f;
+	char		buff[256];
+	uint16_t	port;
+
+	f = fopen("/proc/net/tcp", "r");
+	if (f != NULL) {
+		if (fgets(buff, 256, f) == NULL) {
+			return;
+		}
+		while (fgets(buff, 256, f)) {
+			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
+			if (port >= LOWEST_PORT && port < HIGHEST_PORT) {
+				array[i] = port;
+				i++;
+			}
+		}
 	}
-	free(chunks);
+	fclose(f);
+	f = fopen("/proc/net/udp", "r");
+	if (f != NULL) {
+		if (fgets(buff, 256, f) == NULL) {
+			return;
+		}
+		while (fgets(buff, 256, f)) {
+			sscanf(buff, "%*d: %*64[0-9A-Fa-f]:%hx", &port);
+			if (port >= LOWEST_PORT && port < HIGHEST_PORT) {
+				array[i] = port;
+				i++;
+			}
+		}
+	}
+	fclose(f);
 }
 
-static tdata_in	*build_chunks(const options opt, uint8_t *th_amount) {
-	host_and_port	*raw_hnp;
-	uint32_t		raw_hnp_len = 0;
-	uint32_t		per_thread;
-	tdata_in		*res = NULL;
+static uint16_t	assign_port(uint16_t *already_open_ports) {
+	uint16_t res;
 
-	raw_hnp = every_host_and_port(opt, &raw_hnp_len);
+	while (true) {
+		res = LOWEST_PORT + (rand() % PORT_RANGE);
 
-	per_thread = raw_hnp_len / NEVER_ZERO(opt.threads);
+		for (int i = 0; already_open_ports[i]; i++) {
+			if (already_open_ports[i] == res)
+				continue;
+		}
+		return res;
+	}
+}
 
-	*th_amount = per_thread ? opt.threads : raw_hnp_len;
+static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
+	tdata_in		*res;
+	host_and_ports	**every_hnp;
 
-	if (per_thread == 0) {
-		res = ft_calloc(raw_hnp_len + 1, sizeof(tdata_in));
-		if (res == NULL) {
-			free(raw_hnp);
-			return NULL;
-		}
-		for (uint32_t i = 0; i < raw_hnp_len; i++) {
-			res[i].hnp = ft_calloc(1, sizeof(host_and_port));
-			if (res[i].hnp == NULL) {
-				free_chunks(res, i);
-				return NULL;
-			}
-			res[i].hnp[0] = raw_hnp[i];
-			res[i].hnp[0].host.basename = ft_strdup(raw_hnp[i].host.basename);
-			res[i].hnp_len = 1;
-			res[i].id = i;
-			res[i].scans = opt.scans;
-		}
-	} else {
-		uint8_t more = raw_hnp_len % NEVER_ZERO(opt.threads);
+	every_hnp = every_host_and_ports(opt, th_amount);
+	if (every_hnp == NULL)
+		return NULL;
 
-		res = ft_calloc(NEVER_ZERO(opt.threads), sizeof(host_and_port));
-		if (res == NULL) {
-			free(raw_hnp);
-			return NULL;
-		}
-		*th_amount = NEVER_ZERO(opt.threads);
-		for (uint8_t i = 0; i < more; i++) {
-			res[i].hnp = ft_calloc(per_thread + 1, sizeof(host_and_port));
-			if (res[i].hnp == NULL) {
-				free_chunks(res, i);
-				return NULL;
-			}
-			for (uint32_t j = 0; j < per_thread + 1; j++) {
-				res[i].hnp[j] = raw_hnp[i * (per_thread + 1) + j];
-				res[i].hnp[j].host.basename = ft_strdup(raw_hnp[i * (per_thread + 1) + j].host.basename);
-			}
-			res[i].hnp_len = per_thread + 1;
-			res[i].id = i;
-			res[i].scans = opt.scans;
-		}
-		for (uint8_t i = more; i < *th_amount; i++) {
-			uint32_t already_filled = more * (per_thread + 1) + (i - more) * per_thread;
-			res[i].hnp = ft_calloc(per_thread, sizeof(host_and_port));
-			if (res[i].hnp == NULL) {
-				free_chunks(res, i);
-				return NULL;
-			}
-			for (uint32_t j = 0; j < per_thread; j++) {
-				res[i].hnp[j] = raw_hnp[already_filled + j];
-				res[i].hnp[j].host.basename = ft_strdup(raw_hnp[already_filled + j].host.basename);
-			}
-			res[i].hnp_len = per_thread;
-			res[i].id = i;
-			res[i].scans = opt.scans;
-		}
+	res = calloc(*th_amount, sizeof(tdata_in));
+	if (res == NULL) {
+		// TODO: Free every hnp
+		return NULL;
 	}
 
-	free(raw_hnp);
+	for (uint8_t i = 0; i < *th_amount; i++) {
+		res[i].hnp = every_hnp[i];
+		res[i].id = i;
+		res[i].scans = opt.scans;
+		res[i].output = NULL;
+	}
+	free(every_hnp);
+
 	return res;
 }
 
-static host_and_port *every_host_and_port(const options opt, uint32_t *size) {
-	host_and_port	*res;
-	uint32_t		i = 0;
-	host_and_port	tmp;
+static host_and_ports **every_host_and_ports(const options opt, uint8_t *th_amount) {
+	host_and_ports	**res;
+	uint32_t		per_thread;
+	uint64_t		hosts_times_ports = opt.host_len * opt.port_len;
+	uint8_t			more;
+	uint8_t			i = 0;
 
-	res = ft_calloc(opt.host_len * opt.port_len, sizeof(host_and_port));
+	per_thread = hosts_times_ports / NEVER_ZERO(opt.threads);
+	*th_amount = per_thread ? opt.threads : hosts_times_ports;
+
+	more = hosts_times_ports % NEVER_ZERO(opt.threads);
+
+	res = calloc(*th_amount, sizeof(host_and_ports *));
+
+	for (; i < more; i++) {
+		res[i] = host_and_ports_one_thread(opt, per_thread + 1);
+	}
+	for (; i < *th_amount; i++) {
+		res[i] = host_and_ports_one_thread(opt, per_thread);
+	}
+
+	return res;
+}
+
+static host_and_ports *host_and_ports_one_thread(const options opt, const uint32_t per_thread) {
+	static uint32_t	host_index = 0;
+	static uint32_t	port_index = 0;
+	uint32_t		size = 1;
+	host_and_ports	*res;
+	host_and_ports	*tmp;
+	host_and_ports	hnp;
+	uint32_t		loop_port_index = 0;
+	const uint32_t	first_ports_size = per_thread > (opt.port_len - port_index) ? (opt.port_len - port_index) : per_thread;
+
+	// printf("\n--- Entree dans hnp_one_thread ---\n");
+
+	res = calloc(size + 1, sizeof(host_and_ports));
 	if (res == NULL)
 		return NULL;
 
-	*size = opt.host_len * opt.port_len;
+	hnp.host = opt.host[host_index];
+	hnp.ports = calloc(first_ports_size, sizeof(uint16_t));
+	if (hnp.ports == NULL) {
+		free(res);
+		return NULL;
+	}
+	hnp.ports_len = first_ports_size;
 
-	for (uint32_t h = 0; h < opt.host_len; h++) {
-		tmp.host = opt.host[h];
-		for (uint32_t p = 0; p < opt.port_len; p++) {
-			tmp.port = opt.port[p];
-			res[i] = tmp;
-			i++;
+	for (uint32_t i = 0; i < per_thread; i++) {
+		// printf("hnp.ports: %p | i: %u, opt.ports: %p | opt.port_len: %u | port_index: %u | host_index: %u | op.port[port_index] %u\n", hnp.ports, i, opt.port, opt.port_len, port_index, host_index, opt.port[port_index]);
+		hnp.ports[loop_port_index] = opt.port[port_index];
+		loop_port_index++;
+		port_index++;
+		if (port_index >= opt.port_len) {
+			loop_port_index = 0;
+			port_index = 0;
+			host_index++;
+			if (host_index == opt.host_len)
+				break;
+
+			uint32_t	remaining_ports;
+			remaining_ports = (per_thread - i - 1) > opt.port_len ? opt.port_len : (per_thread - i - 1);
+
+
+			// printf("Remaining: %u\n", remaining_ports);
+			// printf("Per thread: %u\n", per_thread);
+			// printf("opt.port_len: %u\n", opt.port_len);
+			// printf("i: %u\n", i);
+			// printf("Bytes allocated: %lu\n", remaining_ports * sizeof(uint16_t));
+
+			if (remaining_ports <= 0)
+				break;
+
+			res[size - 1] = hnp;
+			size++;
+			tmp = calloc(size + 1, sizeof(host_and_ports));
+			if (tmp == NULL) {
+				free_host_and_ports_array(res);
+				return NULL;
+			}
+
+			memcpy(tmp, res, (size - 1) * sizeof(host_and_ports));
+
+			free(res);
+			res = tmp;
+
+
+			hnp.host = opt.host[host_index];
+			hnp.ports = calloc(remaining_ports, sizeof(uint16_t));
+			if (hnp.ports == NULL) {
+				free_host_and_ports_array(res);
+				free(tmp);
+				return NULL;
+			}
+			hnp.ports_len = remaining_ports;
 		}
 	}
+	res[size - 1] = hnp;
+
+	// printf("Before displaying the range:\nres: %p\nsize: %u\nres[size - 1].ports: %p\n", res, size, res[size - 1].ports);
+	// printf("port_index: %u\n", port_index);
+	// printf("host_index: %u\n", host_index);
+	// printf("hnp.ports_len: %u\n", hnp.ports_len);
+	// printf("size: %u\n", size);
+	// display_port_range(res[size - 1].ports, res[size - 1].ports_len);
+	// puts("");
+
+	res[size] = (host_and_ports){.ports = NULL, .ports_len = 0};
 
 	return res;
+}
+
+void	free_host_and_ports(host_and_ports h) {
+	free(h.ports);
+}
+
+void	free_host_and_ports_array(host_and_ports *array) {
+	for (int i = 0; array[i].ports; i++) {
+		free_host_and_ports(array[i]);
+	}
+	free(array);
+}
+
+void	free_tdata_in(tdata_in d) {
+	free_host_and_ports_array(d.hnp);
+}
+
+void	free_tdata_in_array(tdata_in *array, uint8_t size) {
+	for (int i = 0; i < size; i++) {
+		free_tdata_in(array[i]);
+	}
+	free(array);
 }
