@@ -20,9 +20,9 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     } else if (protocol == IPPROTO_UDP) {
         iph.len = htons(sizeof(ipheader_t) + sizeof(udpheader_t) + data_len);
     }
-	iph.ident = htons(random_uint16(0, UINT16_MAX));
-    iph.flag = 0b010; // DF flag
-    iph.offset = 0; // Keep 0 if no fragmentation
+	iph.ident = htons(54321); // TODO make me random
+    iph.flag = htons(0x4000); // TODO study me
+    iph.offset = 0; // TODO study me
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
     iph.protocol = protocol;
     iph.chksum = 0;
@@ -51,8 +51,9 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
     tcph.reserved = 0;
     tcph.offset = 5; // Normally, is fixed
     tcph.flags = 0; 
-	tcph.win = htons(3550); // TODO change me later
-    tcph.urgptr = 0; // not important in any scan (even XMAS)
+    tcph.win = htons(33280); // TODO maybe make me adjustable
+    tcph.chksum = 0;
+    tcph.urgptr = 0; // TODO set me with desired scan
     printf("Setting up TCP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
 
 	return tcph;
