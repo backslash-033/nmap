@@ -105,6 +105,9 @@ options options_handling(int argc, char **argv) {
 		exit(1);
 	}
 
+	if (res.threads == 0)
+		res.threads = 1;
+
 	return res;
 }
 
@@ -125,7 +128,7 @@ static bool opt_speed(options *opts, str arg) {
 	if (thread_nb > 250 || thread_nb < 0) {
 		fprintf(stderr, WARNING "--speedup can only be between 0 and 250 included. "
 						"Argument given: %d. "
-						"Default to 0 additional threads.\n", thread_nb);
+						"Setting default value of 1 thread.\n", thread_nb);
 		opts->threads = 0;
 		return false;
 	}
@@ -174,6 +177,10 @@ static bool opt_ports(options *opts, str arg) {
 			return true;
 		} else if (!range_size_value && (unsigned int)errno == RANGE_SIZEERR) {
 			fprintf(stderr, ERROR "The port range has to be between 0 and 65535 included.\n");
+			free_darray((void **)splitted);
+			return true;
+		} else if (range_size_value > 1024) {
+			fprintf(stderr, ERROR "Cannot scan more than 1024 ports.\n");
 			free_darray((void **)splitted);
 			return true;
 		}
