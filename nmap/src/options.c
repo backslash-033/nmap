@@ -222,10 +222,10 @@ static bool opt_ports(options *opts, str arg) {
 
 	if (opts->port == NULL) {
 		opts->port = tmp_ports;
-		opts->port_len = tmp_port_amount;
+		opts->port_len = tmp_port_len;
 	}
 	else {
-		uint16_t *merge = calloc(sizeof(uint16_t), opts->port_len + tmp_port_amount);
+		uint16_t *merge = calloc(sizeof(uint16_t), opts->port_len + tmp_port_len);
 		uint32_t merge_size = 0;
 		if (merge == NULL) {
 			fprintf(stderr, ERROR "Error allocating memory\n");
@@ -234,7 +234,7 @@ static bool opt_ports(options *opts, str arg) {
 			return true;
 		}
 		add_range_to_ports(merge, &merge_size, opts->port, opts->port_len);
-		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_amount);
+		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_len);
 		free(opts->port);
 		opts->port = merge;
 		opts->port_len = merge_size;

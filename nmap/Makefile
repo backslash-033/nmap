@@ -1,6 +1,10 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
-			scanner			\
+			main			\
+			main_thread		\
+			threads			\
+			options			\
+			routine			\
 			scans			\
 			sender			\
 			parsing			\
