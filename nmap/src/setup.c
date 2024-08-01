@@ -46,8 +46,8 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
 
     tcph.src_port = htons(src_port);
     tcph.dest_port = htons(dest_port);
-    tcph.seqnum = 15564; // TODO Make me random automatically
-    tcph.acknum = 0; // TODO Make me random automatically
+    tcph.seqnum = htonl(random_uint32(0, UINT32_MAX)); // TODO Make me random automatically
+    tcph.acknum = htonl(random_uint32(0, UINT32_MAX)); // TODO Make me random automatically
     tcph.reserved = 0;
     tcph.offset = 5; // Normally, is fixed
     tcph.flags = 0; 

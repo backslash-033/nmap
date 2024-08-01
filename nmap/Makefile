@@ -1,16 +1,12 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
-			main			\
-			main_thread		\
-			threads			\
-			options			\
-			routine			\
 			scans			\
 			sender			\
 			parsing			\
 			utils			\
 			setup			\
 			debug			\
+			scanner			\
 		))
 
 NAME	= ft_nmap

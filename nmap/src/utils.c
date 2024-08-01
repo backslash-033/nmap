@@ -16,3 +16,13 @@ void free_formatted_ips(ip_addr_t **formatted_ips) {
 	free(formatted_ips);
 	formatted_ips = NULL;
 }
+
+uint32_t random_uint32(uint32_t min, uint32_t max) {
+	if (min > max)
+		return 0;
+
+	const uint32_t diff = max - min;
+	
+	srand(time(NULL));
+	return (rand() % diff) + min;
+}
