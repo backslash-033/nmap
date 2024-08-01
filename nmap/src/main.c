@@ -9,6 +9,8 @@ int main(int argc, char **argv) {
 
 	display_options(opt);
 
+	threads(opt);
+
 	free_options(&opt);
 }
 
@@ -59,11 +61,11 @@ static void	display_options(options opt) {
 
 	printf("Ports: ");
 
-	if (opt.port_amount == 1) {
+	if (opt.port_len == 1) {
 		printf("%hu\n", opt.port[0]);
 	}
 	else {
-		for (uint32_t i = 0; i != (opt.port_amount - 1); i++) {
+		for (uint32_t i = 0; i != (opt.port_len - 1); i++) {
 			if (!in_range)
 				printf("%hu", opt.port[i]);
 			if (opt.port[i] + 1 == opt.port[i + 1] && !in_range) {
@@ -75,11 +77,13 @@ static void	display_options(options opt) {
 				printf("%hu,", opt.port[i]);
 			}
 		}
-		printf("%hu\n", opt.port[opt.port_amount - 1]);
+		printf("%hu\n", opt.port[opt.port_len - 1]);
 	}
 
 	printf("Hosts:\n");
-	for (uint32_t i = 0; i < opt.host_amout; i++) {
+	for (uint32_t i = 0; i < opt.host_len; i++) {
 		printf("- %s\n", opt.host[i].basename);
 	}
+
+	printf("\n---\n\n");
 }

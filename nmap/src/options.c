@@ -29,9 +29,9 @@ static bool			opt_ip(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
 static uint16_t 	*range_values(str arg, uint32_t *size);
-static void			add_range_to_ports(uint16_t *ports, uint32_t *port_amount,
+static void			add_range_to_ports(uint16_t *ports, uint32_t *port_len,
 									uint16_t *range, uint32_t range_size);
-static uint16_t		*sort_port_range(uint16_t *ports, uint32_t *port_amout);
+static uint16_t		*sort_port_range(uint16_t *ports, uint32_t *port_len);
 static bool			add_hostname(options *opts, str hostname);
 static host_data	resolve_hostname(const str hostname) ;
 
@@ -80,7 +80,7 @@ options options_handling(int argc, char **argv) {
 			!(res.scans & 0x10000000))
 		res.scans = SCAN_ALL;
 
-	uint16_t *sorted = sort_port_range(res.port, &res.port_amount);
+	uint16_t *sorted = sort_port_range(res.port, &res.port_len);
 
 	if (sorted == NULL && (unsigned)errno == RANGE_ALLOCERR) {
 		fprintf(stderr, ERROR "Error allocating memory\n");
@@ -94,7 +94,7 @@ options options_handling(int argc, char **argv) {
 
 	res.port = sorted;
 
-	if (res.host_amout == 0 || res.host == NULL) {
+	if (res.host_len == 0 || res.host == NULL) {
 		fprintf(stderr, ERROR "No valid IP address or FQDN provided\n");
 		free_options(&res);
 		exit(1);
@@ -108,11 +108,15 @@ void	free_options(options *opts) {
 		free(opts->port);
 	}
 	if (opts->host) {
-		for (uint32_t i = 0; i < opts->host_amout; i++) {
-			free(opts->host[i].basename);
+		for (uint32_t i = 0; i < opts->host_len; i++) {
+			free_host_data(opts->host[i]);
 		}
 		free(opts->host);
 	}
+}
+
+void	free_host_data(host_data data) {
+	free(data.basename);
 }
 
 static bool opt_speed(options *opts, str arg) {
@@ -148,7 +152,7 @@ static bool opt_ports(options *opts, str arg) {
 	uint32_t	size = 0;
 	str			*splitted = ft_split(arg, ',');
 	uint16_t	*tmp_ports = NULL;
-	uint32_t	tmp_port_amount = 0;
+	uint32_t	tmp_port_len = 0;
 
 	if (splitted == NULL)
 		return true;
@@ -173,7 +177,7 @@ static bool opt_ports(options *opts, str arg) {
 		free_darray((void **)splitted);
 		return true;
 	}
-	tmp_port_amount = 0;
+	tmp_port_len = 0;
 
 	for (int i = 0; splitted[i]; i++) {
 		errno = 0;
@@ -191,27 +195,27 @@ static bool opt_ports(options *opts, str arg) {
 			return true;
 		}
 
-		add_range_to_ports(tmp_ports, &tmp_port_amount, range, real_size);
+		add_range_to_ports(tmp_ports, &tmp_port_len, range, real_size);
 		free(range);
 	}
 
 	if (opts->port == NULL) {
 		opts->port = tmp_ports;
-		opts->port_amount = tmp_port_amount;
+		opts->port_len = tmp_port_len;
 	}
 	else {
-		uint16_t *merge = ft_calloc(sizeof(uint16_t), opts->port_amount + tmp_port_amount);
+		uint16_t *merge = ft_calloc(sizeof(uint16_t), opts->port_len + tmp_port_len);
 		uint32_t merge_size = 0;
 		if (merge == NULL) {
 			free_darray((void **)splitted);
 			free(tmp_ports);
 			return true;
 		}
-		add_range_to_ports(merge, &merge_size, opts->port, opts->port_amount);
-		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_amount);
+		add_range_to_ports(merge, &merge_size, opts->port, opts->port_len);
+		add_range_to_ports(merge, &merge_size, tmp_ports, tmp_port_len);
 		free(opts->port);
 		opts->port = merge;
-		opts->port_amount = merge_size;
+		opts->port_len = merge_size;
 		free(tmp_ports);
 	}
 
@@ -270,19 +274,19 @@ static bool	add_hostname(options *opts, const str hostname) {
 		return false;
 	}
 
-	tmp = ft_calloc(opts->host_amout + 1, sizeof(host_data));
+	tmp = ft_calloc(opts->host_len + 1, sizeof(host_data));
 	if (tmp == NULL) {
 		free(to_add.basename);
 		return true;
 	}
 
 	if (opts->host != NULL) {
-		ft_memcpy(tmp, opts->host, sizeof(host_data) * opts->host_amout);
+		ft_memcpy(tmp, opts->host, sizeof(host_data) * opts->host_len);
 		free(opts->host);
 	}
 	opts->host = tmp;
-	opts->host[opts->host_amout] = to_add;
-	opts->host_amout += 1;
+	opts->host[opts->host_len] = to_add;
+	opts->host_len += 1;
 	return false;
 }
 
@@ -335,10 +339,10 @@ static host_data	resolve_hostname(const str hostname) {
 	return ret;
 }
 
-static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
+static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_len) {
 	uint16_t tmp;
 
-	if (!ports || (port_amout && *port_amout == 0)) {
+	if (!ports || (port_len && *port_len == 0)) {
 		if (ports)
 			free(ports);
 		ports = ft_calloc(1024, sizeof(uint16_t));
@@ -348,17 +352,17 @@ static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
 		}
 		for (uint16_t i = 1; i < 1025; i++)
 			ports[i - 1] = i;
-		*port_amout = 1024;
+		*port_len = 1024;
 		return ports;
 	}
 
-	if (*port_amout > 1024) {
+	if (*port_len > 1024) {
 		errno = RANGE_SIZEERR;
 		return NULL;
 	}
 
-	for (uint32_t _ = 0; _ < *port_amout; _++) {
-		for (uint32_t i = 0; i < (*port_amout - 1); i++) {
+	for (uint32_t _ = 0; _ < *port_len; _++) {
+		for (uint32_t i = 0; i < (*port_len - 1); i++) {
 			if (ports[i] > ports[i + 1]) {
 				tmp = ports[i + 1];
 				ports[i + 1] = ports[i];
@@ -370,20 +374,20 @@ static uint16_t *sort_port_range(uint16_t *ports, uint32_t *port_amout) {
 	return ports;
 }
 
-static void	add_range_to_ports(uint16_t *ports, uint32_t *port_amount, uint16_t *range, uint32_t range_size) {
+static void	add_range_to_ports(uint16_t *ports, uint32_t *port_len, uint16_t *range, uint32_t range_size) {
 	bool	present;
 	
 	for (uint32_t i = 0; i < range_size; i++) {
 		present = false;
-		for (uint32_t j = 0; j < (*port_amount); j++) {
+		for (uint32_t j = 0; j < (*port_len); j++) {
 			if (ports[j] == range[i]) {
 				present = true;
 				break;
 			}
 		}
 		if (present == false) {
-			ports[(*port_amount)] = range[i];
-			(*port_amount)++;
+			ports[(*port_len)] = range[i];
+			(*port_len)++;
 		}
 	}
 }
@@ -577,11 +581,11 @@ static options default_options() {
 	options ret;
 
 	ret.host = NULL;
-	ret.host_amout = 0;
+	ret.host_len = 0;
 	ret.scans = SCAN_NOTHING;
 	ret.threads = 0;
 	ret.port = NULL;
-	ret.port_amount = 0;
+	ret.port_len = 0;
 
 	return ret;
 }
