@@ -57,7 +57,7 @@ int main() {
 	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
 	ip_addr_t **copy_ips;
 	ip_addr_t *addr;
-	int scan = UDP_SCAN;
+	int scan = SYN_SCAN;
 
 	if (!ips_to_scan || !source_ips) {
 		fprintf(stderr, "Error parsing IPs\n");
