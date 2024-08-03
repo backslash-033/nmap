@@ -24,6 +24,8 @@ Explanations:
 	"(tcp port 33) or (tcp port 1055) or (tcp port 9535)"
 - if the scan is UDP based, isten on UDP and ICMP with the list of src and dest ports
 	ICMP don't use ports like UDP or TCP do. ICMP messages are identified with their type and code
+	When an ICMP unreachable is sent, it contains the IP header along with the 8 first bytes of
+	the UDP (if the triggering request was UDP), effecitvely giving out the original src and dest ports
 	Example: listening for UDP packets:
 		- source port 33
 		- destination ports 1055 and 9535
