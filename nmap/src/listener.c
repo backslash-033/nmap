@@ -14,8 +14,21 @@
 // 	struct pcap_addr *addresses;
 // 	bpf_u_int32 flags;	// PCAP_IF_ interface flags 
 // };
- 
- 
+
+/*
+Explanations:
+- if the scan is TCP based, listen on TCP with the list of src and dest ports
+	Example: listening for TCP packets: 
+		- source port 33
+		- destination ports 1055 and 9535
+	"(tcp port 33) or (tcp port 1055) or (tcp port 9535)"
+- if the scan is UDP based, isten on UDP and ICMP with the list of src and dest ports
+	ICMP don't use ports like UDP or TCP do. ICMP messages are identified with their type and code
+	Example: listening for UDP packets:
+		- source port 33
+		- destination ports 1055 and 9535
+	"udp port 33 or udp port 1055 or udp port 9535 or icmp"
+*/
  
  
 // IP header structure
