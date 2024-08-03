@@ -131,10 +131,10 @@ typedef struct tcpheader_s {
 
 // UDP header structure
 typedef struct udpheader_s {
-    uint16_t src_port;  // Source port
-    uint16_t dest_port; // Destination port
-    uint16_t len;       // Datagram length
-    uint16_t chksum;    // Checksum
+    uint16_t src_port;
+    uint16_t dest_port;
+    uint16_t len;
+    uint16_t chksum;
 } __attribute__((packed)) udpheader_t;
 
 // Pseudo-header for checksum calculation
