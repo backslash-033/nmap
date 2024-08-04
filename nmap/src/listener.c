@@ -5,7 +5,7 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <string.h>
-// #include "ft_nmap.h"
+#include "ft_nmap.h"
  
 // struct pcap_if {
 // 	struct pcap_if *next;
@@ -21,7 +21,7 @@ Explanations:
 	Example: listening for TCP packets: 
 		- source port 33
 		- destination ports 1055 and 9535
-	"(tcp port 33) or (tcp port 1055) or (tcp port 9535)"
+	"tcp port 33 or port 1055 or port 9535"
 - if the scan is UDP based, isten on UDP and ICMP with the list of src and dest ports
 	ICMP don't use ports like UDP or TCP do. ICMP messages are identified with their type and code
 	When an ICMP unreachable is sent, it contains the IP header along with the 8 first bytes of
@@ -29,51 +29,21 @@ Explanations:
 	Example: listening for UDP packets:
 		- source port 33
 		- destination ports 1055 and 9535
-	"udp port 33 or udp port 1055 or udp port 9535 or icmp"
+	"udp port 33 or port 1055 or port 9535 or icmp"
 */
  
- 
-// IP header structure
-typedef struct ipheader_s {
-    uint8_t     ihl:4, ver:4;
-    uint8_t     tos;
-    uint16_t    len;
-    uint16_t    ident;
-    uint16_t    flag:3, offset:13;
-    uint8_t     ttl;
-    uint8_t     protocol;
-    uint16_t    chksum;
-    uint32_t    src_ip;
-    uint32_t    dest_ip;
-} __attribute__((packed)) ipheader_t;
- 
-// TCP header structure
-typedef struct tcpheader_s {
-    uint16_t src_port;
-    uint16_t dest_port;
-    uint32_t seqnum;
-    uint32_t acknum;
-    uint8_t  reserved:4, offset:4;
-    uint8_t  flags;
-    uint16_t win;
-    uint16_t chksum;
-    uint16_t urgptr;
-} __attribute__((packed)) tcpheader_t;
-
-// UDP header structure
-typedef struct udpheader_s {
-    uint16_t src_port;
-    uint16_t dest_port;
-    uint16_t len;
-    uint16_t chksum;
-} __attribute__((packed)) udpheader_t;
-
+typedef struct  s_ilist {
+    int *list;
+    size_t len;
+}               t_ilist;
 
 // TODO ICMP header
 // TODO ICMP handler
  
 
 void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
+    (void)user;
+    (void)header;
     printf("Entering UDP Packet handler\n");
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     if (iph->protocol == IPPROTO_UDP) {
@@ -91,6 +61,8 @@ void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
 }
 
 void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
+    (void)user;
+    (void)header;
     printf("Entering TCP Packet handler\n");
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     if (iph->protocol == IPPROTO_TCP) {
@@ -107,19 +79,104 @@ void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
     }
 }
 
-int main(int ac, char **av) {
+void free_linked_list(t_list **list) {
+    t_list *current;
+    t_list *next_node;
+
+    if (list == NULL || *list == NULL) {
+        return;
+    }
+    current = *list;
+    while (current != NULL) {
+        next_node = current->next;
+        free(current->content);
+        free(current);
+        current = next_node;
+    }
+    *list = NULL;
+}
+
+char *create_filter(t_ilist scans, t_ilist dest_ports) {
+    /*
+    
+
+    Note: the spaces in the strings are intentional, DO NOT REMOVE THEM
+    */
+    char *filter;
+    char *scan;
+    char buff[12]; // for "port 65535 " + null terminator
+    size_t len_filter;
+
+    if (scans.len == 2) {
+        scan = strdup("(tcp or udp) ");
+        len_filter = strlen("(tcp or udp) ") * dest_ports.len + strlen("or icmp"); // "or icmp" is at the end of the filter string
+    }
+    else if (scans.list[0] == UDP_SCAN) {
+        scan = strdup("udp ");
+        len_filter = strlen("udp ") * dest_ports.len + strlen("or icmp"); // "or icmp" is at the end of the filter string
+    }
+    else {
+        scan = strdup("tcp ");
+        len_filter = strlen("tcp ") * dest_ports.len;
+    }
+    if (!scan) {
+        perror("malloc");
+        return NULL;
+    }
+    len_filter += strlen("or ") * (dest_ports.len - 1); // no "or " after final port, if icmp, extra "or " is already counted
+    
+    t_list *port_list = NULL;
+    for (size_t i = 0; i < dest_ports.len; i++) {
+        len_filter += snprintf(buff, sizeof(buff), "port %d ", dest_ports.list[i]);
+        t_list *next_node = ft_lstnew(strdup(buff));
+        if (!next_node) {
+            free(scan);
+            free_linked_list(&port_list);
+            return NULL;
+        }
+        ft_lstadd_back(&port_list, next_node);
+    }
+    filter = malloc(len_filter + 1);
+    if (!filter) {
+        free(scan);
+        free_linked_list(&port_list);
+        return NULL;
+    }
+    filter[0] = 0;
+
+    t_list *current = port_list;
+    while (current) {
+        strcat(filter, scan);
+        strcat(filter, (char *)current->content);
+        current = current->next;
+        if (current)
+            strcat(filter, "or ");
+    }
+    if (scans.len == 2 || scans.list[0] == UDP_SCAN)
+        strcat(filter, "or icmp");
+    free(scan);
+    free_linked_list(&port_list);
+    return filter;
+}
+
+int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
     pcap_t *handle;
-    struct bpf_program fp;
     bpf_u_int32 net;
     bpf_u_int32 mask;
  
-    if (ac != 3) {
-        fprintf(stderr, "Usage: %s <interface> <protocol name>\n", av[0]);
+    char *filter;
+    struct bpf_program compiled_filter;
+
+    // TODO free me at the end and on error
+    filter = create_filter(scans, dest_ports);
+    if (!filter) {
+        perror("malloc");
         return 1;
     }
+    printf("%s\n", filter);
 
     // Find all devices
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {
@@ -131,14 +188,13 @@ int main(int ac, char **av) {
     device = alldevs;
     for (; device != NULL; device = device->next) {
         printf("Device name: %s\n", device->name);
-        if (!strcmp(device->name, av[1]))
+        if (!strcmp(device->name, interface))
             break;
     }
     if (device == NULL) {
         fprintf(stderr, "No devices found.\n");
         return 1;
     }
-
 
     // Get network number and mask
     if (pcap_lookupnet(device->name, &net, &mask, errbuf) == -1) {
@@ -150,27 +206,69 @@ int main(int ac, char **av) {
     // Open the device for packet capture
     handle = pcap_open_live(device->name, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
+        // TODO free all devices?
         fprintf(stderr, "Couldn't open device %s: %s\n", device->name, errbuf);
         return 2;
     }
  
     // Compile and set the filter
-    if (pcap_compile(handle, &fp, av[2], 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", av[2], pcap_geterr(handle));
+    if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
+        // TODO free all devices?
+        // TODO close handle?
+        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
         return 2;
     }
-    if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", av[2], pcap_geterr(handle));
+    if (pcap_setfilter(handle, &compiled_filter) == -1) {
+        // TODO free all devices?
+        // TODO close handle?
+        fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
         return 2;
     }
     // Start capturing packets
-    if (!strcmp(av[2], "tcp"))
+    // TODO create a packet_handler for TCP and UDP
+    if (!strncmp(filter, "tcp", 3))
         pcap_loop(handle, -1, tcp_packet_handler, NULL);
-    else if (!strcmp(av[2], "udp"))
+    else if (!strcmp(filter, "udp"))
         pcap_loop(handle, -1, udp_packet_handler, NULL);
     else
         fprintf(stderr, "Unrecognized filter\n");
     pcap_freealldevs(alldevs);
     pcap_close(handle);
+    return 0;
+}
+
+
+int main(int ac, char **av) {
+    // TODO remove me, only for debug
+    t_ilist scans;
+    t_ilist dest_ports;
+
+    if (ac != 3) {
+        fprintf(stderr, "Usage: %s <interface> <protocol name>\n", av[0]);
+        return 1;
+    }
+    if (!strcmp("tcp", av[2])) {
+        scans.list = malloc(sizeof(int));
+        scans.list[0] = SYN_SCAN;
+        scans.len = 1;
+    } else if (!strcmp("udp", av[2])) {
+        scans.list = malloc(sizeof(int));
+        scans.list[0] = UDP_SCAN;
+        scans.len = 1;
+    } else {
+        scans.list = malloc(2 * sizeof(int));
+        scans.list[0] = UDP_SCAN;
+        scans.list[1] = SYN_SCAN;
+        scans.len = 2;
+    }
+
+    dest_ports.list = malloc(2 * sizeof(int));
+    dest_ports.list[0] = 80;
+    dest_ports.list[1] = 4350;
+    dest_ports.len = 2;
+
+    listener(av[1], scans, dest_ports);
+    free(scans.list);
+    free(dest_ports.list);
     return 0;
 }
