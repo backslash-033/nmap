@@ -63,7 +63,6 @@ void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
 void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)user;
     (void)header;
-    printf("Entering TCP Packet handler\n");
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     if (iph->protocol == IPPROTO_TCP) {
         tcpheader_t *tcph = (tcpheader_t *)(packet + 14 + iph->ihl * 4); // Skip IP header
@@ -73,9 +72,12 @@ void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
         memcpy(&src_ip, &iph->src_ip, sizeof(src_ip));
         memcpy(&dest_ip, &iph->dest_ip, sizeof(dest_ip));
  
-        printf("Captured TCP packet from %s:%d to %s:%d\n",
-               inet_ntoa(src_ip), ntohs(tcph->src_port),
-               inet_ntoa(dest_ip), ntohs(tcph->dest_port));
+
+        if (tcph->flags & RST) {
+            printf("tcp/%d closed\n", ntohs(tcph->src_port));
+        } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
+            printf("tcp/%d open\n", ntohs(tcph->src_port));
+        }
     }
 }
 
@@ -105,15 +107,15 @@ char *create_filter(t_ilist scans, t_ilist dest_ports) {
     char *filter;
     char *scan;
     char buff[12]; // for "port 65535 " + null terminator
-    size_t len_filter;
+    size_t len_filter = strlen("or icmp");
 
     if (scans.len == 2) {
         scan = strdup("(tcp or udp) ");
-        len_filter = strlen("(tcp or udp) ") * dest_ports.len + strlen("or icmp"); // "or icmp" is at the end of the filter string
+        len_filter = strlen("(tcp or udp) ") * dest_ports.len;
     }
     else if (scans.list[0] == UDP_SCAN) {
         scan = strdup("udp ");
-        len_filter = strlen("udp ") * dest_ports.len + strlen("or icmp"); // "or icmp" is at the end of the filter string
+        len_filter = strlen("udp ") * dest_ports.len;
     }
     else {
         scan = strdup("tcp ");
@@ -152,8 +154,7 @@ char *create_filter(t_ilist scans, t_ilist dest_ports) {
         if (current)
             strcat(filter, "or ");
     }
-    if (scans.len == 2 || scans.list[0] == UDP_SCAN)
-        strcat(filter, "or icmp");
+    strcat(filter, "or icmp");
     free(scan);
     free_linked_list(&port_list);
     return filter;
@@ -262,10 +263,15 @@ int main(int ac, char **av) {
         scans.len = 2;
     }
 
-    dest_ports.list = malloc(2 * sizeof(int));
+    dest_ports.list = malloc(6 * sizeof(int));
     dest_ports.list[0] = 80;
     dest_ports.list[1] = 4350;
-    dest_ports.len = 2;
+    dest_ports.list[2] = 4435;
+    dest_ports.list[3] = 1252;
+    dest_ports.list[4] = 6772;
+    dest_ports.list[5] = 443;
+
+    dest_ports.len = 6;
 
     listener(av[1], scans, dest_ports);
     free(scans.list);
