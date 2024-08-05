@@ -137,6 +137,16 @@ typedef struct udpheader_s {
     uint16_t chksum;
 } __attribute__((packed)) udpheader_t;
 
+// ICMP header structure
+typedef struct icmpheader_s {
+    uint8_t     type; 
+    uint8_t     code;
+    uint16_t    checksum;
+    uint16_t    id;   
+    uint16_t    sequence;
+    uint32_t    unused;
+} __attribute__((packed)) icmpheader_t;
+
 // Pseudo-header for checksum calculation
 struct pseudo_header {
     uint32_t src_ip;

@@ -58,16 +58,10 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
     (void)user;
     (void)header;
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
-    void *proto_packet = (void *)(packet + 14 + iph->ihl * 4);
+    void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP heade
 
     if (iph->protocol == IPPROTO_TCP) {
-        tcpheader_t *tcph = (tcpheader_t *)proto_packet; // Skip IP header
- 
-        // Copy packed members to aligned local variables
-        struct in_addr src_ip, dest_ip;
-        memcpy(&src_ip, &iph->src_ip, sizeof(src_ip));
-        memcpy(&dest_ip, &iph->dest_ip, sizeof(dest_ip));
- 
+        tcpheader_t *tcph = (tcpheader_t *)proto_packet;
 
         if (tcph->flags & RST) {
             printf("tcp/%-5d closed\n", ntohs(tcph->src_port));
@@ -76,18 +70,14 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
         }
     }
     if (iph->protocol == IPPROTO_UDP) {
-        udpheader_t *udph = (udpheader_t *)proto_packet; // Skip IP header
+        udpheader_t *udph = (udpheader_t *)proto_packet;
 
-            // Copy packed members to aligned local variables
-            struct in_addr src_ip, dest_ip;
-            memcpy(&src_ip, &iph->src_ip, sizeof(src_ip));
-            memcpy(&dest_ip, &iph->dest_ip, sizeof(dest_ip));
-
-            printf("Captured UDP packet from %s:%d to %s:%d\n",
-                    inet_ntoa(src_ip), ntohs(udph->src_port),
-                    inet_ntoa(dest_ip), ntohs(udph->dest_port));
+        printf("udp/%-5d open\n", ntohs(udph->src_port));
     }
     if (iph->protocol == IPPROTO_ICMP) {
+        icmpheader_t *icmph = (icmpheader_t *)proto_packet;
+
+        
         // TODO ICMP
         exit(1);
     }
