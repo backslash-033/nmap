@@ -31,15 +31,9 @@ Explanations:
 		- destination ports 1055 and 9535
 	"udp port 33 or port 1055 or port 9535 or icmp"
 */
- 
-typedef struct  s_ilist {
-    int *list;
-    size_t len;
-}               t_ilist;
 
 // TODO ICMP header
 // TODO ICMP handler
- 
 
 void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)user;
@@ -60,12 +54,14 @@ void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
     }
 }
 
-void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
+static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)user;
     (void)header;
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
+    void *proto_packet = (void *)(packet + 14 + iph->ihl * 4);
+
     if (iph->protocol == IPPROTO_TCP) {
-        tcpheader_t *tcph = (tcpheader_t *)(packet + 14 + iph->ihl * 4); // Skip IP header
+        tcpheader_t *tcph = (tcpheader_t *)proto_packet; // Skip IP header
  
         // Copy packed members to aligned local variables
         struct in_addr src_ip, dest_ip;
@@ -74,90 +70,27 @@ void tcp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
  
 
         if (tcph->flags & RST) {
-            printf("tcp/%d closed\n", ntohs(tcph->src_port));
+            printf("tcp/%-5d closed\n", ntohs(tcph->src_port));
         } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
-            printf("tcp/%d open\n", ntohs(tcph->src_port));
+            printf("tcp/%-5d open\n", ntohs(tcph->src_port));
         }
     }
-}
+    if (iph->protocol == IPPROTO_UDP) {
+        udpheader_t *udph = (udpheader_t *)proto_packet; // Skip IP header
 
-void free_linked_list(t_list **list) {
-    t_list *current;
-    t_list *next_node;
+            // Copy packed members to aligned local variables
+            struct in_addr src_ip, dest_ip;
+            memcpy(&src_ip, &iph->src_ip, sizeof(src_ip));
+            memcpy(&dest_ip, &iph->dest_ip, sizeof(dest_ip));
 
-    if (list == NULL || *list == NULL) {
-        return;
+            printf("Captured UDP packet from %s:%d to %s:%d\n",
+                    inet_ntoa(src_ip), ntohs(udph->src_port),
+                    inet_ntoa(dest_ip), ntohs(udph->dest_port));
     }
-    current = *list;
-    while (current != NULL) {
-        next_node = current->next;
-        free(current->content);
-        free(current);
-        current = next_node;
+    if (iph->protocol == IPPROTO_ICMP) {
+        // TODO ICMP
+        exit(1);
     }
-    *list = NULL;
-}
-
-char *create_filter(t_ilist scans, t_ilist dest_ports) {
-    /*
-    
-
-    Note: the spaces in the strings are intentional, DO NOT REMOVE THEM
-    */
-    char *filter;
-    char *scan;
-    char buff[12]; // for "port 65535 " + null terminator
-    size_t len_filter = strlen("or icmp");
-
-    if (scans.len == 2) {
-        scan = strdup("(tcp or udp) ");
-        len_filter = strlen("(tcp or udp) ") * dest_ports.len;
-    }
-    else if (scans.list[0] == UDP_SCAN) {
-        scan = strdup("udp ");
-        len_filter = strlen("udp ") * dest_ports.len;
-    }
-    else {
-        scan = strdup("tcp ");
-        len_filter = strlen("tcp ") * dest_ports.len;
-    }
-    if (!scan) {
-        perror("malloc");
-        return NULL;
-    }
-    len_filter += strlen("or ") * (dest_ports.len - 1); // no "or " after final port, if icmp, extra "or " is already counted
-    
-    t_list *port_list = NULL;
-    for (size_t i = 0; i < dest_ports.len; i++) {
-        len_filter += snprintf(buff, sizeof(buff), "port %d ", dest_ports.list[i]);
-        t_list *next_node = ft_lstnew(strdup(buff));
-        if (!next_node) {
-            free(scan);
-            free_linked_list(&port_list);
-            return NULL;
-        }
-        ft_lstadd_back(&port_list, next_node);
-    }
-    filter = malloc(len_filter + 1);
-    if (!filter) {
-        free(scan);
-        free_linked_list(&port_list);
-        return NULL;
-    }
-    filter[0] = 0;
-
-    t_list *current = port_list;
-    while (current) {
-        strcat(filter, scan);
-        strcat(filter, (char *)current->content);
-        current = current->next;
-        if (current)
-            strcat(filter, "or ");
-    }
-    strcat(filter, "or icmp");
-    free(scan);
-    free_linked_list(&port_list);
-    return filter;
 }
 
 int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
@@ -169,8 +102,29 @@ int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
     bpf_u_int32 mask;
  
     char *filter;
-    struct bpf_program compiled_filter;
+    struct bpf_program  compiled_filter;
+    t_response_tracker  tracker;
+    t_ilist tcp_responses;
+    t_ilist udp_responses;
 
+    // Initalize response tracker
+    memset(&tracker, 0, sizeof(t_response_tracker));
+    tcp_responses.list = calloc(sizeof(int), dest_ports.len);
+    if (!tcp_responses.list) {
+        perror("malloc");
+        return 1;
+    }
+    tcp_responses.len = dest_ports.len;
+    udp_responses.list = calloc(sizeof(int), dest_ports.len);
+    if (!udp_responses.list) {
+        perror("malloc");
+        return 1;
+    }
+    udp_responses.len = dest_ports.len;
+    tracker.tcp = &tcp_responses;
+    tracker.udp = &udp_responses;
+    tracker.dest_ports = &dest_ports;
+    
     // TODO free me at the end and on error
     filter = create_filter(scans, dest_ports);
     if (!filter) {
@@ -226,13 +180,7 @@ int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
         return 2;
     }
     // Start capturing packets
-    // TODO create a packet_handler for TCP and UDP
-    if (!strncmp(filter, "tcp", 3))
-        pcap_loop(handle, -1, tcp_packet_handler, NULL);
-    else if (!strcmp(filter, "udp"))
-        pcap_loop(handle, -1, udp_packet_handler, NULL);
-    else
-        fprintf(stderr, "Unrecognized filter\n");
+    pcap_loop(handle, -1, packet_handler, (u_char *)&tracker);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
     return 0;
@@ -268,7 +216,7 @@ int main(int ac, char **av) {
     dest_ports.list[1] = 4350;
     dest_ports.list[2] = 4435;
     dest_ports.list[3] = 1252;
-    dest_ports.list[4] = 6772;
+    dest_ports.list[4] = 65535;
     dest_ports.list[5] = 443;
 
     dest_ports.len = 6;

@@ -1,6 +1,8 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
 			listener		\
+			filter			\
+			utils			\
 		))
 
 # TODO change back to ft_nmap

@@ -146,6 +146,18 @@ struct pseudo_header {
     uint16_t length;
 } __attribute__((packed));
 
+
+typedef struct  s_ilist {
+    int *list;
+    size_t len;
+}               t_ilist;
+
+typedef struct  s_reponse_tracker {
+    t_ilist     *tcp;
+    t_ilist     *udp;
+    t_ilist     *dest_ports;
+}               t_response_tracker;
+
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
     int     network;
@@ -158,11 +170,6 @@ typedef struct ip_addr_s {
 #define BUFFER_SIZE 4096
 #define DEBUG true
 #define NMAP_PORT "3490"
-
-void    	print_tcp_header(tcpheader_t tcph);
-void    	print_ip_header(ipheader_t iph);
-ip_addr_t	**parse_ips(char **ips);
-void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 // main.c
 void		display_port_range(uint16_t *array, uint32_t size);
@@ -204,8 +211,15 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             char *data, int data_len);
 
 
-// debug.c
-void 		print_ip_header(ipheader_t iph);
-void 		print_tcp_header(tcpheader_t tcph);
+// filter.c
+char *create_filter(t_ilist scans, t_ilist dest_ports);
+
+// utils.c
+void 		free_formatted_ips(ip_addr_t **formatted_ips);
+
+
+// parsing.c
+ip_addr_t	**parse_ips(char **ips);
+void free_linked_list(t_list **list);
 
 #endif
