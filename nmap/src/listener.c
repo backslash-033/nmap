@@ -70,9 +70,12 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
     void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP heade
     t_port_state_vector *states = (t_port_state_vector *)user;
     int src_port = 0;
+    udpheader_t *udph;
+    tcpheader_t *tcph;
+    icmpheader_t *icmph;
 
     if (iph->protocol == IPPROTO_TCP) {
-        tcpheader_t *tcph = (tcpheader_t *)proto_packet;
+        tcph = (tcpheader_t *)proto_packet;
 
         src_port = ntohs(tcph->src_port);
         if (tcph->flags & RST) {
@@ -82,7 +85,7 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
         }
     }
     if (iph->protocol == IPPROTO_UDP) {
-        udpheader_t *udph = (udpheader_t *)proto_packet;
+        udph = (udpheader_t *)proto_packet;
 
         src_port = ntohs(udph->src_port);
         set_port_state(POSITIVE, src_port, states);
@@ -90,11 +93,9 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
         printf("udp/%-5d open\n", ntohs(udph->src_port));
     }
     if (iph->protocol == IPPROTO_ICMP) {
-        icmpheader_t *icmph = (icmpheader_t *)proto_packet;
-        (void)icmph;
-        
-        // TODO ICMP
-        exit(1);
+        printf("Detected an ICMP packet");
+        icmph = (icmpheader_t *)proto_packet;
+
     }
 }
 
