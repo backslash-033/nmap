@@ -6,34 +6,6 @@
 #include <netinet/tcp.h>
 #include <string.h>
 #include "ft_nmap.h"
- 
-// struct pcap_if {
-// 	struct pcap_if *next;
-// 	char *name;		// name to hand to "pcap_open_live()"
-// 	char *description;	// textual description of interface, or NULL 
-// 	struct pcap_addr *addresses;
-// 	bpf_u_int32 flags;	// PCAP_IF_ interface flags 
-// };
-
-/*
-Explanations:
-- if the scan is TCP based, listen on TCP and ICMP with the list of src and dest ports
-	Example: listening for TCP packets: 
-		- source port 33
-		- destination ports 1055 and 9535
-	"tcp port 33 or port 1055 or port 9535"
-- if the scan is UDP based, isten on UDP and ICMP with the list of src and dest ports
-	ICMP don't use ports like UDP or TCP do. ICMP messages are identified with their type and code
-	When an ICMP unreachable is sent, it contains the IP header along with the 8 first bytes of
-	the UDP (if the triggering request was UDP), effecitvely giving out the original src and dest ports
-	Example: listening for UDP packets:
-		- source port 33
-		- destination ports 1055 and 9535
-	"udp port 33 or port 1055 or port 9535 or icmp"
-*/
-
-// TODO ICMP header
-// TODO ICMP handler
 
 void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
     for (size_t i = 0; i < states->len; i++) {
