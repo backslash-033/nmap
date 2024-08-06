@@ -95,11 +95,11 @@ enum e_scans {
     UDP_SCAN = -1
 };
 
-// Results of the scans. Sum the port states to form open|filtered...
-enum e_port_states {
-	OPEN = 1,
-	CLOSED = 1 << 1,
-	FILTERED = 1 << 2,
+enum e_responses {
+	POSITIVE = 1,       // TCP Response, UDP Response
+	NEGATIVE = 1 << 1,  // TCP RST
+	BAD      = 1 << 2,  // ICMP Unreachable
+    NOTHING  = 1 << 3   // No response 
 };
 
 // IP header structure
@@ -160,18 +160,24 @@ struct pseudo_header {
 typedef struct  s_ilist {
     int *list;
     size_t len;
-}               t_ilist;
-
-typedef struct  s_reponse_tracker {
-    t_ilist     *tcp;
-    t_ilist     *udp;
-    t_ilist     *dest_ports;
-}               t_response_tracker;
+}               t_vector;
 
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
     int     network;
 }           ip_addr_t;
+
+typedef struct  s_port_state {
+    u_int16_t   port;  // the port number
+    u_int8_t    state; // see e_port_states
+}               t_port_state;
+
+typedef struct      s_port_state_vector {
+    t_port_state    *ports;
+    size_t          len;
+}                   t_port_state_vector;
+
+
 
 // TODO maybe remove later
 #define PORTS_SCANNED 90
@@ -222,8 +228,7 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 
 
 // filter.c
-char *create_filter(t_ilist scans, t_ilist dest_ports);
-
+char *create_filter(int scan, t_port_state_vector dest_ports);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 

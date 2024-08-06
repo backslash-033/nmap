@@ -1,29 +1,24 @@
 #include "ft_nmap.h"
 
-char *create_filter(t_ilist scans, t_ilist dest_ports) {
+char *create_filter(int scan, t_port_state_vector dest_ports) {
     /*
-    
-
-    Note: the spaces in the strings are intentional, DO NOT REMOVE THEM
+        Note: the spaces in the strings are intentional, DO NOT REMOVE THEM
     */
     char *filter;
-    char *scan;
+    char *scan_name;
     char buff[12]; // for "port 65535 " + null terminator
     size_t len_filter = strlen("or icmp");
 
-    if (scans.len == 2) {
-        scan = strdup("(tcp or udp) ");
-        len_filter += strlen("(tcp or udp) ") * dest_ports.len;
-    }
-    else if (scans.list[0] == UDP_SCAN) {
-        scan = strdup("udp ");
+
+    if (scan == UDP_SCAN) {
+        scan_name = strdup("udp ");
         len_filter += strlen("udp ") * dest_ports.len;
     }
     else {
-        scan = strdup("tcp ");
+        scan_name = strdup("tcp ");
         len_filter += strlen("tcp ") * dest_ports.len;
     }
-    if (!scan) {
+    if (!scan_name) {
         perror("malloc");
         return NULL;
     }
@@ -31,10 +26,10 @@ char *create_filter(t_ilist scans, t_ilist dest_ports) {
     
     t_list *port_list = NULL;
     for (size_t i = 0; i < dest_ports.len; i++) {
-        len_filter += snprintf(buff, sizeof(buff), "port %d ", dest_ports.list[i]);
+        len_filter += snprintf(buff, sizeof(buff), "port %d ", dest_ports.ports[i].port);
         t_list *next_node = ft_lstnew(strdup(buff));
         if (!next_node) {
-            free(scan);
+            free(scan_name);
             free_linked_list(&port_list);
             return NULL;
         }
@@ -42,7 +37,7 @@ char *create_filter(t_ilist scans, t_ilist dest_ports) {
     }
     filter = malloc(len_filter + 1);
     if (!filter) {
-        free(scan);
+        free(scan_name);
         free_linked_list(&port_list);
         return NULL;
     }
@@ -50,14 +45,14 @@ char *create_filter(t_ilist scans, t_ilist dest_ports) {
 
     t_list *current = port_list;
     while (current) {
-        strcat(filter, scan);
+        strcat(filter, scan_name);
         strcat(filter, (char *)current->content);
         current = current->next;
         if (current)
             strcat(filter, "or ");
     }
     strcat(filter, "or icmp");
-    free(scan);
+    free(scan_name);
     free_linked_list(&port_list);
     return filter;
 }

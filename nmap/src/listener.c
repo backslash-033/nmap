@@ -17,7 +17,7 @@
 
 /*
 Explanations:
-- if the scan is TCP based, listen on TCP with the list of src and dest ports
+- if the scan is TCP based, listen on TCP and ICMP with the list of src and dest ports
 	Example: listening for TCP packets: 
 		- source port 33
 		- destination ports 1055 and 9535
@@ -54,69 +54,64 @@ void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_
     }
 }
 
+void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
+    for (size_t i = 0; i < states->len; i++) {
+        if (states->ports[i].port == port) {
+            states->ports[i].port = port_state;
+            break;
+        }
+    }
+}
+
 static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)user;
     (void)header;
     ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP heade
+    t_port_state_vector *states = (t_port_state_vector *)user;
+    int src_port = 0;
 
     if (iph->protocol == IPPROTO_TCP) {
         tcpheader_t *tcph = (tcpheader_t *)proto_packet;
 
+        src_port = ntohs(tcph->src_port);
         if (tcph->flags & RST) {
-            printf("tcp/%-5d closed\n", ntohs(tcph->src_port));
+            set_port_state(NEGATIVE, src_port, states);
         } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
-            printf("tcp/%-5d open\n", ntohs(tcph->src_port));
+            set_port_state(POSITIVE, src_port, states);
         }
     }
     if (iph->protocol == IPPROTO_UDP) {
         udpheader_t *udph = (udpheader_t *)proto_packet;
 
+        src_port = ntohs(udph->src_port);
+        set_port_state(POSITIVE, src_port, states);
+
         printf("udp/%-5d open\n", ntohs(udph->src_port));
     }
     if (iph->protocol == IPPROTO_ICMP) {
         icmpheader_t *icmph = (icmpheader_t *)proto_packet;
-
+        (void)icmph;
         
         // TODO ICMP
         exit(1);
     }
 }
 
-int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
+int listener(char *interface, int scan, t_port_state_vector states) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
     pcap_t *handle;
     bpf_u_int32 net;
     bpf_u_int32 mask;
- 
+    (void) states;
+
     char *filter;
     struct bpf_program  compiled_filter;
-    t_response_tracker  tracker;
-    t_ilist tcp_responses;
-    t_ilist udp_responses;
 
-    // Initalize response tracker
-    memset(&tracker, 0, sizeof(t_response_tracker));
-    tcp_responses.list = calloc(sizeof(int), dest_ports.len);
-    if (!tcp_responses.list) {
-        perror("malloc");
-        return 1;
-    }
-    tcp_responses.len = dest_ports.len;
-    udp_responses.list = calloc(sizeof(int), dest_ports.len);
-    if (!udp_responses.list) {
-        perror("malloc");
-        return 1;
-    }
-    udp_responses.len = dest_ports.len;
-    tracker.tcp = &tcp_responses;
-    tracker.udp = &udp_responses;
-    tracker.dest_ports = &dest_ports;
-    
     // TODO free me at the end and on error
-    filter = create_filter(scans, dest_ports);
+    filter = create_filter(scan, states);
     if (!filter) {
         perror("malloc");
         return 1;
@@ -170,7 +165,7 @@ int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
         return 2;
     }
     // Start capturing packets
-    pcap_loop(handle, -1, packet_handler, (u_char *)&tracker);
+    pcap_loop(handle, -1, packet_handler, (u_char *)&states);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
     return 0;
@@ -179,40 +174,34 @@ int listener(char *interface, t_ilist scans, t_ilist dest_ports) {
 
 int main(int ac, char **av) {
     // TODO remove me, only for debug
-    t_ilist scans;
-    t_ilist dest_ports;
+    t_port_state_vector states;
+
+    int scan;
 
     if (ac != 3) {
         fprintf(stderr, "Usage: %s <interface> <protocol name>\n", av[0]);
         return 1;
     }
     if (!strcmp("tcp", av[2])) {
-        scans.list = malloc(sizeof(int));
-        scans.list[0] = SYN_SCAN;
-        scans.len = 1;
+        scan = SYN_SCAN;
     } else if (!strcmp("udp", av[2])) {
-        scans.list = malloc(sizeof(int));
-        scans.list[0] = UDP_SCAN;
-        scans.len = 1;
+        scan = UDP_SCAN;
     } else {
-        scans.list = malloc(2 * sizeof(int));
-        scans.list[0] = UDP_SCAN;
-        scans.list[1] = SYN_SCAN;
-        scans.len = 2;
+        fprintf(stderr, "Please enter a valid scan name: tcp, udp\n");
+        return 1;
     }
 
-    dest_ports.list = malloc(6 * sizeof(int));
-    dest_ports.list[0] = 80;
-    dest_ports.list[1] = 4350;
-    dest_ports.list[2] = 4435;
-    dest_ports.list[3] = 1252;
-    dest_ports.list[4] = 65535;
-    dest_ports.list[5] = 443;
+    states.ports = malloc(6 * sizeof(int));
+    states.ports[0].port = 80;
+    states.ports[1].port = 4350;
+    states.ports[2].port = 4435;
+    states.ports[3].port = 1252;
+    states.ports[4].port = 65535;
+    states.ports[5].port = 443;
 
-    dest_ports.len = 6;
-
-    listener(av[1], scans, dest_ports);
-    free(scans.list);
-    free(dest_ports.list);
+    states.len = 6;
+    (void)scan;
+    (void)states;
+    listener(av[1], scan, states);
     return 0;
 }
