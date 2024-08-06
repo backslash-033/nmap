@@ -104,16 +104,16 @@ enum e_responses {
 
 // IP header structure
 typedef struct ipheader_s {
-    unsigned char       ihl:4, ver:4;
-    unsigned char       tos;
-    unsigned short int  len;
-    unsigned short int  ident;
-    unsigned short int  flag:3, offset:13;
-    unsigned char       ttl;
-    unsigned char       protocol;
-    unsigned short int  chksum;
-    unsigned int        src_ip;
-    unsigned int        dest_ip;
+    uint8_t  ihl:4, ver:4;
+    uint8_t  tos;
+    uint16_t len;
+    uint16_t ident;
+    uint16_t flag:3, offset:13;
+    uint8_t  ttl;
+    uint8_t  protocol;
+    uint16_t chksum;
+    uint32_t src_ip;
+    uint32_t dest_ip;
 } __attribute__((packed)) ipheader_t;
 
 // TCP header structure
