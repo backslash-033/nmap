@@ -38,19 +38,32 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
             printf("tcp/%-5d open\n", ntohs(tcph->src_port)); // TODO remove me
             set_port_state(POSITIVE, src_port, states);
         }
-    }
-    if (iph->protocol == IPPROTO_UDP) {
+    } else if (iph->protocol == IPPROTO_UDP) {
         udph = (udpheader_t *)proto_packet;
 
         src_port = ntohs(udph->src_port);
         set_port_state(POSITIVE, src_port, states);
 
         printf("udp/%-5d open\n", ntohs(udph->src_port)); // TODO remove me
-    }
-    if (iph->protocol == IPPROTO_ICMP) {
-        printf("Detected an ICMP packet"); // TODO remove me
+    } else if (iph->protocol == IPPROTO_ICMP) {
+        printf("Detected an ICMP packet\n"); // TODO remove me
         icmph = (icmpheader_t *)proto_packet;
-
+        icmp_visualizer(icmph);
+        if (icmph->type == 3 && icmph->code == 3) {
+            proto_packet = (void *)icmph + sizeof(icmpheader_t);
+            ipheader_t *original_iph = (ipheader_t *)proto_packet;  
+            ip_visualizer(original_iph);
+            proto_packet += original_iph->ihl * 4;
+            if (original_iph->protocol == IPPROTO_UDP) {
+                udph = (udpheader_t *)proto_packet;
+                udp_visualizer(udph);
+            } else if (original_iph->protocol == IPPROTO_TCP) {
+                tcph = (tcpheader_t *)proto_packet;
+                tcp_visualizer(tcph);
+            } else {
+                fprintf(stderr, "Unknown protocol\n");
+            }
+        }
     }
 }
 

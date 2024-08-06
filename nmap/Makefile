@@ -3,6 +3,7 @@ SRC	=	$(addsuffix .c,		\
 			listener		\
 			filter			\
 			utils			\
+			visualizers		\
 		))
 
 # TODO change back to ft_nmap

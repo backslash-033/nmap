@@ -232,9 +232,14 @@ char *create_filter(int scan, t_port_state_vector dest_ports);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
-
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
 void free_linked_list(t_list **list);
+
+// visualizers.c // TODO remove me
+void icmp_visualizer(icmpheader_t *icmph);
+void udp_visualizer(udpheader_t *udph);
+void tcp_visualizer(tcpheader_t *tcph);
+void ip_visualizer(ipheader_t *iph);
 
 #endif
