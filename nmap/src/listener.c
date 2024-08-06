@@ -35,25 +35,6 @@ Explanations:
 // TODO ICMP header
 // TODO ICMP handler
 
-void udp_packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
-    (void)user;
-    (void)header;
-    printf("Entering UDP Packet handler\n");
-    ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
-    if (iph->protocol == IPPROTO_UDP) {
-        udpheader_t *udph = (udpheader_t *)(packet + 14 + iph->ihl * 4); // Skip IP header
- 
-        // Copy packed members to aligned local variables
-        struct in_addr src_ip, dest_ip;
-        memcpy(&src_ip, &iph->src_ip, sizeof(src_ip));
-        memcpy(&dest_ip, &iph->dest_ip, sizeof(dest_ip));
- 
-        printf("Captured UDP packet from %s:%d to %s:%d\n",
-               inet_ntoa(src_ip), ntohs(udph->src_port),
-               inet_ntoa(dest_ip), ntohs(udph->dest_port));
-    }
-}
-
 void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
     for (size_t i = 0; i < states->len; i++) {
         if (states->ports[i].port == port) {
