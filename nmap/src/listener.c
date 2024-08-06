@@ -32,8 +32,10 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
 
         src_port = ntohs(tcph->src_port);
         if (tcph->flags & RST) {
+            printf("tcp/%-5d closed\n", ntohs(tcph->src_port)); // TODO remove me
             set_port_state(NEGATIVE, src_port, states);
         } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
+            printf("tcp/%-5d open\n", ntohs(tcph->src_port)); // TODO remove me
             set_port_state(POSITIVE, src_port, states);
         }
     }
@@ -43,10 +45,10 @@ static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const
         src_port = ntohs(udph->src_port);
         set_port_state(POSITIVE, src_port, states);
 
-        printf("udp/%-5d open\n", ntohs(udph->src_port));
+        printf("udp/%-5d open\n", ntohs(udph->src_port)); // TODO remove me
     }
     if (iph->protocol == IPPROTO_ICMP) {
-        printf("Detected an ICMP packet");
+        printf("Detected an ICMP packet"); // TODO remove me
         icmph = (icmpheader_t *)proto_packet;
 
     }

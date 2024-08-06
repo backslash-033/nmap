@@ -11,12 +11,12 @@ char *create_filter(int scan, t_port_state_vector dest_ports) {
 
 
     if (scan == UDP_SCAN) {
-        scan_name = strdup("udp ");
-        len_filter += strlen("udp ") * dest_ports.len;
+        scan_name = strdup("udp src ");
+        len_filter += strlen("udp src ") * dest_ports.len;
     }
     else {
-        scan_name = strdup("tcp ");
-        len_filter += strlen("tcp ") * dest_ports.len;
+        scan_name = strdup("tcp src ");
+        len_filter += strlen("tcp src ") * dest_ports.len;
     }
     if (!scan_name) {
         perror("malloc");
