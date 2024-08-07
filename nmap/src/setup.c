@@ -20,8 +20,8 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     } else if (protocol == IPPROTO_UDP) {
         iph.len = htons(sizeof(ipheader_t) + sizeof(udpheader_t) + data_len);
     }
-	iph.ident = htons(54321); // TODO make me random
-    iph.flag = 0; // TODO study me
+	iph.ident = htons(random_uint16(0, UINT16_MAX)); // TODO make me random
+    iph.flag = htons(0x4000); // TODO study me
     iph.offset = 0; // TODO study me
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
     iph.protocol = protocol;
@@ -46,8 +46,8 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
 
     tcph.src_port = htons(src_port);
     tcph.dest_port = htons(dest_port);
-    tcph.seqnum = 15564; // TODO Make me random automatically
-    tcph.acknum = 0; // TODO Make me random automatically
+    tcph.seqnum = htonl(random_uint32(0, UINT32_MAX));
+    tcph.acknum = htonl(random_uint32(0, UINT32_MAX));
     tcph.reserved = 0;
     tcph.offset = 5; // Normally, is fixed
     tcph.flags = 0; 

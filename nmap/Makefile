@@ -1,10 +1,12 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
-			listener		\
-			filter			\
+			scans			\
+			sender			\
+			parsing			\
 			utils			\
-			packet_handler	\
-			visualizers		\
+			setup			\
+			debug			\
+			scanner			\
 		))
 
 # TODO change back to ft_nmap

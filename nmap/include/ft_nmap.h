@@ -16,6 +16,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <time.h>
 #include <sys/wait.h>
 
 #include "libft.h"
@@ -115,6 +116,7 @@ typedef struct ipheader_s {
     uint32_t src_ip;
     uint32_t dest_ip;
 } __attribute__((packed)) ipheader_t;
+
 
 // TCP header structure
 typedef struct tcpheader_s {

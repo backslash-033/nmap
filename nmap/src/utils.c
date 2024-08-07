@@ -33,3 +33,23 @@ void free_linked_list(t_list **list) {
     }
     *list = NULL;
 }
+
+uint32_t random_uint32(uint32_t min, uint32_t max) {
+	if (min > max)
+		return 0;
+
+	const uint32_t diff = max - min;
+	
+	srand(time(NULL));
+	return (rand() % diff) + min;
+}
+
+uint16_t random_uint16(uint16_t min, uint16_t max) {
+	if (min > max)
+		return 0;
+
+	const uint16_t diff = max - min;
+	
+	srand(time(NULL));
+	return (rand() % diff) + min;
+}
