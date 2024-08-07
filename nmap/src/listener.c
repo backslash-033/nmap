@@ -7,6 +7,14 @@
 #include <string.h>
 #include "ft_nmap.h"
 
+static pcap_t *g_handle = NULL;
+
+static void handle_alarm(int sig) {
+    (void) sig;
+    if (g_handle)
+        pcap_breakloop(g_handle);
+}
+
 int listener(char *interface, int scan, t_port_state_vector states) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
@@ -14,6 +22,7 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     pcap_t *handle;
     bpf_u_int32 net;
     bpf_u_int32 mask;
+    const uint32_t timeout = 1;
     (void) states;
 
     char *filter;
@@ -59,6 +68,8 @@ int listener(char *interface, int scan, t_port_state_vector states) {
         fprintf(stderr, "Couldn't open device %s: %s\n", device->name, errbuf);
         return 2;
     }
+
+    g_handle = handle;
  
     // Compile and set the filter
     if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
@@ -73,8 +84,13 @@ int listener(char *interface, int scan, t_port_state_vector states) {
         fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
         return 2;
     }
+
+    signal(SIGALRM, handle_alarm);
+    alarm(timeout);
+
     // Start capturing packets
-    pcap_loop(handle, -1, packet_handler, (u_char *)&states);
+    // TODO states.len might be ambitious, back to -1 if necessary
+    pcap_loop(handle, states.len, packet_handler, (u_char *)&states);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
     return 0;
