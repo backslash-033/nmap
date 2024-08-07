@@ -28,14 +28,6 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     char *filter;
     struct bpf_program  compiled_filter;
 
-    // TODO free me at the end and on error
-    filter = create_filter(scan, states);
-    if (!filter) {
-        perror("malloc");
-        return 1;
-    }
-    printf("%s\n", filter);
-
     // Find all devices
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {
         fprintf(stderr, "Couldn't find default device: %s\n", errbuf);
@@ -49,6 +41,7 @@ int listener(char *interface, int scan, t_port_state_vector states) {
         if (!strcmp(device->name, interface))
             break;
     }
+
     if (device == NULL) {
         fprintf(stderr, "No devices found.\n");
         return 1;
@@ -64,23 +57,32 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     // Open the device for packet capture
     handle = pcap_open_live(device->name, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
-        // TODO free all devices?
+        pcap_freealldevs(alldevs);
         fprintf(stderr, "Couldn't open device %s: %s\n", device->name, errbuf);
         return 2;
     }
 
     g_handle = handle;
  
+    filter = create_filter(scan, states);
+    if (!filter) {
+        perror("malloc");
+        return 1;
+    }
+    printf("%s\n", filter);
+
     // Compile and set the filter
     if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
-        // TODO free all devices?
-        // TODO close handle?
+        pcap_freealldevs(alldevs);
+        pcap_close(handle);
+        free(filter);
         fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
         return 2;
     }
+    free(filter);
     if (pcap_setfilter(handle, &compiled_filter) == -1) {
-        // TODO free all devices?
-        // TODO close handle?
+        pcap_freealldevs(alldevs);
+        pcap_close(handle);
         fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
         return 2;
     }
@@ -98,7 +100,6 @@ int listener(char *interface, int scan, t_port_state_vector states) {
 
 
 int main(int ac, char **av) {
-    // TODO remove me, only for debug
     t_port_state_vector states;
 
     int scan;
@@ -123,6 +124,13 @@ int main(int ac, char **av) {
     states.ports[3].port = 1252;
     states.ports[4].port = 65535;
     states.ports[5].port = 443;
+
+    states.ports[0].state = NOTHING;
+    states.ports[1].state = NOTHING;
+    states.ports[2].state = NOTHING;
+    states.ports[3].state = NOTHING;
+    states.ports[4].state = NOTHING;
+    states.ports[5].state = NOTHING;
 
     states.len = 6;
     (void)scan;

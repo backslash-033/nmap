@@ -83,7 +83,7 @@ enum e_tcp_flags
     URG = ACK << 1,
     ECE = URG << 1,
     CWR = ECE << 1,
-    NS = ECE << 1
+    NS = CWR << 1
 };
 
 enum e_scans {
@@ -99,7 +99,7 @@ enum e_responses {
 	POSITIVE = 1,       // TCP Response, UDP Response
 	NEGATIVE = 1 << 1,  // TCP RST
 	BAD      = 1 << 2,  // ICMP Unreachable
-    NOTHING  = 1 << 3   // No response 
+    NOTHING  = 0        // No response 
 };
 
 // IP header structure
@@ -171,6 +171,7 @@ typedef struct  s_port_state {
     u_int8_t    state; // see e_port_states
 }               t_port_state;
 
+// TODOinit the port list with port state nothing
 typedef struct      s_port_state_vector {
     t_port_state    *ports;
     size_t          len;
