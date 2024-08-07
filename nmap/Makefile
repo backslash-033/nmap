@@ -3,6 +3,7 @@ SRC	=	$(addsuffix .c,		\
 			listener		\
 			filter			\
 			utils			\
+			packet_handler	\
 			visualizers		\
 		))
 

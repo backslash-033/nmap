@@ -144,7 +144,6 @@ typedef struct icmpheader_s {
     uint16_t    checksum;
     uint16_t    id;   
     uint16_t    sequence;
-    uint32_t    unused;
 } __attribute__((packed)) icmpheader_t;
 
 // Pseudo-header for checksum calculation
@@ -241,5 +240,8 @@ void icmp_visualizer(icmpheader_t *icmph);
 void udp_visualizer(udpheader_t *udph);
 void tcp_visualizer(tcpheader_t *tcph);
 void ip_visualizer(ipheader_t *iph);
+
+// packet_handler.c
+void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 #endif

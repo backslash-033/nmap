@@ -7,66 +7,6 @@
 #include <string.h>
 #include "ft_nmap.h"
 
-void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
-    for (size_t i = 0; i < states->len; i++) {
-        if (states->ports[i].port == port) {
-            states->ports[i].port = port_state;
-            break;
-        }
-    }
-}
-
-static void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
-    (void)user;
-    (void)header;
-    ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
-    void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP heade
-    t_port_state_vector *states = (t_port_state_vector *)user;
-    int src_port = 0;
-    udpheader_t *udph;
-    tcpheader_t *tcph;
-    icmpheader_t *icmph;
-
-    if (iph->protocol == IPPROTO_TCP) {
-        tcph = (tcpheader_t *)proto_packet;
-
-        src_port = ntohs(tcph->src_port);
-        if (tcph->flags & RST) {
-            printf("tcp/%-5d closed\n", ntohs(tcph->src_port)); // TODO remove me
-            set_port_state(NEGATIVE, src_port, states);
-        } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
-            printf("tcp/%-5d open\n", ntohs(tcph->src_port)); // TODO remove me
-            set_port_state(POSITIVE, src_port, states);
-        }
-    } else if (iph->protocol == IPPROTO_UDP) {
-        udph = (udpheader_t *)proto_packet;
-
-        src_port = ntohs(udph->src_port);
-        set_port_state(POSITIVE, src_port, states);
-
-        printf("udp/%-5d open\n", ntohs(udph->src_port)); // TODO remove me
-    } else if (iph->protocol == IPPROTO_ICMP) {
-        printf("Detected an ICMP packet\n"); // TODO remove me
-        icmph = (icmpheader_t *)proto_packet;
-        icmp_visualizer(icmph);
-        if (icmph->type == 3 && icmph->code == 3) {
-            proto_packet = (void *)icmph + sizeof(icmpheader_t);
-            ipheader_t *original_iph = (ipheader_t *)proto_packet;  
-            ip_visualizer(original_iph);
-            proto_packet += original_iph->ihl * 4;
-            if (original_iph->protocol == IPPROTO_UDP) {
-                udph = (udpheader_t *)proto_packet;
-                udp_visualizer(udph);
-            } else if (original_iph->protocol == IPPROTO_TCP) {
-                tcph = (tcpheader_t *)proto_packet;
-                tcp_visualizer(tcph);
-            } else {
-                fprintf(stderr, "Unknown protocol\n");
-            }
-        }
-    }
-}
-
 int listener(char *interface, int scan, t_port_state_vector states) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
