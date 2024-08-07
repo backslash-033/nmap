@@ -173,12 +173,16 @@ typedef struct  s_port_state {
     u_int8_t    state; // see e_port_states
 }               t_port_state;
 
-// TODOinit the port list with port state nothing
+// TODO init the port list with port state NOTHING
 typedef struct      s_port_state_vector {
     t_port_state    *ports;
     size_t          len;
 }                   t_port_state_vector;
 
+typedef struct          s_scan {
+    int                 scan_type;
+    t_port_state_vector *results;
+}                       t_scan;
 
 
 // TODO maybe remove later
@@ -233,6 +237,7 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 char *create_filter(int scan, t_port_state_vector dest_ports);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
+t_port_state_vector *create_port_state_vector(int *ports, size_t len);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
@@ -246,5 +251,7 @@ void ip_visualizer(ipheader_t *iph);
 
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
+
+// show_results.c
 
 #endif

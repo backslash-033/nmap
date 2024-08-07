@@ -53,3 +53,24 @@ uint16_t random_uint16(uint16_t min, uint16_t max) {
 	srand(time(NULL));
 	return (rand() % diff) + min;
 }
+
+t_port_state_vector *create_port_state_vector(int *ports, size_t len) {
+	t_port_state_vector *vector;
+	size_t				i;
+
+	vector = malloc(sizeof(t_port_state_vector));
+	if (!vector)
+		return NULL;
+	
+	vector->ports = malloc(len * sizeof(t_port_state));
+	if (!vector->ports) {
+		free(vector);
+		return NULL;
+	}
+	
+	for (i = 0; i < len; i++) {
+		vector->ports[i].port = ports[i];
+		vector->ports[i].state = NOTHING;
+	}
+	return vector;
+}
