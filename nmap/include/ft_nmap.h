@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include "libft.h"
 
@@ -180,7 +181,7 @@ typedef struct      s_port_state_vector {
 }                   t_port_state_vector;
 
 typedef struct          s_scan {
-    int                 scan_type;
+    int                 type;
     t_port_state_vector *results;
 }                       t_scan;
 
