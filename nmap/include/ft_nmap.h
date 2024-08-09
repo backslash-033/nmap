@@ -97,6 +97,15 @@ enum e_scans {
     UDP_SCAN = -1
 };
 
+enum e_scans_print_len {
+	SYN_LEN = 8,
+	NULL_LEN = 13,
+	ACK_LEN = 10,
+	FIN_LEN = 13,
+	XMAS_LEN = 13,
+	UDP_LEN = 8
+};
+
 enum e_responses {
 	POSITIVE = 1,       // TCP Response, UDP Response
 	NEGATIVE = 1 << 1,  // TCP RST

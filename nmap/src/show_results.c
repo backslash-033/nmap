@@ -23,11 +23,73 @@
 
 // TODO need to record elpased time during the scn
 
-void    print_scans() {
-    struct winsize w;
+int    print_scans(t_scan *scans, size_t len_scans) {
+	char *results;
+	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
 
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    printf("Rows: %d and columns: %d\n", w.ws_row, w.ws_col);
+	for (size_t i = 0; i < len_scans; i++) {
+		switch (scans[i].type) {
+			case SYN_SCAN:
+				len += SYN_LEN;
+				break;
+			case NULL_SCAN:
+				len += NULL_LEN;
+				break;
+			case ACK_SCAN:
+				len += ACK_LEN;
+				break;
+			case FIN_SCAN:
+				len += FIN_LEN;
+				break;
+			case XMAS_SCAN:
+				len += XMAS_LEN;
+				break;
+			case UDP_SCAN:
+				len += UDP_LEN;
+				break;
+		}
+		++len; // For the separator
+	}
+
+	results = malloc(len * sizeof(char));
+	if (!results) {
+		perror("malloc");
+		return -1;
+	}
+	memset(results, 0, len);
+	strncpy(results, "PORT  ", 7);
+
+	for (size_t i = 0; i < len_scans; i++) {
+		switch (scans[i].type) {
+			case SYN_SCAN:
+				strncat(results, "SYN     ", 9);
+				break;
+			case NULL_SCAN:
+				strncat(results, "NULL         ", 14);
+				break;
+			case ACK_SCAN:
+				strncat(results, "ACK       ", 11);
+				break;
+			case FIN_SCAN:
+				strncat(results, "FIN         ", 14);
+				break;
+			case XMAS_SCAN:
+				strncat(results, "XMAS         ", 14);
+				break;
+			case UDP_SCAN:
+				strncat(results, "UDP     ", 9);
+				break;
+		}
+		strncat(results, " ", 2);
+	}
+	strncat(results, "CONCLUSION    ", 15);
+	strncat(results, "SERVICE", 8);
+	printf("%s\n", results);
+	for (size_t i = 0; i < len; i++) {
+		results[i] = '-';
+	}
+	printf("%s\n", results);
+	return 0;
 }
 
 int main() {
@@ -58,5 +120,5 @@ int main() {
 	scans[2].type = ACK_SCAN;
 	scans[2].results = create_port_state_vector(ports, len_ports);
 
-    print_scans();
+    print_scans(scans, len_scans);
 }
