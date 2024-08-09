@@ -23,10 +23,10 @@
 
 // TODO need to record elpased time during the scn
 
-int    print_scans(t_scan *scans, size_t len_scans) {
-	char *results;
-	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
 
+static inline size_t __scans_strings_len(t_scan *scans, size_t len_scans) {
+	size_t len = 0;
+	
 	for (size_t i = 0; i < len_scans; i++) {
 		switch (scans[i].type) {
 			case SYN_SCAN:
@@ -50,15 +50,12 @@ int    print_scans(t_scan *scans, size_t len_scans) {
 		}
 		++len; // For the separator
 	}
+	return len;
+}
 
-	results = malloc(len * sizeof(char));
-	if (!results) {
-		perror("malloc");
-		return -1;
-	}
-	memset(results, 0, len);
-	strncpy(results, "PORT  ", 7);
-
+static inline void __write_header_scans(t_scan *scans, size_t len_scans,
+										char *results) {
+	
 	for (size_t i = 0; i < len_scans; i++) {
 		switch (scans[i].type) {
 			case SYN_SCAN:
@@ -82,12 +79,27 @@ int    print_scans(t_scan *scans, size_t len_scans) {
 		}
 		strncat(results, " ", 2);
 	}
+}
+
+int    print_scans(t_scan *scans, size_t len_scans) {
+	char *results;
+	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
+
+	len += __scans_strings_len(scans, len_scans);
+	results = malloc(len * sizeof(char));
+	if (!results) {
+		perror("malloc");
+		return -1;
+	}
+	memset(results, 0, len);
+
+	strncpy(results, "PORT  ", 7);
+	__write_header_scans(scans, len_scans, results);
 	strncat(results, "CONCLUSION    ", 15);
 	strncat(results, "SERVICE", 8);
 	printf("%s\n", results);
-	for (size_t i = 0; i < len; i++) {
-		results[i] = '-';
-	}
+
+	memset(results, '-', len);
 	printf("%s\n", results);
 	return 0;
 }
