@@ -72,5 +72,6 @@ t_port_state_vector *create_port_state_vector(int *ports, size_t len) {
 		vector->ports[i].port = ports[i];
 		vector->ports[i].state = NOTHING;
 	}
+	vector->len = len;
 	return vector;
 }
