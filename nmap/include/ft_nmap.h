@@ -109,8 +109,15 @@ enum e_scans_print_len {
 enum e_responses {
 	POSITIVE = 1,       // TCP Response, UDP Response
 	NEGATIVE = 1 << 1,  // TCP RST
-	BAD      = 1 << 2,  // ICMP Unreachable
-    NOTHING  = 0        // No response 
+	BAD      = 1 << 2,  // ICMP Unreachable // TODO maybe NEGATVIE and BAD could be merged
+    NOTHING  = 1 << 3   // No response 
+};
+
+enum e_port_states {
+	P_OPEN = 1,
+	P_CLOSED = 1 << 1,
+	P_FILTERED = 1 << 2,
+	P_UNFILTERED = 1 << 3
 };
 
 // IP header structure
@@ -193,6 +200,7 @@ typedef struct          s_scan {
     int                 type;
     t_port_state_vector *results;
 }                       t_scan;
+
 
 
 // TODO maybe remove later
