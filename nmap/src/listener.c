@@ -99,42 +99,42 @@ int listener(char *interface, int scan, t_port_state_vector states) {
 }
 
 
-int main(int ac, char **av) {
-    t_port_state_vector states;
+// int main(int ac, char **av) {
+//     t_port_state_vector states;
 
-    int scan;
+//     int scan;
 
-    if (ac != 3) {
-        fprintf(stderr, "Usage: %s <interface> <protocol name>\n", av[0]);
-        return 1;
-    }
-    if (!strcmp("tcp", av[2])) {
-        scan = SYN_SCAN;
-    } else if (!strcmp("udp", av[2])) {
-        scan = UDP_SCAN;
-    } else {
-        fprintf(stderr, "Please enter a valid scan name: tcp, udp\n");
-        return 1;
-    }
+//     if (ac != 3) {
+//         fprintf(stderr, "Usage: %s <interface> <protocol name>\n", av[0]);
+//         return 1;
+//     }
+//     if (!strcmp("tcp", av[2])) {
+//         scan = SYN_SCAN;
+//     } else if (!strcmp("udp", av[2])) {
+//         scan = UDP_SCAN;
+//     } else {
+//         fprintf(stderr, "Please enter a valid scan name: tcp, udp\n");
+//         return 1;
+//     }
 
-    states.ports = malloc(6 * sizeof(int));
-    states.ports[0].port = 80;
-    states.ports[1].port = 4350;
-    states.ports[2].port = 4435;
-    states.ports[3].port = 1252;
-    states.ports[4].port = 65535;
-    states.ports[5].port = 443;
+//     states.ports = malloc(6 * sizeof(int));
+//     states.ports[0].port = 80;
+//     states.ports[1].port = 4350;
+//     states.ports[2].port = 4435;
+//     states.ports[3].port = 1252;
+//     states.ports[4].port = 65535;
+//     states.ports[5].port = 443;
 
-    states.ports[0].state = NOTHING;
-    states.ports[1].state = NOTHING;
-    states.ports[2].state = NOTHING;
-    states.ports[3].state = NOTHING;
-    states.ports[4].state = NOTHING;
-    states.ports[5].state = NOTHING;
+//     states.ports[0].state = NOTHING;
+//     states.ports[1].state = NOTHING;
+//     states.ports[2].state = NOTHING;
+//     states.ports[3].state = NOTHING;
+//     states.ports[4].state = NOTHING;
+//     states.ports[5].state = NOTHING;
 
-    states.len = 6;
-    (void)scan;
-    (void)states;
-    listener(av[1], scan, states);
-    return 0;
-}
+//     states.len = 6;
+//     (void)scan;
+//     (void)states;
+//     listener(av[1], scan, states);
+//     return 0;
+// }

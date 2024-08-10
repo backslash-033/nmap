@@ -1,16 +1,23 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
+			main			\
+			options			\
 			scans			\
 			sender			\
 			parsing			\
 			utils			\
 			setup			\
-			debug			\
 			scanner			\
+			listener		\
+			threads			\
+			packet_handler	\
+			main_thread		\
+			filter			\
+			routine			\
 		))
 
 # TODO change back to ft_nmap
-NAME	= listener
+NAME	= ft_nmap
 
 SHELL	= /bin/zsh
 

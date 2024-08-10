@@ -249,4 +249,7 @@ void ip_visualizer(ipheader_t *iph);
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
+// listener.c
+int listener(char *interface, int scan, t_port_state_vector states);
+
 #endif
