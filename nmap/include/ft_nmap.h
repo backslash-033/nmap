@@ -73,6 +73,8 @@ typedef struct tdata_in {
 #define HIGHEST_PORT		UINT16_MAX
 #define PORT_RANGE			(HIGHEST_PORT - LOWEST_PORT)
 
+#define SCAN_AMOUNT			6
+
 enum e_tcp_flags
 {
 	FIN = 1,
@@ -170,11 +172,11 @@ void		free_tdata_out_array(tdata_out *array, const uint8_t size);
 void		free_tdata_out(tdata_out d);
 
 // options.c
-options 	options_handling(int argc, char **argv);
+options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
 void		free_options(options *opts);
 
 // threads.c
-tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after);
+tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after);
 
 // main_thread.c
 void		main_thread();

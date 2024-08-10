@@ -37,6 +37,8 @@ static host_data	resolve_hostname(const str hostname) ;
 
 typedef bool	(*parsing_function)(options *, str);
 
+static struct addrinfo	*addrinfo_to_keep = NULL;
+
 static parsing_function handlers[5] = {
 	opt_speed,
 	opt_scans,
@@ -45,8 +47,9 @@ static parsing_function handlers[5] = {
 	opt_ip,
 };
 
-options options_handling(int argc, char **argv) {
+options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
 	options res;
+	uint8_t	addrinfo_amount = 1;
 	int		args_status = ARGS_NOTHING;
 
 	if (argc == 1) {
@@ -55,6 +58,8 @@ options options_handling(int argc, char **argv) {
 		exit(2);
 	}
 	res = default_options();
+
+	(*addrinfo_to_free) = calloc(addrinfo_amount, sizeof(struct addrinfo *));
 
 	for (int i = 1; i < argc; i++) {
 		if (args_status == ARGS_NOTHING) {
@@ -68,6 +73,14 @@ options options_handling(int argc, char **argv) {
 			if (handlers[args_status](&res, argv[i]) == true) {
 				free_options(&res);
 				exit(1);
+			}
+			if (addrinfo_to_keep) {
+				struct addrinfo **tmp = calloc(addrinfo_amount + 1, sizeof(struct addrinfo *));
+				memcpy(tmp, (*addrinfo_to_free), addrinfo_amount * sizeof(struct addrinfo *));
+				free((*addrinfo_to_free));
+				(*addrinfo_to_free) = tmp;
+				(*addrinfo_to_free)[addrinfo_amount] = addrinfo_to_keep;
+				addrinfo_to_keep = NULL;
 			}
 			args_status = ARGS_NOTHING;
 		}
@@ -350,7 +363,7 @@ static host_data	resolve_hostname(const str hostname) {
 			ptr = &((struct sockaddr_in6 *) result->ai_addr)->sin6_addr;
 			break;
 		}
-		inet_ntop (result->ai_family, ptr, buff, 100);
+		inet_ntop(result->ai_family, ptr, buff, 100);
 
 		ret.info = *result;
 		result = result->ai_next;

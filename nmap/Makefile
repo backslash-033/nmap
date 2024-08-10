@@ -11,6 +11,7 @@ SRC	=	$(addsuffix .c,		\
 			utils			\
 			setup			\
 			debug			\
+			scanner			\
 		))
 
 NAME	= ft_nmap
