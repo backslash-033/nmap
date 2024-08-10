@@ -2,6 +2,12 @@
 
 static void	sdisplay_port_range(uint16_t *array, uint32_t size, str s, uint32_t *a);
 
+// TODO: put in .h
+void    scanner(ip_addr_t **ip_list,
+				int *port_list, int len_port_list,
+                ip_addr_t src_ip, int src_port,
+                int scan, char *data, int data_len);
+
 void *routine(void * arg) {
 	tdata_in in = *(tdata_in *)arg;
 	str s;
@@ -15,11 +21,43 @@ void *routine(void * arg) {
 	printf("My scan: %d\n", in.scans);
 
 	for (int i = 0; in.hnp[i].ports; i++) {
-		a += sprintf((s + a), "Host: %s\n", in.hnp[i].host.basename);
+		int	*port_list = NULL;
+		host_and_ports	current = in.hnp[i];
+		a += sprintf((s + a), "Host: %s\n", current.host.basename);
 		a += sprintf((s + a), "Range: ");
-		sdisplay_port_range(in.hnp[i].ports, in.hnp[i].ports_len, s, &a);
+		sdisplay_port_range(current.ports, current.ports_len, s, &a);
 		a += sprintf((s + a), "\n\n");
+
+
+		ip_addr_t	**ptr = calloc(2, sizeof(ip_addr_t *));
+		ip_addr_t	to_scan;
+
+		ptr[0] = &to_scan;
+
+		to_scan.network = ((struct sockaddr_in *)current.host.info.ai_addr)->sin_addr.s_addr;
+		inet_ntop(AF_INET, &(to_scan.network), to_scan.printable, INET_ADDRSTRLEN);
+
+		printf(".network: %d\n", to_scan.network);
+		printf(".printable: %s\n", to_scan.printable);
+
+		port_list = calloc(current.ports_len, sizeof(int));
+		// TODO: free if malloc problem
+
+		for (int i = 0; i < (int)current.ports_len; i++)
+			port_list[i] = current.ports[i];
+		
+		ip_addr_t	src_ip;
+	
+		// TODO: Make it dynamic ?
+		src_ip.network = 16777343;
+		inet_ntop(AF_INET, &(src_ip.network), src_ip.printable, INET_ADDRSTRLEN);
+
+		scanner(ptr, port_list, current.ports_len, src_ip, in.port, in.scans, "salut", 5);
+
+		free(port_list);
+		free(ptr);
 	}
+
 
 	return NULL;
 }

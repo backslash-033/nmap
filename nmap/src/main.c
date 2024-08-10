@@ -7,8 +7,9 @@ int main(int argc, char **argv) {
 	options 		opt;
 	tdata_out		**thread_output;
 	struct timeval	before, after;
+	struct addrinfo	**addrinfo_to_free;
 
-	opt = options_handling(argc, argv);
+	opt = options_handling(argc, argv, &addrinfo_to_free);
 
 	display_options(opt);
 
@@ -30,6 +31,10 @@ int main(int argc, char **argv) {
 		free_tdata_out_array(thread_output[i], opt.threads);
 	}
 
+	for (int i = 0; addrinfo_to_free[i]; i++) {
+		freeaddrinfo(addrinfo_to_free[i]);
+	}
+	free(addrinfo_to_free);
 	free(thread_output);
 	free_options(&opt);
 }

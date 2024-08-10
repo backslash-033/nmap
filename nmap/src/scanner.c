@@ -48,28 +48,28 @@ void sigint_handler() {
     exit(1);
 }
 
-int main() {
-    signal(SIGINT, sigint_handler);
-	char data[] = "HELLO\0";
-	int *port = malloc(sizeof(int) * 1);
-	port[0] = 80;
-	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
-	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
-	ip_addr_t **copy_ips;
-	ip_addr_t *addr;
-	int scan = UDP_SCAN;
+// int main() {
+//     signal(SIGINT, sigint_handler);
+// 	char data[] = "HELLO\0";
+// 	int *port = malloc(sizeof(int) * 1);
+// 	port[0] = 80;
+// 	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
+// 	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
+// 	ip_addr_t **copy_ips;
+// 	ip_addr_t *addr;
+// 	int scan = UDP_SCAN;
 
-	if (!ips_to_scan || !source_ips) {
-		fprintf(stderr, "Error parsing IPs\n");
-		return 1;
-	}
-	copy_ips = ips_to_scan;
-	addr = *ips_to_scan;
-	while (addr) {
-		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
-		addr = *(++ips_to_scan);
-	}
-	ips_to_scan = copy_ips;
+// 	if (!ips_to_scan || !source_ips) {
+// 		fprintf(stderr, "Error parsing IPs\n");
+// 		return 1;
+// 	}
+// 	copy_ips = ips_to_scan;
+// 	addr = *ips_to_scan;
+// 	while (addr) {
+// 		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
+// 		addr = *(++ips_to_scan);
+// 	}
+// 	ips_to_scan = copy_ips;
 
-	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, strlen(data));
-}
+// 	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, strlen(data));
+// }

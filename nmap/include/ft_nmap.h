@@ -172,7 +172,7 @@ void		free_tdata_out_array(tdata_out *array, const uint8_t size);
 void		free_tdata_out(tdata_out d);
 
 // options.c
-options 	options_handling(int argc, char **argv);
+options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
 void		free_options(options *opts);
 
 // threads.c
