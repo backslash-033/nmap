@@ -26,4 +26,7 @@ void	main_thread() {
     (void)scan;
     (void)states;
     listener(dev, scan, states);
+
+	free(states.ports);
+	
 }

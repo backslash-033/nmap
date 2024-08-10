@@ -351,6 +351,7 @@ static host_data	resolve_hostname(const str hostname) {
 	}
 
 	result = result_base;
+	addrinfo_to_keep = result_base;
 
 	while (result) {
 		inet_ntop(result->ai_family, result->ai_addr->sa_data, buff, INET6_ADDRSTRLEN + 1);
@@ -368,8 +369,6 @@ static host_data	resolve_hostname(const str hostname) {
 		ret.info = *result;
 		result = result->ai_next;
 	}
-
-	freeaddrinfo(result_base);
 
 	return ret;
 }
