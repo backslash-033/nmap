@@ -5,12 +5,16 @@
 
 # 42
 libft.a
-ft_nmap
-decoder
+
 
 # VSCode
 .vscode
 
 # random
 pastebin
-todolist.md
+ft_nmap
+decoder
+listener
+
+# pcap_test
+pcap_test*

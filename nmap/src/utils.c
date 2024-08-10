@@ -16,3 +16,40 @@ void free_formatted_ips(ip_addr_t **formatted_ips) {
 	free(formatted_ips);
 	formatted_ips = NULL;
 }
+
+void free_linked_list(t_list **list) {
+    t_list *current;
+    t_list *next_node;
+
+    if (list == NULL || *list == NULL) {
+        return;
+    }
+    current = *list;
+    while (current != NULL) {
+        next_node = current->next;
+        free(current->content);
+        free(current);
+        current = next_node;
+    }
+    *list = NULL;
+}
+
+uint32_t random_uint32(uint32_t min, uint32_t max) {
+	if (min > max)
+		return 0;
+
+	const uint32_t diff = max - min;
+	
+	srand(time(NULL));
+	return (rand() % diff) + min;
+}
+
+uint16_t random_uint16(uint16_t min, uint16_t max) {
+	if (min > max)
+		return 0;
+
+	const uint16_t diff = max - min;
+	
+	srand(time(NULL));
+	return (rand() % diff) + min;
+}
