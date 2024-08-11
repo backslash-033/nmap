@@ -2,12 +2,6 @@
 
 static void	sdisplay_port_range(uint16_t *array, uint32_t size, str s, uint32_t *a);
 
-// TODO: put in .h
-void    scanner(ip_addr_t **ip_list,
-				int *port_list, int len_port_list,
-                ip_addr_t src_ip, int src_port,
-                int scan, char *data, int data_len);
-
 void *routine(void * arg) {
 	tdata_in in = *(tdata_in *)arg;
 	str s;
@@ -23,6 +17,10 @@ void *routine(void * arg) {
 	for (int i = 0; in.hnp[i].ports; i++) {
 		int	*port_list = NULL;
 		host_and_ports	current = in.hnp[i];
+		t_vector port_vector = {
+			.list = NULL,
+			.len = current.ports_len,
+		};
 		a += sprintf((s + a), "Host: %s\n", current.host.basename);
 		a += sprintf((s + a), "Range: ");
 		sdisplay_port_range(current.ports, current.ports_len, s, &a);
@@ -43,16 +41,17 @@ void *routine(void * arg) {
 		port_list = calloc(current.ports_len, sizeof(int));
 		// TODO: free if malloc problem
 
-		for (int i = 0; i < (int)current.ports_len; i++)
-			port_list[i] = current.ports[i];
+		// FIXME why not do port_vector.list = current.ports ?
+		for (size_t i = 0; i < port_vector.len; i++)
+			port_vector.list[i] = current.ports[i];
 		
 		ip_addr_t	src_ip;
-	
+
 		// TODO: Make it dynamic ?
 		src_ip.network = 16777343;
 		inet_ntop(AF_INET, &(src_ip.network), src_ip.printable, INET_ADDRSTRLEN);
 
-		scanner(ptr, port_list, current.ports_len, src_ip, in.port, in.scans, "salut", 5);
+		scanner(ptr, port_vector, src_ip, in.port, in.scans, "salut", 5);
 
 		free(port_list);
 		free(ptr);

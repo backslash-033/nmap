@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 void    scanner(ip_addr_t **ip_list,
-				int *port_list, int len_port_list,
+				t_vector port_vector,
                 ip_addr_t src_ip, int src_port,
                 int scan, char *data, int data_len) {
     /*
@@ -35,8 +35,8 @@ void    scanner(ip_addr_t **ip_list,
 		scanner_func = udp_scan;
 
 	while (dest_ip) {
-		for (int j = 0; j < len_port_list; j++) {
-			dest_port = port_list[j];
+		for (size_t j = 0; j < port_vector.len; j++) {
+			dest_port = port_vector.list[j];
 			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, scan, data, data_len);
 			printf("IP: %s\nPort: %d\nRet: %d\n", dest_ip->printable, dest_port, ret);
 		}

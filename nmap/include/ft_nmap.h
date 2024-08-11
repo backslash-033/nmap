@@ -211,6 +211,12 @@ void		main_thread();
 // routine.c
 void		*routine(void *);
 
+// scanner.c
+void    scanner(ip_addr_t **ip_list,
+				t_vector port_vector,
+                ip_addr_t src_ip, int src_port,
+                int scan, char *data, int data_len);
+
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
 char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
