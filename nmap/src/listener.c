@@ -75,17 +75,18 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
         pcap_freealldevs(alldevs);
         pcap_close(handle);
-        free(filter);
         fprintf(stderr, "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
+        free(filter);
         return 2;
     }
-    free(filter);
     if (pcap_setfilter(handle, &compiled_filter) == -1) {
         pcap_freealldevs(alldevs);
         pcap_close(handle);
         fprintf(stderr, "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
-        return 2;
+        free(filter);
+		return 2;
     }
+    free(filter);
 
     signal(SIGALRM, handle_alarm);
     alarm(timeout);
