@@ -57,13 +57,13 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     // Open the device for packet capture
     handle = pcap_open_live(device->name, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
-        pcap_freealldevs(alldevs);
         fprintf(stderr, "Couldn't open device %s: %s\n", device->name, errbuf);
+        pcap_freealldevs(alldevs);
         return 2;
     }
 
     g_handle = handle;
- 
+
     filter = create_filter(scan, states);
     if (!filter) {
         perror("malloc");

@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount);
-static void 			launch_threads(tdata_in *threads_input, uint8_t amount, enum e_scans scan);
+static void 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
 static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amount);
 static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
 static void				free_host_and_ports(host_and_ports h);
@@ -32,7 +32,7 @@ tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after)
 
 	gettimeofday(before, NULL);
 
-	for (int scan = 0b00000001, i = 0; scan != 0b10000000; scan <<= 1) {
+	for (int scan = 0b00000001, i = 0; scan != 0b00100000; scan <<= 1) {
 		if (scan & opt->scans) {
 			out = calloc((size_t)th_amount, sizeof(tdata_out));
 			if (out == NULL) {
@@ -47,7 +47,7 @@ tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after)
 			for (int i = 0; i < th_amount; i++)
 				threads_input[i].output = &(out[i]);
 
-			launch_threads(threads_input, th_amount, convert_option_scan(scan));
+			launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
 
 			every_output[i] = out;
 		}
@@ -75,9 +75,9 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 	else if (IS_SCAN_UDP(opt_scan))
 		return UDP_SCAN;
 	return 0;
-}	
+}
 
-static void launch_threads(tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
+static void launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 
@@ -91,7 +91,7 @@ static void launch_threads(tdata_in *threads_input, uint8_t amount, enum e_scans
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	main_thread();
+	main_thread(opt->port, opt->port_len);
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
@@ -135,14 +135,21 @@ static void	already_open_ports(uint16_t *array) {
 }
 
 static uint16_t	assign_port(uint16_t *already_open_ports) {
-	uint16_t res;
+	uint16_t	res;
+	bool		same = false;
 
 	while (true) {
 		res = LOWEST_PORT + (rand() % PORT_RANGE);
 
 		for (int i = 0; already_open_ports[i]; i++) {
-			if (already_open_ports[i] == res)
-				continue;
+			if (already_open_ports[i] == res) {
+				same = true;
+				break;
+			}
+		}
+		if (same == true) {
+			same = false;
+			continue;
 		}
 		return res;
 	}
