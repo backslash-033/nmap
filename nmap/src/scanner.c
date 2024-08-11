@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 void    scanner(ip_addr_t **ip_list,
-				t_vector port_vector,
+				t_uint16_vector port_vector,
                 ip_addr_t src_ip, int src_port,
                 int scan, char *data, int data_len) {
     /*

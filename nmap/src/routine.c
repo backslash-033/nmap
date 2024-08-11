@@ -17,7 +17,7 @@ void *routine(void * arg) {
 	for (int i = 0; in.hnp[i].ports; i++) {
 		int	*port_list = NULL;
 		host_and_ports	current = in.hnp[i];
-		t_vector port_vector = {
+		t_uint16_vector port_vector = {
 			.list = NULL,
 			.len = current.ports_len,
 		};
@@ -42,8 +42,9 @@ void *routine(void * arg) {
 		// TODO: free if malloc problem
 
 		// FIXME why not do port_vector.list = current.ports ?
-		for (size_t i = 0; i < port_vector.len; i++)
-			port_vector.list[i] = current.ports[i];
+		port_vector.list = current.ports;
+		// for (size_t i = 0; i < port_vector.len; i++)
+		// 	port_vector.list[i] = current.ports[i];
 		
 		ip_addr_t	src_ip;
 

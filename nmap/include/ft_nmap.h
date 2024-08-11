@@ -160,10 +160,15 @@ struct pseudo_header {
 } __attribute__((packed));
 
 
-typedef struct  s_ilist {
+typedef struct  s_vector {
     int *list;
     size_t len;
 }               t_vector;
+
+typedef struct s_uint16_vector {
+	uint16_t	*list;
+	size_t		len;
+}				t_uint16_vector;
 
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
@@ -213,7 +218,7 @@ void		*routine(void *);
 
 // scanner.c
 void    scanner(ip_addr_t **ip_list,
-				t_vector port_vector,
+				t_uint16_vector port_vector,
                 ip_addr_t src_ip, int src_port,
                 int scan, char *data, int data_len);
 
