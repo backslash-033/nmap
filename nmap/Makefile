@@ -1,14 +1,22 @@
 SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
+			main			\
+			options			\
 			scans			\
 			sender			\
 			parsing			\
 			utils			\
 			setup			\
-			debug			\
 			scanner			\
+			listener		\
+			threads			\
+			packet_handler	\
+			main_thread		\
+			filter			\
+			routine			\
 		))
 
+# TODO change back to ft_nmap
 NAME	= ft_nmap
 
 SHELL	= /bin/zsh
@@ -22,7 +30,8 @@ LIBFT	= libft/libft.a
 # TODO add dependencies
 INCLUDE = -Iinclude/ -Ilibft/include
 
-CFLAGS	=  -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
+# TODO add -Werror
+CFLAGS	=  -Wall -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
 
 all: __watermark ${LIBFT} ${NAME}
 

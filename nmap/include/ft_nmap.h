@@ -74,6 +74,8 @@ typedef struct tdata_in {
 #define HIGHEST_PORT		UINT16_MAX
 #define PORT_RANGE			(HIGHEST_PORT - LOWEST_PORT)
 
+#define SCAN_AMOUNT			6
+
 enum e_tcp_flags
 {
 	FIN = 1,
@@ -84,7 +86,7 @@ enum e_tcp_flags
     URG = ACK << 1,
     ECE = URG << 1,
     CWR = ECE << 1,
-    NS = ECE << 1
+    NS = CWR << 1
 };
 
 enum e_scans {
@@ -96,25 +98,25 @@ enum e_scans {
     UDP_SCAN = -1
 };
 
-// Results of the scans. Sum the port states to form open|filtered...
-enum e_port_states {
-	OPEN = 1,
-	CLOSED = 1 << 1,
-	FILTERED = 1 << 2,
+enum e_responses {
+	POSITIVE = 1,       // TCP Response, UDP Response
+	NEGATIVE = 1 << 1,  // TCP RST
+	BAD      = 1 << 2,  // ICMP Unreachable
+    NOTHING  = 0        // No response 
 };
 
 // IP header structure
 typedef struct ipheader_s {
-    uint8_t     ihl:4, ver:4;
-    uint8_t     tos;
-    uint16_t    len;
-    uint16_t    ident;
-    uint16_t    flag:3, offset:13;
-    uint8_t     ttl;
-    uint8_t     protocol;
-    uint16_t    chksum;
-    uint32_t    src_ip;
-    uint32_t    dest_ip;
+    uint8_t  ihl:4, ver:4;
+    uint8_t  tos;
+    uint16_t len;
+    uint16_t ident;
+    uint16_t flag:3, offset:13;
+    uint8_t  ttl;
+    uint8_t  protocol;
+    uint16_t chksum;
+    uint32_t src_ip;
+    uint32_t dest_ip;
 } __attribute__((packed)) ipheader_t;
 
 
@@ -133,11 +135,20 @@ typedef struct tcpheader_s {
 
 // UDP header structure
 typedef struct udpheader_s {
-    uint16_t src_port;  // Source port
-    uint16_t dest_port; // Destination port
-    uint16_t len;       // Datagram length
-    uint16_t chksum;    // Checksum
+    uint16_t src_port;
+    uint16_t dest_port;
+    uint16_t len;
+    uint16_t chksum;
 } __attribute__((packed)) udpheader_t;
+
+// ICMP header structure
+typedef struct icmpheader_s {
+    uint8_t     type; 
+    uint8_t     code;
+    uint16_t    checksum;
+    uint16_t    id;   
+    uint16_t    sequence;
+} __attribute__((packed)) icmpheader_t;
 
 // Pseudo-header for checksum calculation
 struct pseudo_header {
@@ -148,10 +159,29 @@ struct pseudo_header {
     uint16_t length;
 } __attribute__((packed));
 
+
+typedef struct  s_ilist {
+    int *list;
+    size_t len;
+}               t_vector;
+
 typedef struct ip_addr_s {
     char    printable[INET_ADDRSTRLEN];
     int     network;
 }           ip_addr_t;
+
+typedef struct  s_port_state {
+    u_int16_t   port;  // the port number
+    u_int8_t    state; // see e_port_states
+}               t_port_state;
+
+// TODOinit the port list with port state nothing
+typedef struct      s_port_state_vector {
+    t_port_state    *ports;
+    size_t          len;
+}                   t_port_state_vector;
+
+
 
 // TODO maybe remove later
 #define PORTS_SCANNED 90
@@ -161,9 +191,6 @@ typedef struct ip_addr_s {
 #define DEBUG true
 #define NMAP_PORT "3490"
 
-// utils.c
-void    	print_tcp_header(tcpheader_t tcph);
-void    	print_ip_header(ipheader_t iph);
 ip_addr_t	**parse_ips(char **ips);
 
 // main.c
@@ -172,11 +199,11 @@ void		free_tdata_out_array(tdata_out *array, const uint8_t size);
 void		free_tdata_out(tdata_out d);
 
 // options.c
-options 	options_handling(int argc, char **argv);
+options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
 void		free_options(options *opts);
 
 // threads.c
-tdata_out	*threads(options *opt, struct timeval *before, struct timeval *after);
+tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after);
 
 // main_thread.c
 void		main_thread();
@@ -205,12 +232,24 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 			int scan __attribute__((unused)),
             char *data, int data_len);
 
-// utils.c
-uint32_t random_uint32(uint32_t min, uint32_t max);
-uint16_t random_uint16(uint16_t min, uint16_t max);
 
-// debug.c
-void 		print_ip_header(ipheader_t iph);
-void 		print_tcp_header(tcpheader_t tcph);
+// filter.c
+char *create_filter(int scan, t_port_state_vector dest_ports);
+
+// parsing.c
+ip_addr_t	**parse_ips(char **ips);
+void free_linked_list(t_list **list);
+
+// visualizers.c // TODO remove me
+void icmp_visualizer(icmpheader_t *icmph);
+void udp_visualizer(udpheader_t *udph);
+void tcp_visualizer(tcpheader_t *tcph);
+void ip_visualizer(ipheader_t *iph);
+
+// packet_handler.c
+void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
+
+// listener.c
+int listener(char *interface, int scan, t_port_state_vector states);
 
 #endif

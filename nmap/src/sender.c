@@ -167,8 +167,10 @@ int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t
 			response_tcph = (tcpheader_t *)(*response + 4 * response_iph->ihl);
 			*response = *response + sizeof(ipheader_t) + sizeof(tcpheader_t);
 		}
-		print_ip_header(*response_iph);
-		print_tcp_header(*response_tcph);
+		// print_ip_header(*response_iph);
+		// print_tcp_header(*response_tcph);
+		(void)response_iph;
+		(void)response_tcph;
 	}
 	return 0;
 }
