@@ -58,7 +58,7 @@ static inline size_t __scans_strings_len(t_scan *scans, size_t len_scans) {
 				len += UDP_LEN;
 				break;
 		}
-		++len; // For the separator
+		// ++len; // For the separator -> NOW DIRECTLY IN THE MACRO
 	}
 	return len;
 }
@@ -69,22 +69,22 @@ static inline void __write_header_scans(t_scan *scans, size_t len_scans,
 	for (size_t i = 0; i < len_scans; i++) {
 		switch (scans[i].type) {
 			case SYN_SCAN:
-				strncat(results, "SYN     ", 9);
+				strncat(results, "SYN     ", SYN_LEN);
 				break;
 			case NULL_SCAN:
-				strncat(results, "NULL         ", 14);
+				strncat(results, "NULL         ", NULL_LEN);
 				break;
 			case ACK_SCAN:
-				strncat(results, "ACK       ", 11);
+				strncat(results, "ACK       ", ACK_LEN);
 				break;
 			case FIN_SCAN:
-				strncat(results, "FIN         ", 14);
+				strncat(results, "FIN          ", FIN_LEN);
 				break;
 			case XMAS_SCAN:
-				strncat(results, "XMAS         ", 14);
+				strncat(results, "XMAS         ", XMAS_LEN);
 				break;
 			case UDP_SCAN:
-				strncat(results, "UDP     ", 9);
+				strncat(results, "UDP          ", UDP_LEN);
 				break;
 		}
 		strncat(results, " ", 2);
@@ -153,7 +153,35 @@ static inline void __print_sole_scan(t_scan *scans, char *results, size_t len) {
 	(void)len;
 }
 
-static void _print_ports(t_scan *scans, size_t len_scans, char *results, size_t len) {
+static void _write_results(t_scan *scans, size_t len_scans, char *results, size_t ind) {
+	// const uint16_t port = scans->results->ports[ind].port;
+
+	for (size_t i = 0; i < len_scans; i++) {
+		switch (scans[i].type) {
+			case SYN_SCAN:
+				interpret_syn_scan(scans[i].results->ports[ind].state, results);
+				break;
+			case NULL_SCAN:
+				interpret_null_scan(scans[i].results->ports[ind].state, results);
+				break;
+			case ACK_SCAN:
+				interpret_ack_scan(scans[i].results->ports[ind].state, results);
+				break;
+			case FIN_SCAN:
+				interpret_fin_scan(scans[i].results->ports[ind].state, results);
+				break;
+			case XMAS_SCAN:
+				interpret_xmas_scan(scans[i].results->ports[ind].state, results);
+				break;
+			case UDP_SCAN:
+				interpret_udp_scan(scans[i].results->ports[ind].state, results);
+				break;
+		}
+		strncat(results, " ", 2);
+	}
+}
+
+static void _print_port_results(t_scan *scans, size_t len_scans, char *results, size_t len) {
 	int conclusion;
 
 	(void) results;
@@ -163,27 +191,31 @@ static void _print_ports(t_scan *scans, size_t len_scans, char *results, size_t 
 		return __print_sole_scan(scans, results, len);
 	}
 	for (size_t ind = 0; ind < scans->results->len; ind++) { // Vertical traversal of all ports
+		sprintf(results, "%-5d ", scans->results->ports[ind].port);
+		_write_results(scans, len_scans, results, ind);
+		
 		conclusion = __get_conclusion(scans, len_scans, ind);
 		switch (conclusion) {
 			case P_OPEN:
-				printf("%-5d open\n", scans->results->ports[ind].port);
+				strncat(results, "open         \n", 15);
 				break;
 			case P_CLOSED:
-				printf("%-5d closed\n", scans->results->ports[ind].port);
+				strncat(results, "closed       \n", 15);
 				break;
 			case P_OPEN + P_FILTERED:
-				printf("%-5d open|filtered\n", scans->results->ports[ind].port);
+				strncat(results, "open|filtered\n", 15);
 				break;
 			case P_FILTERED:
-				printf("%-5d filtered\n", scans->results->ports[ind].port);
+				strncat(results, "filtered     \n", 15);
 				break;
 			default:
 				printf("%-5d bad ccl: %d\n", scans->results->ports[ind].port, conclusion);
 		}
+		printf("%s", results);
 	}
 }
 
-int    print_scans(t_scan *scans, size_t len_scans) {
+int    print_results(t_scan *scans, size_t len_scans) {
 	char *results;
 	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
 
@@ -203,7 +235,7 @@ int    print_scans(t_scan *scans, size_t len_scans) {
 
 	memset(results, '-', len);
 	printf("%s\n", results);
-	_print_ports(scans, len_scans, results, len);
+	_print_port_results(scans, len_scans, results, len);
 	return 0;
 }
 
@@ -245,5 +277,5 @@ int main() {
 	// change_response(scans[0].results, POSITIVE);
 	change_response(scans[2].results, NOTHING);
 
-    print_scans(scans, len_scans);
+    print_results(scans, len_scans);
 }

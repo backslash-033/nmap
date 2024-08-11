@@ -98,12 +98,12 @@ enum e_scans {
 };
 
 enum e_scans_print_len {
-	SYN_LEN = 8,
-	NULL_LEN = 13,
-	ACK_LEN = 10,
-	FIN_LEN = 13,
-	XMAS_LEN = 13,
-	UDP_LEN = 8
+	SYN_LEN = 9,
+	NULL_LEN = 14,
+	ACK_LEN = 11,
+	FIN_LEN = 14,
+	XMAS_LEN = 14,
+	UDP_LEN = 14
 };
 
 enum e_responses {
@@ -187,7 +187,7 @@ typedef struct ip_addr_s {
 
 typedef struct  s_port_state {
     u_int16_t   port;  // the port number
-    u_int8_t    state; // see e_port_states
+    u_int8_t    state; // see e_reponse
 }               t_port_state;
 
 // TODO init the port list with port state NOTHING
@@ -266,6 +266,15 @@ void icmp_visualizer(icmpheader_t *icmph);
 void udp_visualizer(udpheader_t *udph);
 void tcp_visualizer(tcpheader_t *tcph);
 void ip_visualizer(ipheader_t *iph);
+
+// interpreters.c
+void interpret_syn_scan(uint16_t state, char *results);
+void interpret_null_scan(uint16_t state, char *results);
+void interpret_ack_scan(uint16_t state, char *results);
+void interpret_fin_scan(uint16_t state, char *results);
+void interpret_xmas_scan(uint16_t state, char *results);
+void interpret_udp_scan(uint16_t state, char *results);
+
 
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);

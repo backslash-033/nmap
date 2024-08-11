@@ -10,7 +10,7 @@
 static void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
     for (size_t i = 0; i < states->len; i++) {
         if (states->ports[i].port == port) {
-            states->ports[i].port = port_state;
+            states->ports[i].state = port_state;
             break;
         }
     }

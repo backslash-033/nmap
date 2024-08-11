@@ -2,6 +2,7 @@ SRC	=	$(addsuffix .c,		\
 		$(addprefix src/,	\
 			show_results	\
 			utils			\
+			interpreters	\
 		))
 
 # TODO change back to ft_nmap
