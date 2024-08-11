@@ -15,6 +15,7 @@ static void handle_alarm(int sig) {
         pcap_breakloop(g_handle);
 }
 
+// TODO change scan and states to a t_scan
 int listener(char *interface, int scan, t_port_state_vector states) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;

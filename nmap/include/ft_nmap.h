@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include "libft.h"
 
@@ -98,11 +99,27 @@ enum e_scans {
     UDP_SCAN = -1
 };
 
+enum e_scans_print_len {
+	SYN_LEN = 9,
+	NULL_LEN = 14,
+	ACK_LEN = 11,
+	FIN_LEN = 14,
+	XMAS_LEN = 14,
+	UDP_LEN = 14
+};
+
 enum e_responses {
 	POSITIVE = 1,       // TCP Response, UDP Response
 	NEGATIVE = 1 << 1,  // TCP RST
-	BAD      = 1 << 2,  // ICMP Unreachable
-    NOTHING  = 0        // No response 
+	BAD      = 1 << 2,  // ICMP Unreachable // TODO maybe NEGATVIE and BAD could be merged
+    NOTHING  = 1 << 3   // No response 
+};
+
+enum e_port_states {
+	P_OPEN = 1,
+	P_CLOSED = 1 << 1,
+	P_FILTERED = 1 << 2,
+	P_UNFILTERED = 1 << 3
 };
 
 // IP header structure
@@ -177,14 +194,19 @@ typedef struct ip_addr_s {
 
 typedef struct  s_port_state {
     u_int16_t   port;  // the port number
-    u_int8_t    state; // see e_port_states
+    u_int8_t    state; // see e_reponse
 }               t_port_state;
 
-// TODOinit the port list with port state nothing
+// TODO init the port list with port state NOTHING
 typedef struct      s_port_state_vector {
     t_port_state    *ports;
     size_t          len;
 }                   t_port_state_vector;
+
+typedef struct          s_scan {
+    int                 type;
+    t_port_state_vector *results;
+}                       t_scan;
 
 
 
@@ -246,6 +268,9 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 
 // filter.c
 char *create_filter(int scan, t_port_state_vector dest_ports);
+// utils.c
+void 		free_formatted_ips(ip_addr_t **formatted_ips);
+t_port_state_vector *create_port_state_vector(int *ports, size_t len);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
@@ -257,10 +282,20 @@ void udp_visualizer(udpheader_t *udph);
 void tcp_visualizer(tcpheader_t *tcph);
 void ip_visualizer(ipheader_t *iph);
 
+// interpreters.c
+void interpret_syn_scan(uint16_t state, char *results);
+void interpret_null_scan(uint16_t state, char *results);
+void interpret_ack_scan(uint16_t state, char *results);
+void interpret_fin_scan(uint16_t state, char *results);
+void interpret_xmas_scan(uint16_t state, char *results);
+void interpret_udp_scan(uint16_t state, char *results);
+
+
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
+// show_results.c
+
 // listener.c
 int listener(char *interface, int scan, t_port_state_vector states);
-
 #endif

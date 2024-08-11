@@ -15,6 +15,7 @@ pastebin
 ft_nmap
 decoder
 listener
+printer
 
 # pcap_test
 pcap_test*

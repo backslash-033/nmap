@@ -14,6 +14,8 @@ SRC	=	$(addsuffix .c,		\
 			main_thread		\
 			filter			\
 			routine			\
+			show_results	\
+			interpreters	\
 		))
 
 # TODO change back to ft_nmap
