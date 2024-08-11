@@ -21,7 +21,7 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	if (!packet)
 		return -1;
 	printf("Created packet\n");
-	if (send_packet(iph, packet) == -1) {
+	if (send_packet(iph, packet, dest_port) == -1) {
 		free(packet);
 		return -1;
 	}
@@ -32,7 +32,7 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
-			int port __attribute__((unused)),
+			int scan __attribute__((unused)),
             char *data, int data_len) {
 	ipheader_t iph;
 	udpheader_t udph;
@@ -48,7 +48,7 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	if (!packet)
 		return -1;
 	printf("Created packet\n");
-	if (send_packet(iph, packet) == -1) {
+	if (send_packet(iph, packet, dest_port) == -1) {
 		free(packet);
 		return -1;
 	}

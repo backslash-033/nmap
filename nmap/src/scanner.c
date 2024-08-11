@@ -51,10 +51,14 @@ void sigint_handler() {
 int main() {
     signal(SIGINT, sigint_handler);
 	char data[] = "HELLO\0";
-	int *port = malloc(sizeof(int) * 1);
-	port[0] = 80;
-	ip_addr_t **ips_to_scan = parse_ips(ft_split("127.0.0.1\n", '\n'));
-	ip_addr_t **source_ips = parse_ips(ft_split("127.0.0.1\n", '\n'));
+	size_t len_ports = 2;
+	int *ports = malloc(sizeof(int) * len_ports);
+	ports[0] = 80;
+	ports[1] = 443;
+	char **raw_ips_to_scan = ft_split("127.0.0.1\n", '\n');
+	char **raw_source_ips = ft_split("127.0.0.1\n", '\n');
+	ip_addr_t **ips_to_scan = parse_ips(raw_ips_to_scan);
+	ip_addr_t **source_ips = parse_ips(raw_source_ips);
 	ip_addr_t **copy_ips;
 	ip_addr_t *addr;
 	int scan = SYN_SCAN;
@@ -71,5 +75,13 @@ int main() {
 	}
 	ips_to_scan = copy_ips;
 
-	scanner(ips_to_scan, port, 1, **source_ips, 12345, scan, data, strlen(data));
+	scanner(ips_to_scan, ports, len_ports, **source_ips, 12345, scan, data, strlen(data));
+	printf("End of scan\n");
+	// free_formatted_ips(ips_to_scan);
+	// free_formatted_ips(source_ips);
+	free_darray((void **)ips_to_scan);
+	free_darray((void **)source_ips);
+	free(ports);
+	free_darray((void **)raw_ips_to_scan);
+	free_darray((void **)raw_source_ips);
 }

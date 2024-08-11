@@ -161,10 +161,10 @@ typedef struct ip_addr_s {
 #define DEBUG true
 #define NMAP_PORT "3490"
 
+// utils.c
 void    	print_tcp_header(tcpheader_t tcph);
 void    	print_ip_header(ipheader_t iph);
 ip_addr_t	**parse_ips(char **ips);
-void 		free_formatted_ips(ip_addr_t **formatted_ips);
 
 // main.c
 void		display_port_range(uint16_t *array, uint32_t size);
@@ -187,7 +187,7 @@ void		*routine(void *);
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
 char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
-int			send_packet(ipheader_t iph, char *packet);
+int			send_packet(ipheader_t iph, char *packet, int dest_port);
 int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // setup.c

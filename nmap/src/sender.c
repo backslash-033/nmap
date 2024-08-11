@@ -122,15 +122,17 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 	return packet;
 }
 
-int send_packet(ipheader_t iph, char *packet) {
+int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	int sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
 	if (sockfd < 0) {
 		perror("socket");
 		return -1;
 	}
 	struct sockaddr_in dest;
+
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = iph.dest_ip;
+	dest.sin_port = htons(dest_port);
 	printf("Sending packet to IP: %s\n", inet_ntoa(*(struct in_addr *)&iph.dest_ip));
 
 	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {

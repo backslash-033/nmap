@@ -35,15 +35,16 @@ ip_addr_t **parse_ips(char **ips) {
 	formatted_ips[len_list] = NULL;
 	len_list = 0;
 	while (ip) {
+		puts("Loop");
 		formatted_ips[len_list] = malloc(sizeof(ip_addr_t));
 		if (!formatted_ips[len_list]) {
 			perror("malloc");
-			free_formatted_ips(formatted_ips);
+			free_darray((void **)formatted_ips);
 			return NULL;
 		}
 		ret = convert_ip(ip, formatted_ips[len_list]);
 		if (ret == -1) {
-			free_formatted_ips(formatted_ips);
+			free_darray((void **)formatted_ips);
 			return NULL;
 		}
 		len_list++;
