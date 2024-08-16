@@ -7,6 +7,7 @@ void *routine(void * arg) {
 	str s;
 	uint32_t a = 0;
 
+	// TODO: Get rid of or change the behavior
 	in.output->data = calloc(1000, 1);
 
 	s = in.output->data;
@@ -39,13 +40,12 @@ void *routine(void * arg) {
 		printf(".printable: %s\n", to_scan.printable);
 
 		port_list = calloc(current.ports_len, sizeof(int));
-		// TODO: free if malloc problem
+		if (port_list == NULL) {
+			return NULL;
+		}
 
-		// FIXME why not do port_vector.list = current.ports ?
 		port_vector.list = current.ports;
-		// for (size_t i = 0; i < port_vector.len; i++)
-		// 	port_vector.list[i] = current.ports[i];
-		
+
 		ip_addr_t	src_ip;
 
 		// TODO: Make it dynamic ?

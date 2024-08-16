@@ -6,12 +6,12 @@ static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amou
 static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
 static void				free_host_and_ports(host_and_ports h);
 static void				free_host_and_ports_array(host_and_ports *array);
+static void				free_every_host_and_ports(host_and_ports **hnp);
 static void				free_tdata_in(tdata_in d);
 static void				free_tdata_in_array(tdata_in *array, uint8_t size);
 static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
-
 tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after) {
 	tdata_in		*threads_input;
 	uint8_t			th_amount = NEVER_ZERO(opt->threads);
@@ -165,7 +165,7 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
 
 	res = calloc(*th_amount, sizeof(tdata_in));
 	if (res == NULL) {
-		// TODO: Free every hnp
+		free_every_host_and_ports(every_hnp);
 		return NULL;
 	}
 
@@ -192,7 +192,7 @@ static host_and_ports **every_host_and_ports(const options opt, uint8_t *th_amou
 
 	more = hosts_times_ports % NEVER_ZERO(opt.threads);
 
-	res = calloc(*th_amount, sizeof(host_and_ports *));
+	res = calloc(*th_amount + 1, sizeof(host_and_ports *));
 
 	for (; i < more; i++) {
 		res[i] = host_and_ports_one_thread(opt, per_thread + 1);
@@ -204,6 +204,13 @@ static host_and_ports **every_host_and_ports(const options opt, uint8_t *th_amou
 	return res;
 }
 
+static void	free_every_host_and_ports(host_and_ports **hnp) {
+	for (int i = 0; hnp[i]; i++) {
+		free_host_and_ports_array(hnp[i]);
+	}
+	free(hnp);
+}
+
 static host_and_ports *host_and_ports_one_thread(const options opt, const uint32_t per_thread) {
 	static uint32_t	host_index = 0;
 	static uint32_t	port_index = 0;
@@ -213,8 +220,6 @@ static host_and_ports *host_and_ports_one_thread(const options opt, const uint32
 	host_and_ports	hnp;
 	uint32_t		loop_port_index = 0;
 	const uint32_t	first_ports_size = per_thread > (opt.port_len - port_index) ? (opt.port_len - port_index) : per_thread;
-
-	// printf("\n--- Entree dans hnp_one_thread ---\n");
 
 	res = calloc(size + 1, sizeof(host_and_ports));
 	if (res == NULL)
