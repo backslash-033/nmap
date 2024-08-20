@@ -1,29 +1,5 @@
 #include "ft_nmap.h"
 
-// void show_results(t_port_state_vector *scans) {
-//     /*
-
-//     */
-//     char    *str_ips = NULL;
-//     size_t  len = 0;
-//     char    *str_scans = NULL;
-//     int     nb_threads = 0;
-
-//     // Print in main thread before scanning
-//     // TODO nathan
-//     // puts("Scan configuration:\n");
-//     // printf("Target IP addresses:\n%s\n", str_ips);
-//     // printf("Number of ports to scan: %d\n", len);
-//     // printf("Scans to be performed: %s\n", str_scans);
-//     // printf("Number of threads: %d\n", nb_threads);
-//     // puts("Starting to scan\n");
-
-
-// }
-
-// TODO need to record elpased time during the scn
-
-
 typedef struct	s_results {
 	uint16_t	syn;
 	uint16_t	null;
@@ -58,13 +34,16 @@ static inline size_t __scans_strings_len(t_scan *scans, size_t len_scans) {
 				len += UDP_LEN;
 				break;
 		}
-		// ++len; // For the separator -> NOW DIRECTLY IN THE MACRO
+		// The length for the separator is directly in the *_LEN macro
 	}
 	return len;
 }
 
 static inline void __write_header_scans(t_scan *scans, size_t len_scans,
 										char *results) {
+	/*
+
+	*/
 	
 	for (size_t i = 0; i < len_scans; i++) {
 		switch (scans[i].type) {
@@ -91,34 +70,57 @@ static inline void __write_header_scans(t_scan *scans, size_t len_scans,
 	}
 }
 
-// TODO might return str if last time needed
-static inline int __compute_conclusion(t_results results) {
-	
+static inline const char *__compute_conclusion(t_results results) {
+	/*
+		Returns a padded string of the conclusion of the port state based on 
+		the t_results stuct.
+
+		Args:
+			- results: see __get_conclusion() below
+		
+		Returns:
+			A padded string of length 14 representing the conclusion computed
+			on the different elements of the t_results argument
+	*/
+
 	if (results.syn == POSITIVE || results.udp == POSITIVE) {
-		return P_OPEN;
+		return "open         ";
 	}
 	if (results.ack != 0) {
 		if (!(results.ack == NEGATIVE)) { // If it's unfiltered
 			if (results.null == NOTHING || results.fin == NOTHING || \
 				results.xmas == NOTHING || results.udp == NOTHING) {
-				return P_OPEN;
+				return "open         ";
 			}
 		} else { // If it's filtered
 			if (results.null == NOTHING || results.fin == NOTHING || \
 				results.xmas == NOTHING || results.udp == NOTHING) {
-				return P_FILTERED;
+				return "filtered     ";
 			}
 		}
 	} else {
 		if (results.null == NOTHING || results.fin == NOTHING || \
 			results.xmas == NOTHING || results.udp == NOTHING) {
-						return P_OPEN + P_FILTERED;
+			return "open|filtered";
 		}
 	}
-	return P_CLOSED;
+	return "closed       ";
 }
 
-static inline int __get_conclusion(t_scan *scans, size_t len_scans, size_t ind) {
+static inline const char *__get_conclusion(t_scan *scans, size_t len_scans, size_t ind) {
+	/*
+		Fills a t_result structure, that will be used by compute conclusion.
+		Each field of t_result represents a type of scan and will be filled by
+		the state of the response received (see enum e_responses)
+
+		Args:
+			- scans: the list of performed scans
+			- len_scans: the number of performed scans
+			- ind: the index of the port number in the port list of the scans
+
+		Returns:
+			The result of __compute_conlusion
+	*/
 	t_results results;
 
 	memset(&results, 0, sizeof(t_results));
@@ -147,17 +149,19 @@ static inline int __get_conclusion(t_scan *scans, size_t len_scans, size_t ind) 
 	return __compute_conclusion(results);
 }
 
-static inline void __print_sole_scan(t_scan *scans, char *results, size_t len) {
-	(void)scans;
-	(void)results;
-	(void)len;
-}
-
 static void _write_results(t_scan *scans, size_t len_scans, char *results, size_t ind) {
-	// const uint16_t port = scans->results->ports[ind].port;
+	/*
+		Write the result of each scan of scans in results, for the port of index ind
 
-	for (size_t i = 0; i < len_scans; i++) {
-		switch (scans[i].type) {
+		Args:
+			- scans: the list of performed scans
+			- len_scans: the number of performed scans
+			- results: the string representing the results of a given port for the different scans
+			- ind: the index of the port number in the port list of the scans
+	*/
+
+	for (size_t i = 0; i < len_scans; i++) { // Iterate through all the scans
+		switch (scans[i].type) { // Each scan can yield a different conclusion, interpret the results
 			case SYN_SCAN:
 				interpret_syn_scan(scans[i].results->ports[ind].state, results);
 				break;
@@ -177,47 +181,27 @@ static void _write_results(t_scan *scans, size_t len_scans, char *results, size_
 				interpret_udp_scan(scans[i].results->ports[ind].state, results);
 				break;
 		}
-		strncat(results, " ", 2);
+		strncat(results, " ", 2); // Add a separator between each scan interpretation
 	}
 }
 
-static void _print_port_results(t_scan *scans, size_t len_scans, char *results, size_t len) {
-	int conclusion;
+static void _print_port_results(t_scan *scans, size_t len_scans, char *results) {
+	struct servent *service;
 
-	(void) results;
-	(void)len;
-	(void)conclusion;
-	if (len_scans == 1) {
-		return __print_sole_scan(scans, results, len);
-	}
 	for (size_t ind = 0; ind < scans->results->len; ind++) { // Vertical traversal of all ports
-		sprintf(results, "%-5d ", scans->results->ports[ind].port);
-		_write_results(scans, len_scans, results, ind);
-		
-		conclusion = __get_conclusion(scans, len_scans, ind);
-		switch (conclusion) {
-			case P_OPEN:
-				strncat(results, "open         \n", 15);
-				break;
-			case P_CLOSED:
-				strncat(results, "closed       \n", 15);
-				break;
-			case P_OPEN + P_FILTERED:
-				strncat(results, "open|filtered\n", 15);
-				break;
-			case P_FILTERED:
-				strncat(results, "filtered     \n", 15);
-				break;
-			default:
-				printf("%-5d bad ccl: %d\n", scans->results->ports[ind].port, conclusion);
-		}
-		printf("%s", results);
+		sprintf(results, "%-5d ", scans->results->ports[ind].port); // Write the port number
+		_write_results(scans, len_scans, results, ind); // Write the result of eachs scan
+		strncat(results, __get_conclusion(scans, len_scans, ind), 14); // Write the conclusion
+		service = getservbyport(htons(scans->results->ports[ind].port), NULL); // Resolve the suspected service
+		if (service)
+			strncat(results, service->s_name, 16);	// Write the service name
+		puts(results); // Prints everything
 	}
 }
 
 int    print_results(t_scan *scans, size_t len_scans) {
 	char *results;
-	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
+	size_t len = 5 + 1 + 13 + 16; // Length of 65535 + ' ' + size of conclusion field + arbirtrary size for service
 
 	len += __scans_strings_len(scans, len_scans);
 	results = malloc(len * sizeof(char));
@@ -231,51 +215,63 @@ int    print_results(t_scan *scans, size_t len_scans) {
 	__write_header_scans(scans, len_scans, results);
 	strncat(results, "CONCLUSION    ", 15);
 	strncat(results, "SERVICE", 8);
-	printf("%s\n", results);
+	puts(results);
 
-	memset(results, '-', len);
-	printf("%s\n", results);
-	_print_port_results(scans, len_scans, results, len);
+	memset(results, '-', --len); // To prevent overwriting the final 0
+	puts(results);
+	_print_port_results(scans, len_scans, results);
+	free(results);
 	return 0;
 }
 
 
 // // TODO delete me
-// static void change_response(t_port_state_vector *vector, int response) {
-// 	for (size_t i = 0; i < vector->len; i++) {
-// 		vector->ports[i].state = response;
-// 	}
-// }
+static void change_response(t_port_state_vector *vector, int response) {
+	for (size_t i = 0; i < vector->len; i++) {
+		vector->ports[i].state = response;
+	}
+}
 
-// int main() {
-//     size_t len_scans = 3;
-//     t_scan *scans;
-//     size_t len_ports = 10;
-//     int *ports = malloc(len_ports * sizeof(int));
+int main() {
+    size_t len_scans = 3;
+    t_scan *scans;
+    size_t len_ports = 10;
+    int *ports = malloc(len_ports * sizeof(int));
 
-//     ports[0] = 80;
-//     ports[1] = 443;
-//     ports[2] = 65535;
-//     ports[3] = 2605;
-//     ports[4] = 739;
-//     ports[5] = 1245;
-//     ports[6] = 2153;
-//     ports[7] = 27467;
-//     ports[8] = 26214;
-//     ports[9] = 8567;
+    ports[0] = 80;
+    ports[1] = 443;
+    ports[2] = 65535;
+    ports[3] = 2605;
+    ports[4] = 739;
+    ports[5] = 1245;
+    ports[6] = 2153;
+    ports[7] = 27467;
+    ports[8] = 26214;
+    ports[9] = 8567;
 
 
-// 	// Maybe all of the scans can point to the same port_state_vector?
-//     scans = malloc(3 * sizeof(t_scan));
-//     scans[0].type = SYN_SCAN;
-//     scans[0].results = create_port_state_vector(ports, len_ports);
-// 	scans[1].type = UDP_SCAN;
-// 	scans[1].results = create_port_state_vector(ports, len_ports);
-// 	scans[2].type = ACK_SCAN;
-// 	scans[2].results = create_port_state_vector(ports, len_ports);
+	// TODO Maybe all of the scans can point to the same port_state_vector?
+    scans = malloc(len_scans * sizeof(t_scan));
+    scans[0].type = SYN_SCAN;
+    scans[0].results = create_port_state_vector(ports, len_ports);
+	scans[1].type = UDP_SCAN;
+	scans[1].results = create_port_state_vector(ports, len_ports);
+	scans[2].type = ACK_SCAN;
+	scans[2].results = create_port_state_vector(ports, len_ports);
 
-// 	// change_response(scans[0].results, POSITIVE);
-// 	change_response(scans[2].results, NOTHING);
 
-//     print_results(scans, len_scans);
-// }
+	// len_scans = 1;
+    // scans = malloc(len_scans * sizeof(t_scan));
+    // scans[0].type = SYN_SCAN;
+    // scans[0].results = create_port_state_vector(ports, len_ports);
+
+	// change_response(scans[0].results, POSITIVE);
+	change_response(scans[2].results, NOTHING);
+
+    print_results(scans, len_scans);
+	free(ports);
+	free_port_state_vector(&(scans[0].results));
+	free_port_state_vector(&(scans[1].results));
+	free_port_state_vector(&(scans[2].results));
+	free(scans);
+}
