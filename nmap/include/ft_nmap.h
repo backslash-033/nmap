@@ -226,7 +226,7 @@ void		free_options(options *opts);
 bool		threads(options *opt, struct timeval *before, struct timeval *after);
 
 // main_thread.c
-void		main_thread(const uint16_t *ports, const uint32_t size);
+t_port_state_vector *main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
 
 // routine.c
 void		*routine(void *);
@@ -257,9 +257,11 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 			int scan __attribute__((unused)),
             char *data, int data_len);
 
+// show_results.c
+int    print_results(t_scan *scans, size_t len_scans);
 
 // filter.c
-char *create_filter(int scan, t_port_state_vector dest_ports);
+char *create_filter(int scan);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 t_port_state_vector *create_port_state_vector(int *ports, size_t len);
@@ -267,6 +269,8 @@ void free_port_state_vector(t_port_state_vector **vector);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
+
+// TODO maybe unused
 void free_linked_list(t_list **list);
 
 // visualizers.c // TODO remove me
@@ -290,5 +294,5 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char
 // show_results.c
 
 // listener.c
-int listener(char *interface, int scan, t_port_state_vector states);
+int listener(char *interface, int scan, t_port_state_vector *states);
 #endif

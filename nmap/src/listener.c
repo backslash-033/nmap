@@ -16,7 +16,7 @@ static void handle_alarm(int sig) {
 }
 
 // TODO change scan and states to a t_scan
-int listener(char *interface, int scan, t_port_state_vector states) {
+int listener(char *interface, int scan, t_port_state_vector *states) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
@@ -64,7 +64,7 @@ int listener(char *interface, int scan, t_port_state_vector states) {
 
     g_handle = handle;
 
-    filter = create_filter(scan, states);
+    filter = create_filter(scan);
     if (!filter) {
         perror("malloc");
         return 1;
@@ -93,7 +93,7 @@ int listener(char *interface, int scan, t_port_state_vector states) {
 
     // Start capturing packets
     // TODO states.len might be ambitious, back to -1 if necessary
-    pcap_loop(handle, states.len, packet_handler, (u_char *)&states);
+    pcap_loop(handle, states->len, packet_handler, (u_char *)states);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
     return 0;

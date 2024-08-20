@@ -67,7 +67,7 @@ static void launch_threads(const options *opt, tdata_in *threads_input, uint8_t 
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	main_thread(opt->port, opt->port_len);
+	main_thread(opt->port, opt->port_len, scan);
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
