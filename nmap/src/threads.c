@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount);
-static void 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
+static t_scan 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
 static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amount);
 static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
 static void				free_host_and_ports(host_and_ports h);
@@ -13,28 +13,43 @@ static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
 
-bool	threads(options *opt, struct timeval *before, struct timeval *after) {
+t_scan	*threads(options *opt, struct timeval *before, struct timeval *after) {
 	tdata_in		*threads_input;
 	uint8_t			th_amount = NEVER_ZERO(opt->threads);
+	t_scan			*out;
 
-	
+	out = calloc(sizeof(t_scan), amount_of_scans(opt->scans));
+	if (out == NULL)
+		return NULL;
+
 	threads_input = build_threads_input(*opt, &th_amount);
 	if (threads_input == NULL)
-		return true;
+		return NULL;
 
 	gettimeofday(before, NULL);
 
 	for (int scan = 0b00000001, i = 0; scan != 0b00100000; scan <<= 1) {
-		if (scan & opt->scans)
-			launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
-		i++;
+		if (scan & opt->scans) {
+			out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
+			i++;
+		}
 	}
 
 	gettimeofday(after, NULL);
 
 	free_tdata_in_array(threads_input, th_amount);
 	opt->threads = th_amount;
-	return false;
+	return out;
+}
+
+uint8_t	amount_of_scans(const uint8_t opt_scan) {
+	uint8_t i = 0;
+
+	for (int scan = 0b00000001; scan != 0b00100000; scan <<= 1) {
+		if (scan & opt_scan)
+			i++;
+	}
+	return i;
 }
 
 static enum e_scans	convert_option_scan(uint8_t opt_scan) {
@@ -53,9 +68,10 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 	return 0;
 }
 
-static void launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
+static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
+	t_scan		res;
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
@@ -67,11 +83,13 @@ static void launch_threads(const options *opt, tdata_in *threads_input, uint8_t 
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	main_thread(opt->port, opt->port_len, scan);
+	res = main_thread(opt->port, opt->port_len, scan);
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
 	}
+
+	return res;
 }
 
 static void	already_open_ports(uint16_t *array) {
