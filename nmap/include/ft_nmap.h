@@ -226,14 +226,14 @@ void		free_tdata_out_array(tdata_out *array, const uint8_t size);
 void		free_tdata_out(tdata_out d);
 
 // options.c
-options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
+options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
 void		free_options(options *opts);
 
 // threads.c
 tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after);
 
 // main_thread.c
-void		main_thread();
+void		main_thread(const uint16_t *ports, const uint32_t size);
 
 // routine.c
 void		*routine(void *);
