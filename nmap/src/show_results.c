@@ -147,12 +147,6 @@ static inline int __get_conclusion(t_scan *scans, size_t len_scans, size_t ind) 
 	return __compute_conclusion(results);
 }
 
-static inline void __print_sole_scan(t_scan *scans, char *results, size_t len) {
-	(void)scans;
-	(void)results;
-	(void)len;
-}
-
 static void _write_results(t_scan *scans, size_t len_scans, char *results, size_t ind) {
 	// const uint16_t port = scans->results->ports[ind].port;
 
