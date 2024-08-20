@@ -48,10 +48,10 @@ static void handle_icmp_packet(void *proto_packet, t_port_state_vector *states) 
         proto_packet += original_iph->ihl * 4;
         if (original_iph->protocol == IPPROTO_UDP) {
             udph = (udpheader_t *)proto_packet;
-            set_port_state(BAD, ntohs(udph->dest_port), states);
+            set_port_state(NEGATIVE, ntohs(udph->dest_port), states);
         } else if (original_iph->protocol == IPPROTO_TCP) {
             tcph = (tcpheader_t *)proto_packet;
-            set_port_state(BAD, ntohs(tcph->dest_port), states);
+            set_port_state(NEGATIVE, ntohs(tcph->dest_port), states);
         } else {
             fprintf(stderr, "Unknown protocol\n");
         }
