@@ -15,7 +15,6 @@ SRC	=	$(addsuffix .c,		\
 			routine			\
 			show_results	\
 			interpreters	\
-			visualizers		\
 		))
 
 NAME	= ft_nmap
