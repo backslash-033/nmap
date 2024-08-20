@@ -272,8 +272,6 @@ void interpret_udp_scan(uint16_t state, char *results);
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
-// show_results.c
-
 // listener.c
 int listener(char *interface, int scan, t_port_state_vector *states);
 #endif

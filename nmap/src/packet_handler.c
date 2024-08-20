@@ -7,7 +7,7 @@
 #include <string.h>
 #include "ft_nmap.h"
 
-static void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
+static inline void __set_port_state(uint8_t port_state, uint16_t port, t_port_state_vector *states) {
     for (size_t i = 0; i < states->len; i++) {
         if (states->ports[i].port == port) {
             states->ports[i].state = port_state;
@@ -16,24 +16,20 @@ static void    set_port_state(uint8_t port_state, uint16_t port, t_port_state_ve
     }
 }
 
-static void handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *states) {
-    const int src_port = ntohs(tcph->src_port);
-    
+static inline void __handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *states) {
     if (tcph->flags & RST) {
-        set_port_state(NEGATIVE, src_port, states);
+        __set_port_state(NEGATIVE, ntohs(tcph->src_port), states);
     } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
-        set_port_state(POSITIVE, src_port, states);
+        __set_port_state(POSITIVE, ntohs(tcph->src_port), states);
     }
+    // else if so the response can remain NOTHING on no response case
 }
 
-// TODO maybe remove me
-static void handle_udp_packet(udpheader_t *udph, t_port_state_vector *states) {
-    const int src_port = ntohs(udph->src_port);
-    
-    set_port_state(POSITIVE, src_port, states);
+static inline void __handle_udp_packet(udpheader_t *udph, t_port_state_vector *states) {
+    __set_port_state(POSITIVE, ntohs(udph->src_port), states);
 }
 
-static void handle_icmp_packet(void *proto_packet, t_port_state_vector *states) {
+static inline void __handle_icmp_packet(void *proto_packet, t_port_state_vector *states) {
     const icmpheader_t *icmph = (icmpheader_t *)proto_packet; 
     tcpheader_t *tcph;
     udpheader_t *udph;
@@ -48,10 +44,10 @@ static void handle_icmp_packet(void *proto_packet, t_port_state_vector *states) 
         proto_packet += original_iph->ihl * 4;
         if (original_iph->protocol == IPPROTO_UDP) {
             udph = (udpheader_t *)proto_packet;
-            set_port_state(NEGATIVE, ntohs(udph->dest_port), states);
+            __set_port_state(NEGATIVE, ntohs(udph->dest_port), states);
         } else if (original_iph->protocol == IPPROTO_TCP) {
             tcph = (tcpheader_t *)proto_packet;
-            set_port_state(NEGATIVE, ntohs(tcph->dest_port), states);
+            __set_port_state(NEGATIVE, ntohs(tcph->dest_port), states);
         } else {
             fprintf(stderr, "Unknown protocol\n");
         }
@@ -65,9 +61,9 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char
     t_port_state_vector *states = (t_port_state_vector *)user;
 
     if (iph->protocol == IPPROTO_TCP)
-        handle_tcp_packet((tcpheader_t *)proto_packet, states);
+        __handle_tcp_packet((tcpheader_t *)proto_packet, states);
     else if (iph->protocol == IPPROTO_UDP)
-        handle_udp_packet((udpheader_t *)proto_packet, states);
+        __handle_udp_packet((udpheader_t *)proto_packet, states);
     else if (iph->protocol == IPPROTO_ICMP)
-        handle_icmp_packet((icmpheader_t *)proto_packet, states);
+        __handle_icmp_packet((icmpheader_t *)proto_packet, states);
 }
