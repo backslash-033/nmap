@@ -23,9 +23,9 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     } else if (protocol == IPPROTO_UDP) {
         iph.len = htons(sizeof(ipheader_t) + sizeof(udpheader_t) + data_len);
     }
-	iph.ident = htons(random_uint16(0, UINT16_MAX)); // TODO make me random
-    iph.flag = htons(0x4000); // TODO study me
-    iph.offset = 0; // TODO study me
+	iph.ident = htons(random_uint16(0, UINT16_MAX)); 
+    iph.flag = htons(0x4000);
+    iph.offset = 0;
     iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
     iph.protocol = protocol;
     iph.chksum = 0;
@@ -56,7 +56,7 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
     tcph.flags = 0; 
     tcph.win = htons(33280); // TODO maybe make me adjustable
     tcph.chksum = 0;
-    tcph.urgptr = 0; // TODO set me with desired scan
+    tcph.urgptr = 0; 
 	return tcph;
 }
 

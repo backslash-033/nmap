@@ -18,7 +18,6 @@ SRC	=	$(addsuffix .c,		\
 			interpreters	\
 		))
 
-# TODO change back to ft_nmap
 NAME	= ft_nmap
 
 SHELL	= /bin/zsh
@@ -29,7 +28,6 @@ CC		= gcc
 
 LIBFT	= libft/libft.a
 
-# TODO add dependencies
 INCLUDE = -Iinclude/ -Ilibft/include
 
 # TODO add -Werror

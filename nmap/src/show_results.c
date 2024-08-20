@@ -224,14 +224,6 @@ int    print_results(t_scan *scans, size_t len_scans) {
 	return 0;
 }
 
-
-// TODO delete me
-// static void change_response(t_port_state_vector *vector, int response) {
-// 	for (size_t i = 0; i < vector->len; i++) {
-// 		vector->ports[i].state = response;
-// 	}
-// }
-
 // int main() {
 //     size_t len_scans = 3;
 //     t_scan *scans;
