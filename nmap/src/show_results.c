@@ -225,53 +225,53 @@ int    print_results(t_scan *scans, size_t len_scans) {
 }
 
 
-// // TODO delete me
-static void change_response(t_port_state_vector *vector, int response) {
-	for (size_t i = 0; i < vector->len; i++) {
-		vector->ports[i].state = response;
-	}
-}
+// TODO delete me
+// static void change_response(t_port_state_vector *vector, int response) {
+// 	for (size_t i = 0; i < vector->len; i++) {
+// 		vector->ports[i].state = response;
+// 	}
+// }
 
-int main() {
-    size_t len_scans = 3;
-    t_scan *scans;
-    size_t len_ports = 10;
-    int *ports = malloc(len_ports * sizeof(int));
+// int main() {
+//     size_t len_scans = 3;
+//     t_scan *scans;
+//     size_t len_ports = 10;
+//     int *ports = malloc(len_ports * sizeof(int));
 
-    ports[0] = 80;
-    ports[1] = 443;
-    ports[2] = 65535;
-    ports[3] = 2605;
-    ports[4] = 739;
-    ports[5] = 1245;
-    ports[6] = 2153;
-    ports[7] = 27467;
-    ports[8] = 26214;
-    ports[9] = 8567;
-
-
-	// TODO Maybe all of the scans can point to the same port_state_vector?
-    scans = malloc(len_scans * sizeof(t_scan));
-    scans[0].type = SYN_SCAN;
-    scans[0].results = create_port_state_vector(ports, len_ports);
-	scans[1].type = UDP_SCAN;
-	scans[1].results = create_port_state_vector(ports, len_ports);
-	scans[2].type = ACK_SCAN;
-	scans[2].results = create_port_state_vector(ports, len_ports);
+//     ports[0] = 80;
+//     ports[1] = 443;
+//     ports[2] = 65535;
+//     ports[3] = 2605;
+//     ports[4] = 739;
+//     ports[5] = 1245;
+//     ports[6] = 2153;
+//     ports[7] = 27467;
+//     ports[8] = 26214;
+//     ports[9] = 8567;
 
 
-	// len_scans = 1;
-    // scans = malloc(len_scans * sizeof(t_scan));
-    // scans[0].type = SYN_SCAN;
-    // scans[0].results = create_port_state_vector(ports, len_ports);
+// 	// TODO Maybe all of the scans can point to the same port_state_vector?
+//     scans = malloc(len_scans * sizeof(t_scan));
+//     scans[0].type = SYN_SCAN;
+//     scans[0].results = create_port_state_vector(ports, len_ports);
+// 	scans[1].type = UDP_SCAN;
+// 	scans[1].results = create_port_state_vector(ports, len_ports);
+// 	scans[2].type = ACK_SCAN;
+// 	scans[2].results = create_port_state_vector(ports, len_ports);
 
-	// change_response(scans[0].results, POSITIVE);
-	change_response(scans[2].results, NOTHING);
 
-    print_results(scans, len_scans);
-	free(ports);
-	free_port_state_vector(&(scans[0].results));
-	free_port_state_vector(&(scans[1].results));
-	free_port_state_vector(&(scans[2].results));
-	free(scans);
-}
+// 	// len_scans = 1;
+//     // scans = malloc(len_scans * sizeof(t_scan));
+//     // scans[0].type = SYN_SCAN;
+//     // scans[0].results = create_port_state_vector(ports, len_ports);
+
+// 	// change_response(scans[0].results, POSITIVE);
+// 	change_response(scans[2].results, NOTHING);
+
+//     print_results(scans, len_scans);
+// 	free(ports);
+// 	free_port_state_vector(&(scans[0].results));
+// 	free_port_state_vector(&(scans[1].results));
+// 	free_port_state_vector(&(scans[2].results));
+// 	free(scans);
+// }
