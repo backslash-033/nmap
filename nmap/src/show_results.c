@@ -34,7 +34,7 @@ static inline size_t __scans_strings_len(t_scan *scans, size_t len_scans) {
 				len += UDP_LEN;
 				break;
 		}
-		// The length for the separtor is directly in the *_LEN macro
+		// The length for the separator is directly in the *_LEN macro
 	}
 	return len;
 }
@@ -42,7 +42,7 @@ static inline size_t __scans_strings_len(t_scan *scans, size_t len_scans) {
 static inline void __write_header_scans(t_scan *scans, size_t len_scans,
 										char *results) {
 	/*
-		
+
 	*/
 	
 	for (size_t i = 0; i < len_scans; i++) {
