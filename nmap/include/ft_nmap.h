@@ -256,6 +256,7 @@ char *create_filter(int scan, t_port_state_vector dest_ports);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 t_port_state_vector *create_port_state_vector(int *ports, size_t len);
+void free_port_state_vector(t_port_state_vector **vector);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);

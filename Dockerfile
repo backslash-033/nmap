@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     tcpdump \
     curl \
 	hping3 \
+	valgrind \
     && apt-get clean
 
 RUN mkdir -p /opt/nmap

@@ -75,3 +75,9 @@ t_port_state_vector *create_port_state_vector(int *ports, size_t len) {
 	vector->len = len;
 	return vector;
 }
+
+void free_port_state_vector(t_port_state_vector **vector) {
+	free((*vector)->ports);
+	free(*vector);
+	vector = NULL;
+}

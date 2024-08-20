@@ -181,15 +181,10 @@ static void _write_results(t_scan *scans, size_t len_scans, char *results, size_
 	}
 }
 
-static void _print_port_results(t_scan *scans, size_t len_scans, char *results, size_t len) {
+static void _print_port_results(t_scan *scans, size_t len_scans, char *results) {
 	int conclusion;
+	struct servent *service;
 
-	(void) results;
-	(void)len;
-	(void)conclusion;
-	if (len_scans == 1) {
-		return __print_sole_scan(scans, results, len);
-	}
 	for (size_t ind = 0; ind < scans->results->len; ind++) { // Vertical traversal of all ports
 		sprintf(results, "%-5d ", scans->results->ports[ind].port);
 		_write_results(scans, len_scans, results, ind);
@@ -197,27 +192,30 @@ static void _print_port_results(t_scan *scans, size_t len_scans, char *results, 
 		conclusion = __get_conclusion(scans, len_scans, ind);
 		switch (conclusion) {
 			case P_OPEN:
-				strncat(results, "open         \n", 15);
+				strncat(results, "open         ", 14);
 				break;
 			case P_CLOSED:
-				strncat(results, "closed       \n", 15);
+				strncat(results, "closed       ", 14);
 				break;
 			case P_OPEN + P_FILTERED:
-				strncat(results, "open|filtered\n", 15);
+				strncat(results, "open|filtered", 14);
 				break;
 			case P_FILTERED:
-				strncat(results, "filtered     \n", 15);
+				strncat(results, "filtered     ", 14);
 				break;
 			default:
 				printf("%-5d bad ccl: %d\n", scans->results->ports[ind].port, conclusion);
 		}
-		printf("%s", results);
+		service = getservbyport(htons(scans->results->ports[ind].port), NULL);
+		if (service)
+			strncat(results, service->s_name, 16);
+		puts(results);
 	}
 }
 
 int    print_results(t_scan *scans, size_t len_scans) {
 	char *results;
-	size_t len = 5 + 1 + 13 + 80; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
+	size_t len = 5 + 1 + 13 + 16; // Size of 65535 + ' ' + size of conclusion field + arbirtrary size for service
 
 	len += __scans_strings_len(scans, len_scans);
 	results = malloc(len * sizeof(char));
@@ -231,51 +229,63 @@ int    print_results(t_scan *scans, size_t len_scans) {
 	__write_header_scans(scans, len_scans, results);
 	strncat(results, "CONCLUSION    ", 15);
 	strncat(results, "SERVICE", 8);
-	printf("%s\n", results);
+	puts(results);
 
-	memset(results, '-', len);
-	printf("%s\n", results);
-	_print_port_results(scans, len_scans, results, len);
+	memset(results, '-', --len); // To prevent overwriting the final 0
+	puts(results);
+	_print_port_results(scans, len_scans, results);
+	free(results);
 	return 0;
 }
 
 
 // // TODO delete me
-// static void change_response(t_port_state_vector *vector, int response) {
-// 	for (size_t i = 0; i < vector->len; i++) {
-// 		vector->ports[i].state = response;
-// 	}
-// }
+static void change_response(t_port_state_vector *vector, int response) {
+	for (size_t i = 0; i < vector->len; i++) {
+		vector->ports[i].state = response;
+	}
+}
 
-// int main() {
-//     size_t len_scans = 3;
-//     t_scan *scans;
-//     size_t len_ports = 10;
-//     int *ports = malloc(len_ports * sizeof(int));
+int main() {
+    size_t len_scans = 3;
+    t_scan *scans;
+    size_t len_ports = 10;
+    int *ports = malloc(len_ports * sizeof(int));
 
-//     ports[0] = 80;
-//     ports[1] = 443;
-//     ports[2] = 65535;
-//     ports[3] = 2605;
-//     ports[4] = 739;
-//     ports[5] = 1245;
-//     ports[6] = 2153;
-//     ports[7] = 27467;
-//     ports[8] = 26214;
-//     ports[9] = 8567;
+    ports[0] = 80;
+    ports[1] = 443;
+    ports[2] = 65535;
+    ports[3] = 2605;
+    ports[4] = 739;
+    ports[5] = 1245;
+    ports[6] = 2153;
+    ports[7] = 27467;
+    ports[8] = 26214;
+    ports[9] = 8567;
 
 
-// 	// Maybe all of the scans can point to the same port_state_vector?
-//     scans = malloc(3 * sizeof(t_scan));
-//     scans[0].type = SYN_SCAN;
-//     scans[0].results = create_port_state_vector(ports, len_ports);
-// 	scans[1].type = UDP_SCAN;
-// 	scans[1].results = create_port_state_vector(ports, len_ports);
-// 	scans[2].type = ACK_SCAN;
-// 	scans[2].results = create_port_state_vector(ports, len_ports);
+	// TODO Maybe all of the scans can point to the same port_state_vector?
+    scans = malloc(len_scans * sizeof(t_scan));
+    scans[0].type = SYN_SCAN;
+    scans[0].results = create_port_state_vector(ports, len_ports);
+	scans[1].type = UDP_SCAN;
+	scans[1].results = create_port_state_vector(ports, len_ports);
+	scans[2].type = ACK_SCAN;
+	scans[2].results = create_port_state_vector(ports, len_ports);
 
-// 	// change_response(scans[0].results, POSITIVE);
-// 	change_response(scans[2].results, NOTHING);
 
-//     print_results(scans, len_scans);
-// }
+	// len_scans = 1;
+    // scans = malloc(len_scans * sizeof(t_scan));
+    // scans[0].type = SYN_SCAN;
+    // scans[0].results = create_port_state_vector(ports, len_ports);
+
+	// change_response(scans[0].results, POSITIVE);
+	change_response(scans[2].results, NOTHING);
+
+    print_results(scans, len_scans);
+	free(ports);
+	free_port_state_vector(&(scans[0].results));
+	free_port_state_vector(&(scans[1].results));
+	free_port_state_vector(&(scans[2].results));
+	free(scans);
+}
