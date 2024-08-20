@@ -37,10 +37,6 @@ typedef struct options {
 	uint32_t		port_len;
 } options;
 
-typedef struct tdata_out {
-	str	data;
-} tdata_out;
-
 typedef struct host_and_ports {
 	host_data	host;
 	uint16_t	*ports;
@@ -52,7 +48,6 @@ typedef struct tdata_in {
 	uint8_t			scans;
 	uint8_t			id;
 	uint16_t		port;
-	tdata_out		*output;
 } tdata_in;
 
 #define WARNING	"\033[33mWarning:\033[0m "
@@ -200,15 +195,13 @@ ip_addr_t	**parse_ips(char **ips);
 
 // main.c
 void		display_port_range(uint16_t *array, uint32_t size);
-void		free_tdata_out_array(tdata_out *array, const uint8_t size);
-void		free_tdata_out(tdata_out d);
 
 // options.c
 options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free);
 void		free_options(options *opts);
 
 // threads.c
-tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after);
+bool		threads(options *opt, struct timeval *before, struct timeval *after);
 
 // main_thread.c
 void		main_thread(const uint16_t *ports, const uint32_t size);

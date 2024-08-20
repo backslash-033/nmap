@@ -12,45 +12,21 @@ static void				free_tdata_in_array(tdata_in *array, uint8_t size);
 static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
-tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after) {
+
+bool	threads(options *opt, struct timeval *before, struct timeval *after) {
 	tdata_in		*threads_input;
 	uint8_t			th_amount = NEVER_ZERO(opt->threads);
-	tdata_out		*out;
-	tdata_out		**every_output;
 
-	every_output = calloc(6, sizeof(tdata_out *));
-	if (every_output == NULL)
-		return NULL;
-
-	bzero(every_output, 6 * sizeof(tdata_out *));
 	
 	threads_input = build_threads_input(*opt, &th_amount);
-	if (threads_input == NULL) {
-		free(every_output);
-		return NULL;
-	}
+	if (threads_input == NULL)
+		return true;
 
 	gettimeofday(before, NULL);
 
 	for (int scan = 0b00000001, i = 0; scan != 0b00100000; scan <<= 1) {
-		if (scan & opt->scans) {
-			out = calloc((size_t)th_amount, sizeof(tdata_out));
-			if (out == NULL) {
-				for (int j = 0; j < 6; j++) {
-					if (every_output[j])
-						free_tdata_out_array(every_output[j], th_amount);
-				}
-				free(every_output);
-				free_tdata_in_array(threads_input, th_amount);
-				return NULL;
-			}
-			for (int i = 0; i < th_amount; i++)
-				threads_input[i].output = &(out[i]);
-
+		if (scan & opt->scans)
 			launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
-
-			every_output[i] = out;
-		}
 		i++;
 	}
 
@@ -58,7 +34,7 @@ tdata_out	**threads(options *opt, struct timeval *before, struct timeval *after)
 
 	free_tdata_in_array(threads_input, th_amount);
 	opt->threads = th_amount;
-	return every_output;
+	return false;
 }
 
 static enum e_scans	convert_option_scan(uint8_t opt_scan) {
@@ -173,7 +149,6 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
 		res[i].hnp = every_hnp[i];
 		res[i].id = i;
 		res[i].scans = 0;
-		res[i].output = NULL;
 	}
 	free(every_hnp);
 
