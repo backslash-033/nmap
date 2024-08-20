@@ -2,56 +2,44 @@
 
 static void	display_options(options opt);
 static void	print_exec_time(struct timeval before, struct timeval after);
+static void	free_every_addrinfo(struct addrinfo **to_free);
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free);
 
 int main(int argc, char **argv) {
 	options 		opt;
-	tdata_out		**thread_output;
 	struct timeval	before, after;
 	struct addrinfo	**addrinfo_to_free;
+	bool			result;
 
 	opt = options_handling(argc, argv, &addrinfo_to_free);
 
 	display_options(opt);
 
-	thread_output = threads(&opt, &before, &after);
+	result = threads(&opt, &before, &after);
+	if (result == true) {
+		free_end_of_main(opt, addrinfo_to_free);
+		fprintf(stderr, ERROR "Error creating thread data.\n");
+		exit(1);
+	}
 
 	printf("\n\033[31mExecution ended: ");
 	print_exec_time(before, after);
 	printf("\033[0m\n\n");
 
-	for (int j = 0; j < SCAN_AMOUNT; j++) {
-		if (thread_output[j] == NULL)
-			continue;
-		for (int i = 0; i < opt.threads; i++) {
-			printf("\033[90mthread %d scan %d\033[0m\n%s", i, j, thread_output[j][i].data);
-		}
-	}
+	free_end_of_main(opt, addrinfo_to_free);
+}
 
-	for (int i = 0; i < SCAN_AMOUNT; i++) {
-		free_tdata_out_array(thread_output[i], opt.threads);
-	}
-
-	for (int i = 0; addrinfo_to_free[i]; i++) {
-		freeaddrinfo(addrinfo_to_free[i]);
-	}
-	free(addrinfo_to_free);
-	free(thread_output);
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free) {
 	free_options(&opt);
+	if (addrinfo_to_free)
+		free_every_addrinfo(addrinfo_to_free);
 }
 
-void	free_tdata_out(tdata_out d) {
-	if (d.data) {
-		free(d.data);
+static void	free_every_addrinfo(struct addrinfo **to_free) {
+	for (int i = 0; to_free[i]; i++) {
+		freeaddrinfo(to_free[i]);
 	}
-}
-
-void	free_tdata_out_array(tdata_out *array, const uint8_t size) {
-	if (!array)
-		return;
-	for (uint8_t i = 0; i < size; i++) {
-		free_tdata_out(array[i]);
-	}
-	free(array);
+	free(to_free);
 }
 
 static void	print_exec_time(struct timeval before, struct timeval after) {

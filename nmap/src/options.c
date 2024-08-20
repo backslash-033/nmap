@@ -49,7 +49,7 @@ static parsing_function handlers[5] = {
 
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
 	options res;
-	uint8_t	addrinfo_amount = 1;
+	uint8_t	addrinfo_amount = 0;
 	int		args_status = ARGS_NOTHING;
 
 	if (argc == 1) {
@@ -75,11 +75,12 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 				exit(1);
 			}
 			if (addrinfo_to_keep) {
-				struct addrinfo **tmp = calloc(addrinfo_amount + 1, sizeof(struct addrinfo *));
+				struct addrinfo **tmp = calloc(addrinfo_amount + 2, sizeof(struct addrinfo *));
 				memcpy(tmp, (*addrinfo_to_free), addrinfo_amount * sizeof(struct addrinfo *));
 				free((*addrinfo_to_free));
 				(*addrinfo_to_free) = tmp;
 				(*addrinfo_to_free)[addrinfo_amount] = addrinfo_to_keep;
+				addrinfo_amount++;
 				addrinfo_to_keep = NULL;
 			}
 			args_status = ARGS_NOTHING;

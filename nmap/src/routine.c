@@ -1,15 +1,7 @@
 #include "ft_nmap.h"
 
-static void	sdisplay_port_range(uint16_t *array, uint32_t size, str s, uint32_t *a);
-
 void *routine(void * arg) {
 	tdata_in in = *(tdata_in *)arg;
-	str s;
-	uint32_t a = 0;
-
-	in.output->data = calloc(1000, 1);
-
-	s = in.output->data;
 
 	printf("My port: %d\n", in.port);
 	printf("My scan: %d\n", in.scans);
@@ -21,11 +13,6 @@ void *routine(void * arg) {
 			.list = NULL,
 			.len = current.ports_len,
 		};
-		a += sprintf((s + a), "Host: %s\n", current.host.basename);
-		a += sprintf((s + a), "Range: ");
-		sdisplay_port_range(current.ports, current.ports_len, s, &a);
-		a += sprintf((s + a), "\n\n");
-
 
 		ip_addr_t	**ptr = calloc(2, sizeof(ip_addr_t *));
 		ip_addr_t	to_scan;
@@ -39,13 +26,12 @@ void *routine(void * arg) {
 		printf(".printable: %s\n", to_scan.printable);
 
 		port_list = calloc(current.ports_len, sizeof(int));
-		// TODO: free if malloc problem
+		if (port_list == NULL) {
+			return NULL;
+		}
 
-		// FIXME why not do port_vector.list = current.ports ?
 		port_vector.list = current.ports;
-		// for (size_t i = 0; i < port_vector.len; i++)
-		// 	port_vector.list[i] = current.ports[i];
-		
+
 		ip_addr_t	src_ip;
 
 		// TODO: Make it dynamic ?
@@ -60,28 +46,4 @@ void *routine(void * arg) {
 
 
 	return NULL;
-}
-
-static void	sdisplay_port_range(uint16_t *array, uint32_t size, str s, uint32_t *a) {
-	bool	in_range = false;
-
-	if (size == 1) {
-		*a += sprintf((s + *a), "%hu\n", array[0]);
-	}
-	else {
-		for (uint32_t i = 0; i != (size - 1); i++) {
-			if (!in_range)
-				*a += sprintf((s + *a), "%hu", array[i]);
-			if (array[i] + 1 == array[i + 1] && !in_range) {
-				in_range = true;
-				*a += sprintf((s + *a), "-");
-			}
-			if (array[i] + 1 != array[i + 1] && in_range) {
-				in_range = false;
-				*a += sprintf((s + *a), "%hu,", array[i]);
-			}
-		}
-		*a += sprintf((s + *a), "%hu", array[size - 1]);
-	}
-
 }
