@@ -101,7 +101,7 @@ static inline const char *__compute_conclusion(t_results results) {
 	} else {
 		if (results.null == NOTHING || results.fin == NOTHING || \
 			results.xmas == NOTHING || results.udp == NOTHING) {
-			return "open|filtered";
+			return "open|filtered ";
 		}
 	}
 	return "closed       ";
