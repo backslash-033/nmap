@@ -5,7 +5,7 @@ void	main_thread(const uint16_t *ports, const uint32_t size) {
     int scan;
 
     scan = SYN_SCAN;
-	char dev[] = "wlp0s20f3";
+	char dev[] = "eth0";
 
     states.ports = calloc(size, sizeof(t_port_state));
 

@@ -57,8 +57,6 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
     tcph.win = htons(33280); // TODO maybe make me adjustable
     tcph.chksum = 0;
     tcph.urgptr = 0; // TODO set me with desired scan
-    printf("Setting up TCP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
-
 	return tcph;
 }
 
@@ -69,8 +67,6 @@ udpheader_t setup_udph(int src_port, int dest_port, int data_len) {
     udph.dest_port = htons(dest_port);
     udph.len = htons(sizeof(udpheader_t) + data_len);
     udph.chksum = 0; // Calculated later
-    printf("Setting up UDP header: src_port=%d, dest_port=%d\n", src_port, dest_port);
-
     return udph;
 }
 

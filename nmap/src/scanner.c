@@ -38,7 +38,6 @@ void    scanner(ip_addr_t **ip_list,
 		for (size_t j = 0; j < port_vector.len; j++) {
 			dest_port = port_vector.list[j];
 			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, scan, data, data_len);
-			printf("IP: %s\nPort: %d\nRet: %d\n", dest_ip->printable, dest_port, ret);
 		}
 		dest_ip = *(++ip_list);
 	}

@@ -38,7 +38,6 @@ int listener(char *interface, int scan, t_port_state_vector states) {
     // Use the first device
     device = alldevs;
     for (; device != NULL; device = device->next) {
-        printf("Device name: %s\n", device->name);
         if (!strcmp(device->name, interface))
             break;
     }

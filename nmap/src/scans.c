@@ -20,12 +20,10 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	packet = create_tcp_packet(&iph, &tcph, data, data_len);
 	if (!packet)
 		return -1;
-	printf("Created packet\n");
 	if (send_packet(iph, packet, dest_port) == -1) {
 		free(packet);
 		return -1;
 	}
-	printf("Sent packet\n");
 	free(packet);	
 	return 0;
 }
@@ -38,7 +36,6 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	udpheader_t udph;
 	char *packet;
 
-	printf("Starting UDP Scan\n");
 	// Setup the IP Header
 	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_UDP);
 
@@ -47,12 +44,10 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	packet = create_udp_packet(&iph, &udph, data, data_len);
 	if (!packet)
 		return -1;
-	printf("Created packet\n");
 	if (send_packet(iph, packet, dest_port) == -1) {
 		free(packet);
 		return -1;
 	}
-	printf("Sent packet\n");
 	free(packet);	
 	return 0;
 }

@@ -248,7 +248,6 @@ void    scanner(ip_addr_t **ip_list,
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
 char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
 int			send_packet(ipheader_t iph, char *packet, int dest_port);
-int			wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph);
 
 // setup.c
 ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol);

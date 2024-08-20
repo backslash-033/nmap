@@ -118,7 +118,6 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 	memcpy(packet + offsetof(ipheader_t, chksum), &iph->chksum, sizeof(iph->chksum));
 	memcpy(packet + sizeof(ipheader_t) + offsetof(tcpheader_t, chksum), &tcph->chksum, sizeof(tcph->chksum));
 
-	printf("TCP Checksum: %d\n", tcph->chksum);
 	return packet;
 }
 
@@ -133,7 +132,6 @@ int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	dest.sin_family = AF_INET;
 	dest.sin_addr.s_addr = iph.dest_ip;
 	dest.sin_port = htons(dest_port);
-	printf("Sending packet to IP: %s\n", inet_ntoa(*(struct in_addr *)&iph.dest_ip));
 
 	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
 		perror("sendto");
@@ -141,36 +139,5 @@ int send_packet(ipheader_t iph, char *packet, int dest_port) {
 		return -1;
 	}
 	close(sockfd);
-	return 0;
-}
-
-
-int wait_for_tcp_response(char **response, ipheader_t *response_iph, tcpheader_t *response_tcph) {
-	int sockfd;
-	ssize_t recvfrom_bytes;
-	*response = malloc(BUFFER_SIZE);
-	if (!(*response)) {
-		perror("malloc");
-		return -1;
-	}
-	sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
-	if (sockfd < 0) {
-		perror("socket");
-		return -1;
-	}
-	printf("Entering RECVFROM\n");
-	// FIXME sometimes fails to catch the requests, maybe wait for child process to be ready in parent process?
-	for (;;) {
-		recvfrom_bytes = recvfrom(sockfd, *response, BUFFER_SIZE, 0, NULL, NULL);
-		if (recvfrom_bytes > 0) {
-			response_iph = (ipheader_t *)*response;
-			response_tcph = (tcpheader_t *)(*response + 4 * response_iph->ihl);
-			*response = *response + sizeof(ipheader_t) + sizeof(tcpheader_t);
-		}
-		// print_ip_header(*response_iph);
-		// print_tcp_header(*response_tcph);
-		(void)response_iph;
-		(void)response_tcph;
-	}
 	return 0;
 }
