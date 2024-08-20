@@ -204,16 +204,6 @@ typedef struct          s_scan {
     t_port_state_vector *results;
 }                       t_scan;
 
-
-
-// TODO maybe remove later
-#define PORTS_SCANNED 90
-#define IP_ADDRESS "127.0.0.1"
-#define TEST_ADDRESS "127.127.127.127"
-#define BUFFER_SIZE 4096
-#define DEBUG true
-#define NMAP_PORT "3490"
-
 ip_addr_t	**parse_ips(char **ips);
 
 // main.c

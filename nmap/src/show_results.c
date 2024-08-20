@@ -191,7 +191,7 @@ static void _print_port_results(t_scan *scans, size_t len_scans, char *results) 
 	for (size_t ind = 0; ind < scans->results->len; ind++) { // Vertical traversal of all ports
 		sprintf(results, "%-5d ", scans->results->ports[ind].port); // Write the port number
 		_write_results(scans, len_scans, results, ind); // Write the result of eachs scan
-		strncat(results, __get_conclusion(scans, len_scans, ind), 14); // Write the conclusion
+		strncat(results, __get_conclusion(scans, len_scans, ind), 15); // Write the conclusion
 		service = getservbyport(htons(scans->results->ports[ind].port), NULL); // Resolve the suspected service
 		if (service)
 			strncat(results, service->s_name, 16);	// Write the service name
