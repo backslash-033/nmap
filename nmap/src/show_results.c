@@ -242,7 +242,7 @@ int    print_results(t_scan *scans, size_t len_scans) {
 //     ports[9] = 8567;
 
 
-// 	// TODO Maybe all of the scans can point to the same port_state_vector?
+// 	// TODO Maybe all of the scans can point to the same int *?
 //     scans = malloc(len_scans * sizeof(t_scan));
 //     scans[0].type = SYN_SCAN;
 //     scans[0].results = create_port_state_vector(ports, len_ports);
