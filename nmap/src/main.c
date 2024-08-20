@@ -122,8 +122,9 @@ void	display_port_range(uint16_t *array, uint32_t size) {
 	}
 	else {
 		for (uint32_t i = 0; i != (size - 1); i++) {
-			if (!in_range)
+			if (!in_range) {
 				printf("%hu", array[i]);
+			}
 			if (array[i] + 1 == array[i + 1] && !in_range) {
 				in_range = true;
 				printf("-");
@@ -131,6 +132,9 @@ void	display_port_range(uint16_t *array, uint32_t size) {
 			if (array[i] + 1 != array[i + 1] && in_range) {
 				in_range = false;
 				printf("%hu,", array[i]);
+			}
+			else if (array[i] + 1 != array[i + 1]) {
+				printf(",");
 			}
 		}
 		printf("%hu", array[size - 1]);

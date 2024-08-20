@@ -36,6 +36,7 @@ typedef struct options {
 	uint8_t			threads;
 	uint16_t		*port;
 	uint32_t		port_len;
+	bool			fast;
 } options;
 
 typedef struct host_and_ports {

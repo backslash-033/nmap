@@ -7,6 +7,7 @@
 #define ARGS_FILE		3
 #define ARGS_IP			4
 #define ARGS_HELP		5
+#define ARGS_FAST		10
 #define SCAN_NOTHING	0
 #define SCAN_SYN		0b00000001
 #define SCAN_NULL		0b00000010
@@ -34,10 +35,24 @@ static void			add_range_to_ports(uint16_t *ports, uint32_t *port_len,
 static uint16_t		*sort_port_range(uint16_t *ports, uint32_t *port_len);
 static bool			add_hostname(options *opts, str hostname);
 static host_data	resolve_hostname(const str hostname) ;
+static uint16_t		*fast_ports();
 
 typedef bool	(*parsing_function)(options *, str);
 
 static struct addrinfo	*addrinfo_to_keep = NULL;
+
+uint16_t top_100_ports[] = {
+    80, 631, 161, 137, 123, 138, 1434, 445, 135, 67,
+    23, 443, 21, 139, 22, 500, 68, 520, 1900, 25,
+    4500, 514, 49152, 162, 69, 5353, 111, 49154, 3389, 110,
+    1701, 998, 996, 997, 999, 3283, 49153, 1812, 136, 143,
+    2222, 3306, 2049, 32768, 5060, 8080, 1025, 1433, 3456, 1723,
+    995, 993, 20031, 1026, 7, 5900, 1646, 1645, 593, 518,
+    2048, 626, 1027, 587, 177, 1719, 427, 497, 8888, 4444,
+    1023, 65024, 199, 19, 9, 49193, 1029, 1720, 49, 465,
+    88, 1028, 17185, 1718, 49186, 548, 113, 81, 6001, 2000,
+    10000, 31337, 49192, 515, 2223, 49181, 179, 1813, 120, 49152
+};
 
 static parsing_function handlers[5] = {
 	opt_speed,
@@ -64,6 +79,17 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 	for (int i = 1; i < argc; i++) {
 		if (args_status == ARGS_NOTHING) {
 			args_status = get_option(argv[i]);
+			switch (args_status) {
+				case ARGS_HELP:
+					print_help_message();
+					free_options(&res);
+					exit(0);
+					break;
+				case ARGS_FAST:
+					res.fast = true;
+					args_status = ARGS_NOTHING;
+					break;
+			}
 			if (args_status == ARGS_HELP) {
 				print_help_message();
 				free_options(&res);
@@ -93,6 +119,17 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 			!(res.scans & 0x10000000))
 		res.scans = SCAN_ALL;
 
+	if (res.fast == true) {
+		free(res.port);
+		res.port = fast_ports();
+		if (res.port == NULL) {
+			fprintf(stderr, ERROR "Error allocating memory, aborting.\n");
+			free_options(&res);
+			exit(1);
+		}
+		res.port_len = 100;
+	}
+
 	uint16_t *sorted = sort_port_range(res.port, &res.port_len);
 
 	if (sorted == NULL && (unsigned)errno == RANGE_ALLOCERR) {
@@ -119,10 +156,22 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 		exit(1);
 	}
 
+
 	if (res.threads == 0)
 		res.threads = 1;
 
 	return res;
+}
+
+static uint16_t *fast_ports() {
+	uint16_t	*array;
+
+	array = calloc(100, sizeof(uint16_t));
+	if (array == NULL)
+		return NULL;
+	
+	memcpy(array, top_100_ports, sizeof(uint16_t) * 100);
+	return array;
 }
 
 void	free_options(options *opts) {
@@ -172,6 +221,10 @@ static bool opt_scans(options *opts, str arg) {
 
 static bool opt_ports(options *opts, str arg) {
 	uint32_t	size = 0;
+
+	if (opts->fast == true)
+		return false;
+
 	str			*splitted = ft_split(arg, ',');
 	uint16_t	*tmp_ports = NULL;
 	uint32_t	tmp_port_len = 0;
@@ -590,6 +643,8 @@ static int	get_option(char const *arg) {
 			return ARGS_IP;
 		if (!strncmp(arg, "help", 4))
 			return ARGS_HELP;
+		if (!strncmp(arg, "fast", 4))
+			return ARGS_FAST;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
