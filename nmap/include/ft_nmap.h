@@ -227,7 +227,7 @@ t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans sca
 void		*routine(void *);
 
 // scanner.c
-void    scanner(ip_addr_t **ip_list,
+int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
                 ip_addr_t src_ip, int src_port,
                 int scan, char *data, int data_len);

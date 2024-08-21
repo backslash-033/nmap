@@ -48,9 +48,9 @@ char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data
     psh.length = udph->len; // Length is already in network byte order
 
     int psize = sizeof(struct pseudo_header) + ntohs(udph->len);
-    char *pseudogram = malloc(psize);
+    char *pseudogram = calloc(1, psize);
     if (!pseudogram) {
-        perror("malloc");
+        perror("calloc");
         free(packet);
         return NULL;
     }
@@ -102,9 +102,9 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
     psh.length = htons(sizeof(tcpheader_t) + data_len); 
     
     int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; 
-    char *pseudogram = malloc(psize);
+    char *pseudogram = calloc(1, psize);
     if (!pseudogram) {
-        perror("malloc");
+        perror("calloc");
 		free(packet);
         return NULL;
     }
@@ -124,6 +124,7 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
 int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	int sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
 	if (sockfd < 0) {
+		free(packet);
 		perror("socket");
 		return -1;
 	}
@@ -136,6 +137,7 @@ int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
 		perror("sendto");
 		close(sockfd);
+		free(packet);
 		return -1;
 	}
 	close(sockfd);
