@@ -32,7 +32,7 @@ void *routine(void * arg) {
 		src_ip.network = 16777343;
 		inet_ntop(AF_INET, &(src_ip.network), src_ip.printable, INET_ADDRSTRLEN);
 
-		scanner(ptr, port_vector, src_ip, in.port, in.scans, "salut", 5);
+		scanner(ptr, port_vector, src_ip, in.port, in.scans, "salut", 5); // TODO make salut and its length dynamic
 
 		free(port_list);
 		free(ptr);
