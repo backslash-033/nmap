@@ -221,7 +221,7 @@ t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-int		main_thread(const uint16_t *ports, const uint32_t size, t_scan *scan);
+int			main_thread(const t_uint16_vector ports, t_scan *scan);
 
 // routine.c
 void		*routine(void *);

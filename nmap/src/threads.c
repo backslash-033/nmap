@@ -74,6 +74,10 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	t_scan		res = {
 		.type = scan
 	};
+	t_uint16_vector ports = {
+		.len = (size_t)opt->port_len,
+		.list = opt->port,
+	};
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
@@ -85,7 +89,7 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	if (main_thread(opt->port, opt->port_len, &res) == - 1) {
+	if (main_thread(ports, &res) == - 1) {
 		exit(1);
 		// TODO handle better
 	}
