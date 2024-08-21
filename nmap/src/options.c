@@ -7,6 +7,7 @@
 #define ARGS_FILE		3
 #define ARGS_IP			4
 #define ARGS_TTL		5
+#define ARGS_WIN		6
 #define ARGS_SOURCE		8
 #define ARGS_HELP		11
 #define ARGS_FAST		10
@@ -30,6 +31,7 @@ static bool			opt_ports(options *opts, str arg);
 static bool			opt_file(options *opts, str arg);
 static bool			opt_ip(options *opts, str arg);
 static bool			opt_ttl(options *opts, str arg);
+static bool			opt_win(options *opts, str arg);
 static bool			opt_source(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
@@ -65,7 +67,7 @@ static parsing_function handlers[9] = {
 	opt_file,	// 3
 	opt_ip,		// 4
 	opt_ttl,	// 5
-	0,// opt_win,
+	opt_win,	// 6
 	0,// opt_data,
 	opt_source,	// 8
 };
@@ -385,6 +387,17 @@ static bool opt_source(options *opts, str arg) {
     return false;
 }
 
+static bool opt_win(options *opts, str arg) {
+	int		res;
+
+	res = atoi(arg);
+	if (res < 0 || res > UINT16_MAX)
+		fprintf(stderr, WARNING "win option `%s` is invalid, the range is 0-65535 included.\n", arg);
+	else
+		opts->win = (uint8_t)res;
+	return false;
+}
+
 static bool	add_hostname(options *opts, const str hostname) {
 	host_data	to_add;
 	host_data	*tmp;
@@ -680,6 +693,8 @@ static int	get_option(char const *arg) {
 			return ARGS_FAST;
 		if (!strncmp(arg, "ttl", 3))
 			return ARGS_TTL;
+		if (!strncmp(arg, "win", 3))
+			return ARGS_WIN;
 		if (!strncmp(arg, "source", 6))
 			return ARGS_SOURCE;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
@@ -714,6 +729,7 @@ static options default_options() {
 	ret.port = NULL;
 	ret.port_len = 0;
 	ret.ttl = 64;
+	ret.win = UINT16_MAX;
 	ret.data = NULL;
 	ret.source = 16777343;
 
