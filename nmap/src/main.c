@@ -3,7 +3,7 @@
 static void	display_options(options opt);
 static void	print_exec_time(struct timeval before, struct timeval after);
 static void	free_every_addrinfo(struct addrinfo **to_free);
-static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free);
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free, t_scan *result);
 
 int main(int argc, char **argv) {
 	options 		opt;
@@ -15,11 +15,9 @@ int main(int argc, char **argv) {
 
 	display_options(opt);
 
-	printf("\033[1;31m[%s]\033[0m\n", opt.data);
-
 	result = threads(&opt, &before, &after);
 	if (result == NULL) {
-		free_end_of_main(opt, addrinfo_to_free);
+		free_end_of_main(opt, addrinfo_to_free, result);
 		fprintf(stderr, ERROR "Error creating thread data.\n");
 		exit(1);
 	}
@@ -30,13 +28,20 @@ int main(int argc, char **argv) {
 
 	print_results(result, amount_of_scans(opt.scans));
 
-	free_end_of_main(opt, addrinfo_to_free);
+	free_end_of_main(opt, addrinfo_to_free, result);
 }
 
-static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free) {
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free, t_scan *result) {
 	free_options(&opt);
 	if (addrinfo_to_free)
 		free_every_addrinfo(addrinfo_to_free);
+	if (result) {
+		for (int i = amount_of_scans(opt.scans) - 1; (i + 1) != 0; i--) {
+			free(result[i].results->ports);
+			free(result[i].results);
+		}
+		free(result);
+	}
 }
 
 static void	free_every_addrinfo(struct addrinfo **to_free) {

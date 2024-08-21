@@ -96,6 +96,7 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
     pcap_loop(handle, states->len, packet_handler, (u_char *)states);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
+	pcap_freecode(&compiled_filter);
     return 0;
 }
 
