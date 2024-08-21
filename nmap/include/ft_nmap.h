@@ -222,7 +222,7 @@ bool		threads(options *opt);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
+t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan, const bool if_lo);
 
 // routine.c
 void		*routine(void *);
@@ -280,5 +280,6 @@ void interpret_udp_scan(uint16_t state, char *results);
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 // listener.c
-int listener(char *interface, int scan, t_port_state_vector *states);
+int listener(int scan, t_port_state_vector *states, const bool if_lo);
+
 #endif

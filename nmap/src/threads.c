@@ -113,6 +113,7 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 	t_scan		res;
+	bool		is_lo;
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
@@ -124,7 +125,11 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	res = main_thread(opt->port, opt->port_len, scan);
+	struct sockaddr *ip = threads_input[0].hnp.host.info.ai_addr;
+
+	is_lo = ntohl(((struct sockaddr_in *)ip)->sin_addr.s_addr) >> 24 == 127;
+
+	res = main_thread(opt->port, opt->port_len, scan, is_lo);
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);

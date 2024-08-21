@@ -16,7 +16,7 @@ static void handle_alarm(int sig) {
 }
 
 // TODO change scan and states to a t_scan
-int listener(char *interface, int scan, t_port_state_vector *states) {
+int listener(int scan, t_port_state_vector *states, const bool if_lo) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
@@ -37,10 +37,13 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
  
     // Use the first device
     device = alldevs;
-    for (; device != NULL; device = device->next) {
-        if (!strcmp(device->name, interface))
-            break;
-    }
+
+	if (if_lo) {
+		for (; device != NULL; device = device->next) {
+			if (!strcmp(device->name, "lo"))
+				break;
+		}
+	}
 
     if (device == NULL) {
         fprintf(stderr, "No devices found.\n");
