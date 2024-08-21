@@ -28,7 +28,7 @@ t_scan	*threads(options *opt, struct timeval *before, struct timeval *after) {
 
 	gettimeofday(before, NULL);
 
-	for (int scan = 0b00000001, i = 0; scan != 0b00100000; scan <<= 1) {
+	for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
 		if (scan & opt->scans) {
 			out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
 			i++;
@@ -45,7 +45,7 @@ t_scan	*threads(options *opt, struct timeval *before, struct timeval *after) {
 uint8_t	amount_of_scans(const uint8_t opt_scan) {
 	uint8_t i = 0;
 
-	for (int scan = 0b00000001; scan != 0b00100000; scan <<= 1) {
+	for (int scan = 0b00000001; scan != 0b01000000; scan <<= 1) {
 		if (scan & opt_scan)
 			i++;
 	}
