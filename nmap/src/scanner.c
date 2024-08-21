@@ -2,28 +2,28 @@
 
 int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
-                ip_addr_t src_ip, int src_port,
-                int scan, char *data, int data_len) {
-    /*
-    Core function of the Nmap scanner. Calls the necessary functions to perform
-    the different scans proposed by the utilitary. The parameters MUST be
-    already parsed, or set to default values (see args)
+				ip_addr_t src_ip, int src_port,
+				int scan, char *data, int data_len) {
+	/*
+	Core function of the Nmap scanner. Calls the necessary functions to perform
+	the different scans proposed by the utilitary. The parameters MUST be
+	already parsed, or set to default values (see args)
 
-    Args:
-        ip_addr_t **ip_list: the list of IPs to be scanned
+	Args:
+		ip_addr_t **ip_list: the list of IPs to be scanned
 			The array of ip_addr_t * MUST be NULL-terminated.
-        int *port_list: the list of ports to be scanned.
-        int len_port_list: the length of the list of ports to be scanned.
-        ip_addr_t src_ip: the IP address to emit the packets from.
-        int src_port: the port to emit the packets from.
-        int scan: the scan to be performed on the hosts and ports.
-        char *data: the data to transmit when sending a packet
-            Doesn't need to be \0 terminated.
-        int data_len: the length (in bytes) of the passed data
-    
-    Returns:
-        Nothing    
-    */
+		int *port_list: the list of ports to be scanned.
+		int len_port_list: the length of the list of ports to be scanned.
+		ip_addr_t src_ip: the IP address to emit the packets from.
+		int src_port: the port to emit the packets from.
+		int scan: the scan to be performed on the hosts and ports.
+		char *data: the data to transmit when sending a packet
+			Doesn't need to be \0 terminated.
+		int data_len: the length (in bytes) of the passed data
+
+	Returns:
+		Nothing    
+	*/
 	int ret;
 	ip_addr_t *dest_ip = *ip_list;
 	int dest_port;

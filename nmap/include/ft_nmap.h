@@ -207,6 +207,15 @@ typedef struct          s_scan {
     t_port_state_vector *results;
 }                       t_scan;
 
+
+typedef struct	s_listener_in {
+	t_scan	scan;
+	char	*dev;
+	pthread_mutex_t mutex;
+	pthread_cond_t	cond;
+	int		ready;
+}				t_listener_in;
+
 ip_addr_t	**parse_ips(char **ips);
 
 // main.c
@@ -221,7 +230,7 @@ t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-int			main_thread(const t_uint16_vector ports, t_scan *scan);
+void		*main_thread(void *arg);
 
 // routine.c
 void		*routine(void *);
@@ -278,5 +287,5 @@ void interpret_udp_scan(uint16_t state, char *results);
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 // listener.c
-int listener(char *interface, t_scan scan);
+int listener(t_listener_in *data);
 #endif

@@ -78,10 +78,35 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 		.len = (size_t)opt->port_len,
 		.list = opt->port,
 	};
+	pthread_t		listener_id;
+	void			*listener_ret;
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
 	srand(time(0));
+
+	t_listener_in listener_data = {
+		.cond = PTHREAD_COND_INITIALIZER,
+		.mutex = PTHREAD_MUTEX_INITIALIZER,
+		.dev = strdup("lo"), // TODO NATHAN WHERE IS THE INTERFACE
+		.ready = 0,
+	};
+
+	res.results = create_port_state_vector(ports.list, ports.len);
+	if (!res.results) {
+		exit(1);
+		// TODO clear properly
+	}
+	res.type = scan;
+	listener_data.scan = res;
+
+	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
+
+	pthread_mutex_lock(&listener_data.mutex);
+	while (listener_data.ready == 0) {
+		pthread_cond_wait(&listener_data.cond, &listener_data.mutex);
+	}
+	pthread_mutex_unlock(&listener_data.mutex);
 
 	for (uint8_t i = 0; i < amount; i++) {
 		threads_input[i].port = assign_port(taken_ports);
@@ -89,15 +114,14 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	if (main_thread(ports, &res) == - 1) {
-		exit(1);
-		// TODO handle better
-	}
-
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
 	}
 
+	pthread_join(listener_id, &listener_ret);
+	printf("Listener ret %d\n", *(int *)listener_ret);
+	free(listener_ret);
+	free(listener_data.dev);
 	return res;
 }
 

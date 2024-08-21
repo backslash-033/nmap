@@ -16,7 +16,7 @@ static void handle_alarm(int sig) {
 }
 
 // TODO change scan and states to a t_scan
-int listener(char *interface, t_scan scan) {
+int listener(t_listener_in *listener_data) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
@@ -37,7 +37,7 @@ int listener(char *interface, t_scan scan) {
     // Use the first device
     device = alldevs;
     for (; device != NULL; device = device->next) {
-        if (!strcmp(device->name, interface))
+        if (!strcmp(device->name, listener_data->dev))
             break;
     }
 
@@ -63,7 +63,7 @@ int listener(char *interface, t_scan scan) {
 
     g_handle = handle;
 
-    filter = create_filter(scan.type);
+    filter = create_filter(listener_data->scan.type);
     if (!filter) {
         perror("malloc");
         return 1;
@@ -87,13 +87,16 @@ int listener(char *interface, t_scan scan) {
     }
     free(filter);
 
+	pthread_mutex_lock(&listener_data->mutex);
+	listener_data->ready = 1;
+	pthread_cond_signal(&listener_data->cond);
+	pthread_mutex_unlock(&listener_data->mutex);
     signal(SIGALRM, handle_alarm);
     alarm(timeout);
 
     // Start capturing packets
     // states.len might be ambitious, back to -1 if necessary
-	printf("Results: %p\n", scan.results);
-    pcap_loop(handle, scan.results->len, packet_handler, (u_char *)scan.results);
+    pcap_loop(handle, -1, packet_handler, (u_char *)listener_data->scan.results);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
 	pcap_freecode(&compiled_filter);
