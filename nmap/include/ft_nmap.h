@@ -37,6 +37,10 @@ typedef struct options {
 	uint16_t		*port;
 	uint32_t		port_len;
 	bool			fast;
+	uint8_t			ttl;
+	uint16_t		win;
+	str				data;
+	int				source;
 } options;
 
 typedef struct host_and_ports {

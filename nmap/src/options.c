@@ -6,7 +6,8 @@
 #define ARGS_PORTS		2
 #define ARGS_FILE		3
 #define ARGS_IP			4
-#define ARGS_HELP		5
+#define ARGS_TTL		5
+#define ARGS_HELP		11
 #define ARGS_FAST		10
 #define SCAN_NOTHING	0
 #define SCAN_SYN		0b00000001
@@ -27,6 +28,7 @@ static bool			opt_scans(options *opts, str arg);
 static bool			opt_ports(options *opts, str arg);
 static bool			opt_file(options *opts, str arg);
 static bool			opt_ip(options *opts, str arg);
+static bool			opt_ttl(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
 static uint16_t 	*range_values(str arg, uint32_t *size);
@@ -54,12 +56,16 @@ uint16_t top_100_ports[] = {
     10000, 31337, 49192, 515, 2223, 49181, 179, 1813, 120, 49152
 };
 
-static parsing_function handlers[5] = {
+static parsing_function handlers[9] = {
 	opt_speed,
 	opt_scans,
 	opt_ports,
 	opt_file,
 	opt_ip,
+	opt_ttl,
+	0,// opt_win,
+	0,// opt_data,
+	0,// opt_source,
 };
 
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
@@ -350,6 +356,17 @@ static bool opt_file(options *opts, str arg) {
 
 static bool opt_ip(options *opts, str arg) {
 	return add_hostname(opts, arg);
+}
+
+static bool opt_ttl(options *opts, str arg) {
+	int		res;
+
+	res = atoi(arg);
+	if (res < 0 || res > 255)
+		fprintf(stderr, WARNING "ttl option `%s` is invalid, the range is 0-255 included.\n", arg);
+	else
+		opts->ttl = (uint8_t)res;
+	return false;
 }
 
 static bool	add_hostname(options *opts, const str hostname) {
@@ -645,6 +662,8 @@ static int	get_option(char const *arg) {
 			return ARGS_HELP;
 		if (!strncmp(arg, "fast", 4))
 			return ARGS_FAST;
+		if (!strncmp(arg, "ttl", 3))
+			return ARGS_TTL;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
@@ -676,6 +695,9 @@ static options default_options() {
 	ret.threads = 0;
 	ret.port = NULL;
 	ret.port_len = 0;
+	ret.ttl = 64;
+	ret.data = NULL;
+	ret.source = 16777343;
 
 	return ret;
 }
