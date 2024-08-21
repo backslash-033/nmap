@@ -36,10 +36,13 @@ int listener(t_listener_in *listener_data) {
  
     // Use the first device
     device = alldevs;
-    for (; device != NULL; device = device->next) {
-        if (!strcmp(device->name, listener_data->dev))
-            break;
-    }
+
+	if (listener_data.if_lo) {
+		for (; device != NULL; device = device->next) {
+			if (!strcmp(device->name, "lo"))
+				break;
+		}
+	}
 
     if (device == NULL) {
         fprintf(stderr, "No devices found.\n");

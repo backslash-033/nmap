@@ -3,17 +3,17 @@
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan,
-            char *data, int data_len) {
+            char *data, int data_len, const options *opts) {
 	ipheader_t iph;
 	tcpheader_t tcph;
 	char *packet;
 
 
 	// Setup the IP Header
-	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_TCP);
+	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_TCP, opts);
 
 	// Setup the TCP Header
-	tcph = setup_tcph(src_port, dest_port);
+	tcph = setup_tcph(src_port, dest_port, opts);
 	// Set the appropriate flag for the SYN scan
 	tcph.flags = scan;
 
@@ -31,13 +31,13 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan __attribute__((unused)),
-            char *data, int data_len) {
+            char *data, int data_len, const options *opts) {
 	ipheader_t iph;
 	udpheader_t udph;
 	char *packet;
 
 	// Setup the IP Header
-	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_UDP);
+	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_UDP, opts);
 
 	// Setup the UDP Header
 	udph = setup_udph(src_port, dest_port, data_len);

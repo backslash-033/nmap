@@ -50,10 +50,11 @@ typedef struct host_and_ports {
 } host_and_ports;
 
 typedef struct tdata_in {
-	host_and_ports	*hnp;
+	host_and_ports	hnp;
 	uint8_t			scans;
 	uint8_t			id;
 	uint16_t		port;
+	const options	*opts;
 } tdata_in;
 
 #define WARNING	"\033[33mWarning:\033[0m "
@@ -226,7 +227,7 @@ options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_
 void		free_options(options *opts);
 
 // threads.c
-t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
+bool		threads(options *opt);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
@@ -239,7 +240,8 @@ void		*routine(void *);
 int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
                 ip_addr_t src_ip, int src_port,
-                int scan, char *data, int data_len);
+                int scan, char *data, int data_len,
+				const options *opts);
 
 // sender.c
 char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
@@ -247,19 +249,19 @@ char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int da
 int			send_packet(ipheader_t iph, char *packet, int dest_port);
 
 // setup.c
-ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol);
-tcpheader_t	setup_tcph(int src_port, int dest_port);
+ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol, const options *opts);
+tcpheader_t	setup_tcph(int src_port, int dest_port, const options *opts);
 udpheader_t setup_udph(int src_port, int dest_port, int data_len);
 
 // scans.c
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan,
-            char *data, int data_len);
+            char *data, int data_len, const options *opts);
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan __attribute__((unused)),
-            char *data, int data_len);
+            char *data, int data_len, const options *opts);
 
 // show_results.c
 int    print_results(t_scan *scans, size_t len_scans);

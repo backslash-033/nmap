@@ -3,7 +3,8 @@
 int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
 				ip_addr_t src_ip, int src_port,
-				int scan, char *data, int data_len) {
+				int scan, char *data, int data_len,
+				const options *opts) {
 	/*
 	Core function of the Nmap scanner. Calls the necessary functions to perform
 	the different scans proposed by the utilitary. The parameters MUST be
@@ -27,7 +28,7 @@ int    scanner(ip_addr_t **ip_list,
 	int ret;
 	ip_addr_t *dest_ip = *ip_list;
 	int dest_port;
-	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int) = NULL;
+	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int, const options *) = NULL;
 
 	if (scan != -1)
 		scanner_func = tcp_scan;
@@ -37,7 +38,7 @@ int    scanner(ip_addr_t **ip_list,
 	while (dest_ip) {
 		for (size_t j = 0; j < port_vector.len; j++) {
 			dest_port = port_vector.list[j];
-			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, scan, data, data_len);
+			ret = scanner_func(src_ip, *dest_ip, src_port, dest_port, scan, data, data_len, opts);
 			if (ret != 0)
 				return ret;
 		}

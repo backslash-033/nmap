@@ -9,6 +9,7 @@ void *main_thread(void *arg) {
 
 	t_listener_in *data = (t_listener_in *)arg;
 	// TODO Make me dynamic
+	// TODO add the if_lo to the t_lisener_in struct
 	char dev[] = "lo";
 	
     *ret = listener(data);
