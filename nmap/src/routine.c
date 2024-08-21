@@ -9,6 +9,7 @@ void *routine(void * arg) {
 	};
 	ip_addr_t	**ptr;
 	ip_addr_t	to_scan;
+	ip_addr_t	src_ip;
 
 	ptr = calloc(2, sizeof(ip_addr_t *));
 	if (ptr == NULL)
@@ -25,13 +26,10 @@ void *routine(void * arg) {
 
 	port_vector.list = in.hnp.ports;
 
-	ip_addr_t	src_ip;
-
-	// TODO: Make it dynamic ?
-	src_ip.network = 16777343;
+	src_ip.network = in.opts->source;
 	inet_ntop(AF_INET, &(src_ip.network), src_ip.printable, INET_ADDRSTRLEN);
 
-	scanner(ptr, port_vector, src_ip, in.port, in.scans, "salut", 5);
+	scanner(ptr, port_vector, src_ip, in.port, in.scans, in.opts->data, strlen(in.opts->data), in.opts);
 
 	free(port_list);
 	free(ptr);

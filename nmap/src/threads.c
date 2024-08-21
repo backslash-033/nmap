@@ -1,6 +1,6 @@
 #include "ft_nmap.h"
 
-static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount, const host_data host);
+static tdata_in			*build_threads_input(const options *opt, uint8_t *th_amount, const host_data host);
 static t_scan 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
 static host_and_ports	*every_host_and_ports(const options opt, uint8_t *th_amount, const host_data host);
 static host_and_ports	host_and_ports_one_thread(const options opt, const uint32_t per_thread, const host_data host);
@@ -27,7 +27,7 @@ bool	threads(options *opt) {
 			return true;
 
 		gettimeofday(&before, NULL);
-		threads_input = build_threads_input(*opt, &th_amount, opt->host[h]);
+		threads_input = build_threads_input(opt, &th_amount, opt->host[h]);
 		if (threads_input == NULL) {
 			free(out);
 			return true;
@@ -190,11 +190,11 @@ static uint16_t	assign_port(uint16_t *already_open_ports) {
 	}
 }
 
-static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount, const host_data host) {
+static tdata_in	*build_threads_input(const options *opt, uint8_t *th_amount, const host_data host) {
 	tdata_in		*res;
 	host_and_ports	*every_hnp;
 
-	every_hnp = every_host_and_ports(opt, th_amount, host);
+	every_hnp = every_host_and_ports(*opt, th_amount, host);
 	if (every_hnp == NULL)
 		return NULL;
 
@@ -208,6 +208,7 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount, cons
 		res[i].hnp = every_hnp[i];
 		res[i].id = i;
 		res[i].scans = 0;
+		res[i].opts = opt;
 	}
 	free(every_hnp);
 

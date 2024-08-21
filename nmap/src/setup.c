@@ -3,7 +3,7 @@
 static uint32_t random_uint32(uint32_t min, uint32_t max);
 static uint16_t random_uint16(uint16_t min, uint16_t max);
 
-ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
+ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol, const options *opts) {
     /*
     Setup basic parameters for the IP Header. Does NOT calculate the checksum.
 
@@ -26,7 +26,7 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
 	iph.ident = htons(random_uint16(0, UINT16_MAX)); 
     iph.flag = htons(0x4000);
     iph.offset = 0;
-    iph.ttl = 255; // TODO experiment with variable ttl for --traceroute param
+    iph.ttl = opts->ttl;
     iph.protocol = protocol;
     iph.chksum = 0;
     iph.src_ip = src_ip;
@@ -34,7 +34,7 @@ ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol) {
     return iph;
 }
 
-tcpheader_t setup_tcph(int src_port, int dest_port) {
+tcpheader_t setup_tcph(int src_port, int dest_port, const options *opts) {
     /*
     Setup basic parameters for the TCP Header. Does NOT calculate the checksum,
     nor sets sequence number, acknowledgment number, offset, flags, variable
@@ -54,7 +54,7 @@ tcpheader_t setup_tcph(int src_port, int dest_port) {
     tcph.reserved = 0;
     tcph.offset = 5; // Normally, is fixed
     tcph.flags = 0; 
-    tcph.win = htons(33280); // TODO maybe make me adjustable
+    tcph.win = htons(opts->win);
     tcph.chksum = 0;
     tcph.urgptr = 0; 
 	return tcph;
