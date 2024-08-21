@@ -50,7 +50,7 @@ typedef struct host_and_ports {
 } host_and_ports;
 
 typedef struct tdata_in {
-	host_and_ports	*hnp;
+	host_and_ports	hnp;
 	uint8_t			scans;
 	uint8_t			id;
 	uint16_t		port;
@@ -217,7 +217,7 @@ options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_
 void		free_options(options *opts);
 
 // threads.c
-t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
+bool		threads(options *opt);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c

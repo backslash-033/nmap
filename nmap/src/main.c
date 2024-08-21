@@ -1,47 +1,33 @@
 #include "ft_nmap.h"
 
 static void	display_options(options opt);
-static void	print_exec_time(struct timeval before, struct timeval after);
 static void	free_every_addrinfo(struct addrinfo **to_free);
-static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free, t_scan *result);
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free);
 
 int main(int argc, char **argv) {
 	options 		opt;
-	struct timeval	before, after;
 	struct addrinfo	**addrinfo_to_free;
-	t_scan			*result;
+	bool	result;
 
 	opt = options_handling(argc, argv, &addrinfo_to_free);
 
 	display_options(opt);
 
-	result = threads(&opt, &before, &after);
-	if (result == NULL) {
-		free_end_of_main(opt, addrinfo_to_free, result);
+	// TODO: change this to bool
+	result = threads(&opt);
+	if (result == true) {
+		free_end_of_main(opt, addrinfo_to_free);
 		fprintf(stderr, ERROR "Error creating thread data.\n");
 		exit(1);
 	}
 
-	printf("\n\033[31mExecution ended: ");
-	print_exec_time(before, after);
-	printf("\033[0m\n\n");
-
-	print_results(result, amount_of_scans(opt.scans));
-
-	free_end_of_main(opt, addrinfo_to_free, result);
+	free_end_of_main(opt, addrinfo_to_free);
 }
 
-static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free, t_scan *result) {
+static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free) {
 	free_options(&opt);
 	if (addrinfo_to_free)
 		free_every_addrinfo(addrinfo_to_free);
-	if (result) {
-		for (int i = amount_of_scans(opt.scans) - 1; (i + 1) != 0; i--) {
-			free(result[i].results->ports);
-			free(result[i].results);
-		}
-		free(result);
-	}
 }
 
 static void	free_every_addrinfo(struct addrinfo **to_free) {
@@ -51,22 +37,7 @@ static void	free_every_addrinfo(struct addrinfo **to_free) {
 	free(to_free);
 }
 
-static void	print_exec_time(struct timeval before, struct timeval after) {
-	uint64_t	msec = ((after.tv_sec - before.tv_sec) * 1000) + ((after.tv_usec - before.tv_usec) / 1000);
-	uint64_t	sec = msec / 1000;
-	uint64_t	min = sec / 60;
 
-	if (min) {
-		printf("%lum ", min);
-	}
-	if (sec) {
-		printf("%lus ", sec % 60);
-		printf("%03lums", msec % 1000);
-	}
-	else {
-		printf("%lums", msec % 1000);
-	}
-}
 
 static void	display_options(options opt) {
 	bool	already_displayed_a_scan = false;
@@ -121,6 +92,7 @@ static void	display_options(options opt) {
 	for (uint32_t i = 0; i < opt.host_len; i++) {
 		printf("- %s\n", opt.host[i].basename);
 	}
+	printf("\n---\n\n");
 }
 
 void	display_port_range(uint16_t *array, uint32_t size) {
@@ -148,6 +120,4 @@ void	display_port_range(uint16_t *array, uint32_t size) {
 		}
 		printf("%hu", array[size - 1]);
 	}
-
-	printf("\n---\n\n");
 }

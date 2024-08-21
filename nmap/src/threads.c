@@ -1,45 +1,86 @@
 #include "ft_nmap.h"
 
-static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount);
+static tdata_in			*build_threads_input(const options opt, uint8_t *th_amount, const host_data host);
 static t_scan 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
-static host_and_ports	**every_host_and_ports(const options opt, uint8_t *th_amount);
-static host_and_ports	*host_and_ports_one_thread(const options opt, const uint32_t per_thread);
+static host_and_ports	*every_host_and_ports(const options opt, uint8_t *th_amount, const host_data host);
+static host_and_ports	host_and_ports_one_thread(const options opt, const uint32_t per_thread, const host_data host);
 static void				free_host_and_ports(host_and_ports h);
 static void				free_host_and_ports_array(host_and_ports *array);
-static void				free_every_host_and_ports(host_and_ports **hnp);
-static void				free_tdata_in(tdata_in d);
-static void				free_tdata_in_array(tdata_in *array, uint8_t size);
 static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
+static void				print_exec_time(struct timeval before, struct timeval after);
 
-t_scan	*threads(options *opt, struct timeval *before, struct timeval *after) {
-	tdata_in		*threads_input;
+bool	threads(options *opt) {
+	tdata_in		*threads_input = NULL;
 	uint8_t			th_amount = NEVER_ZERO(opt->threads);
+	struct timeval	before, after;
 	t_scan			*out;
+	uint8_t			scan_amout = amount_of_scans(opt->scans);
 
-	out = calloc(sizeof(t_scan), amount_of_scans(opt->scans));
-	if (out == NULL)
-		return NULL;
+	printf("Starting scan...\n\n");
 
-	threads_input = build_threads_input(*opt, &th_amount);
-	if (threads_input == NULL)
-		return NULL;
+	for (int h = 0; h < (int)opt->host_len; h++) {
+		printf("Host: %s\n", opt->host[h].basename);
+		out = calloc(sizeof(t_scan), scan_amout + 1);
+		if (out == NULL)
+			return true;
 
-	gettimeofday(before, NULL);
-
-	for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
-		if (scan & opt->scans) {
-			out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
-			i++;
+		gettimeofday(&before, NULL);
+		threads_input = build_threads_input(*opt, &th_amount, opt->host[h]);
+		if (threads_input == NULL) {
+			free(out);
+			return true;
 		}
+
+		for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
+			if (scan & opt->scans) {
+				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
+				i++;
+			}
+		}
+
+		gettimeofday(&after, NULL);
+
+		printf("Execution time: ");
+		print_exec_time(before, after);
+		printf("\n");
+		print_results(out, scan_amout);
+
+		if (h + 1!= (int)opt->host_len)
+			printf("\n---\n\n");
+
+		for (int i = scan_amout - 1; (i + 1) != 0; i--) {
+			free(out[i].results->ports);
+			free(out[i].results);
+		}
+		free(out);
+		for (int i = 0; i < th_amount; i++) {
+			free(threads_input[i].hnp.ports);
+		}
+		free(threads_input);
+		out = NULL;
 	}
 
-	gettimeofday(after, NULL);
-
-	free_tdata_in_array(threads_input, th_amount);
 	opt->threads = th_amount;
-	return out;
+	return false;
+}
+
+static void	print_exec_time(struct timeval before, struct timeval after) {
+	uint64_t	msec = ((after.tv_sec - before.tv_sec) * 1000) + ((after.tv_usec - before.tv_usec) / 1000);
+	uint64_t	sec = msec / 1000;
+	uint64_t	min = sec / 60;
+
+	if (min) {
+		printf("%lum ", min);
+	}
+	if (sec) {
+		printf("%lus ", sec % 60);
+		printf("%03lums", msec % 1000);
+	}
+	else {
+		printf("%lums", msec % 1000);
+	}
 }
 
 uint8_t	amount_of_scans(const uint8_t opt_scan) {
@@ -149,17 +190,17 @@ static uint16_t	assign_port(uint16_t *already_open_ports) {
 	}
 }
 
-static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
+static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount, const host_data host) {
 	tdata_in		*res;
-	host_and_ports	**every_hnp;
+	host_and_ports	*every_hnp;
 
-	every_hnp = every_host_and_ports(opt, th_amount);
+	every_hnp = every_host_and_ports(opt, th_amount, host);
 	if (every_hnp == NULL)
 		return NULL;
 
 	res = calloc(*th_amount, sizeof(tdata_in));
 	if (res == NULL) {
-		free_every_host_and_ports(every_hnp);
+		free_host_and_ports_array(every_hnp);
 		return NULL;
 	}
 
@@ -173,109 +214,54 @@ static tdata_in	*build_threads_input(const options opt, uint8_t *th_amount) {
 	return res;
 }
 
-static host_and_ports **every_host_and_ports(const options opt, uint8_t *th_amount) {
-	host_and_ports	**res;
+static host_and_ports *every_host_and_ports(const options opt, uint8_t *th_amount, const host_data host) {
+	host_and_ports	*res;
 	uint32_t		per_thread;
-	uint64_t		hosts_times_ports = opt.host_len * opt.port_len;
 	uint8_t			more;
 	uint8_t			i = 0;
 
-	per_thread = hosts_times_ports / NEVER_ZERO(opt.threads);
-	*th_amount = per_thread ? opt.threads : hosts_times_ports;
+	per_thread = opt.port_len / NEVER_ZERO(opt.threads);
+	*th_amount = per_thread ? opt.threads : opt.port_len;
 
-	more = hosts_times_ports % NEVER_ZERO(opt.threads);
+	more = opt.port_len % NEVER_ZERO(opt.threads);
 
-	res = calloc(*th_amount + 1, sizeof(host_and_ports *));
+	res = calloc(*th_amount + 1, sizeof(host_and_ports));
 
 	for (; i < more; i++) {
-		res[i] = host_and_ports_one_thread(opt, per_thread + 1);
+		res[i] = host_and_ports_one_thread(opt, per_thread + 1, host);
 	}
 	for (; i < *th_amount; i++) {
-		res[i] = host_and_ports_one_thread(opt, per_thread);
+		res[i] = host_and_ports_one_thread(opt, per_thread, host);
 	}
 
 	return res;
 }
 
-static void	free_every_host_and_ports(host_and_ports **hnp) {
-	for (int i = 0; hnp[i]; i++) {
-		free_host_and_ports_array(hnp[i]);
-	}
-	free(hnp);
-}
-
-static host_and_ports *host_and_ports_one_thread(const options opt, const uint32_t per_thread) {
-	static uint32_t	host_index = 0;
+static host_and_ports host_and_ports_one_thread(const options opt, const uint32_t per_thread, const host_data host) {
 	static uint32_t	port_index = 0;
-	uint32_t		size = 1;
-	host_and_ports	*res;
-	host_and_ports	*tmp;
 	host_and_ports	hnp;
 	uint32_t		loop_port_index = 0;
-	const uint32_t	first_ports_size = per_thread > (opt.port_len - port_index) ? (opt.port_len - port_index) : per_thread;
 
-	res = calloc(size + 1, sizeof(host_and_ports));
-	if (res == NULL)
-		return NULL;
+	bzero(&hnp, sizeof(host_and_ports));
 
-	hnp.host = opt.host[host_index];
-	hnp.ports = calloc(first_ports_size, sizeof(uint16_t));
+	hnp.host = host;
+	hnp.ports = calloc(per_thread, sizeof(uint16_t));
 	if (hnp.ports == NULL) {
-		free(res);
-		return NULL;
+		errno = ENOMEM;
+		return hnp;
 	}
-	hnp.ports_len = first_ports_size;
+	hnp.ports_len = per_thread;
 
 	for (uint32_t i = 0; i < per_thread; i++) {
-		// printf("hnp.ports: %p | i: %u, opt.ports: %p | opt.port_len: %u | port_index: %u | host_index: %u | op.port[port_index] %u\n", hnp.ports, i, opt.port, opt.port_len, port_index, host_index, opt.port[port_index]);
+		// printf("\033[35mhnp.ports: %p | i: %u, opt.ports: %p | opt.port_len: %u | port_index: %u | op.port[%u]: %u\033[0m\n", hnp.ports, i, opt.port, opt.port_len, port_index, port_index, opt.port[port_index]);
 		hnp.ports[loop_port_index] = opt.port[port_index];
 		loop_port_index++;
 		port_index++;
 		if (port_index >= opt.port_len) {
-			loop_port_index = 0;
 			port_index = 0;
-			host_index++;
-			if (host_index == opt.host_len)
-				break;
-
-			uint32_t	remaining_ports;
-			remaining_ports = (per_thread - i - 1) > opt.port_len ? opt.port_len : (per_thread - i - 1);
-
-
-			// printf("Remaining: %u\n", remaining_ports);
-			// printf("Per thread: %u\n", per_thread);
-			// printf("opt.port_len: %u\n", opt.port_len);
-			// printf("i: %u\n", i);
-			// printf("Bytes allocated: %lu\n", remaining_ports * sizeof(uint16_t));
-
-			if (remaining_ports <= 0)
-				break;
-
-			res[size - 1] = hnp;
-			size++;
-			tmp = calloc(size + 1, sizeof(host_and_ports));
-			if (tmp == NULL) {
-				free_host_and_ports_array(res);
-				return NULL;
-			}
-
-			memcpy(tmp, res, (size - 1) * sizeof(host_and_ports));
-
-			free(res);
-			res = tmp;
-
-
-			hnp.host = opt.host[host_index];
-			hnp.ports = calloc(remaining_ports, sizeof(uint16_t));
-			if (hnp.ports == NULL) {
-				free_host_and_ports_array(res);
-				free(tmp);
-				return NULL;
-			}
-			hnp.ports_len = remaining_ports;
+			break;
 		}
 	}
-	res[size - 1] = hnp;
 
 	// printf("Before displaying the range:\nres: %p\nsize: %u\nres[size - 1].ports: %p\n", res, size, res[size - 1].ports);
 	// printf("port_index: %u\n", port_index);
@@ -285,9 +271,7 @@ static host_and_ports *host_and_ports_one_thread(const options opt, const uint32
 	// display_port_range(res[size - 1].ports, res[size - 1].ports_len);
 	// puts("");
 
-	res[size] = (host_and_ports){.ports = NULL, .ports_len = 0};
-
-	return res;
+	return hnp;
 }
 
 void	free_host_and_ports(host_and_ports h) {
@@ -297,17 +281,6 @@ void	free_host_and_ports(host_and_ports h) {
 void	free_host_and_ports_array(host_and_ports *array) {
 	for (int i = 0; array[i].ports; i++) {
 		free_host_and_ports(array[i]);
-	}
-	free(array);
-}
-
-void	free_tdata_in(tdata_in d) {
-	free_host_and_ports_array(d.hnp);
-}
-
-void	free_tdata_in_array(tdata_in *array, uint8_t size) {
-	for (int i = 0; i < size; i++) {
-		free_tdata_in(array[i]);
 	}
 	free(array);
 }
