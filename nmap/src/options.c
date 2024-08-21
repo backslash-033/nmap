@@ -128,7 +128,7 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 	if (res.scans == SCAN_NOTHING)
 		res.scans = SCAN_ALL;
 	else if ((res.scans & 0b00111111) == 0b00111111 &&
-			!(res.scans & 0x10000000))
+			!(res.scans & 0x10000000) || amount_of_scans(res.scans) == 0)
 		res.scans = SCAN_ALL;
 
 	if (res.fast == true) {
