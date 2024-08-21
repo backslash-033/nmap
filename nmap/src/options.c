@@ -6,7 +6,11 @@
 #define ARGS_PORTS		2
 #define ARGS_FILE		3
 #define ARGS_IP			4
-#define ARGS_HELP		5
+#define ARGS_TTL		5
+#define ARGS_WIN		6
+#define ARGS_DATA		7
+#define ARGS_SOURCE		8
+#define ARGS_HELP		11
 #define ARGS_FAST		10
 #define SCAN_NOTHING	0
 #define SCAN_SYN		0b00000001
@@ -27,6 +31,10 @@ static bool			opt_scans(options *opts, str arg);
 static bool			opt_ports(options *opts, str arg);
 static bool			opt_file(options *opts, str arg);
 static bool			opt_ip(options *opts, str arg);
+static bool			opt_ttl(options *opts, str arg);
+static bool			opt_win(options *opts, str arg);
+static bool			opt_data(options *opts, str arg);
+static bool			opt_source(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
 static uint16_t 	*range_values(str arg, uint32_t *size);
@@ -54,12 +62,16 @@ uint16_t top_100_ports[] = {
     10000, 31337, 49192, 515, 2223, 49181, 179, 1813, 120, 49152
 };
 
-static parsing_function handlers[5] = {
-	opt_speed,
-	opt_scans,
-	opt_ports,
-	opt_file,
-	opt_ip,
+static parsing_function handlers[9] = {
+	opt_speed,	// 1
+	opt_scans,	// 1
+	opt_ports,	// 2
+	opt_file,	// 3
+	opt_ip,		// 4
+	opt_ttl,	// 5
+	opt_win,	// 6
+	opt_data,	// 7
+	opt_source,	// 8
 };
 
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
@@ -156,6 +168,9 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 		exit(1);
 	}
 
+	if (res.data == NULL) {
+		res.data = calloc(1, 1); // "\0"
+	}
 
 	if (res.threads == 0)
 		res.threads = 1;
@@ -183,6 +198,9 @@ void	free_options(options *opts) {
 			free(opts->host[i].basename);
 		}
 		free(opts->host);
+	}
+	if (opts->data) {
+		free(opts->data);
 	}
 }
 
@@ -352,6 +370,58 @@ static bool opt_ip(options *opts, str arg) {
 	return add_hostname(opts, arg);
 }
 
+static bool opt_ttl(options *opts, str arg) {
+	int		res;
+
+	res = atoi(arg);
+	if (res < 0 || res > 255)
+		fprintf(stderr, WARNING "ttl option `%s` is invalid, the range is 0-255 included.\n", arg);
+	else
+		opts->ttl = (uint8_t)res;
+	return false;
+}
+
+static bool opt_source(options *opts, str arg) {
+    uint32_t	ip_int;
+	int			result;
+
+	result = inet_pton(AF_INET, arg, &ip_int);
+    if (result == 1) {
+   		opts->source = ntohl(ip_int);
+    } else {
+		fprintf(stderr, WARNING "inet_pton wasnt able to parse the `%s` IP address, makes sure it follows a IPv4 address format.\n", arg);
+	}
+
+    return false;
+}
+
+static bool opt_win(options *opts, str arg) {
+	int		res;
+
+	res = atoi(arg);
+	if (res < 0 || res > UINT16_MAX)
+		fprintf(stderr, WARNING "win option `%s` is invalid, the range is 0-65535 included.\n", arg);
+	else
+		opts->win = (uint8_t)res;
+	return false;
+}
+
+static bool opt_data(options *opts, str arg) {
+
+	if (strlen(arg) > 500)
+		fprintf(stderr, WARNING "Data size need to be maximum 500 bytes.\n");
+	else {
+		if (opts->data)
+			free(opts->data);
+		opts->data = strndup(arg, 500);
+		if (opts->data == NULL) {
+			fprintf(stderr, ERROR "Could not allocate memory, aborting.\n");
+			return true;
+		}
+	}
+	return false;
+}
+
 static bool	add_hostname(options *opts, const str hostname) {
 	host_data	to_add;
 	host_data	*tmp;
@@ -413,7 +483,7 @@ static host_data	resolve_hostname(const str hostname) {
 		switch (result->ai_family) {
 		case AF_INET:
 			ptr = &((struct sockaddr_in *) result->ai_addr)->sin_addr;
-			break;
+				break;
         case AF_INET6:
 			ptr = &((struct sockaddr_in6 *) result->ai_addr)->sin6_addr;
 			break;
@@ -645,6 +715,14 @@ static int	get_option(char const *arg) {
 			return ARGS_HELP;
 		if (!strncmp(arg, "fast", 4))
 			return ARGS_FAST;
+		if (!strncmp(arg, "ttl", 3))
+			return ARGS_TTL;
+		if (!strncmp(arg, "win", 3))
+			return ARGS_WIN;
+		if (!strncmp(arg, "data", 4))
+			return ARGS_DATA;
+		if (!strncmp(arg, "source", 6))
+			return ARGS_SOURCE;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
@@ -676,6 +754,10 @@ static options default_options() {
 	ret.threads = 0;
 	ret.port = NULL;
 	ret.port_len = 0;
+	ret.ttl = 64;
+	ret.win = UINT16_MAX;
+	ret.data = NULL;
+	ret.source = 16777343;
 
 	return ret;
 }

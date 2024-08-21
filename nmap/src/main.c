@@ -9,14 +9,16 @@ int main(int argc, char **argv) {
 	options 		opt;
 	struct timeval	before, after;
 	struct addrinfo	**addrinfo_to_free;
-	bool			result;
+	t_scan			*result;
 
 	opt = options_handling(argc, argv, &addrinfo_to_free);
 
 	display_options(opt);
 
+	printf("\033[1;31m[%s]\033[0m\n", opt.data);
+
 	result = threads(&opt, &before, &after);
-	if (result == true) {
+	if (result == NULL) {
 		free_end_of_main(opt, addrinfo_to_free);
 		fprintf(stderr, ERROR "Error creating thread data.\n");
 		exit(1);
@@ -25,6 +27,8 @@ int main(int argc, char **argv) {
 	printf("\n\033[31mExecution ended: ");
 	print_exec_time(before, after);
 	printf("\033[0m\n\n");
+
+	print_results(result, amount_of_scans(opt.scans));
 
 	free_end_of_main(opt, addrinfo_to_free);
 }

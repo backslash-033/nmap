@@ -37,6 +37,10 @@ typedef struct options {
 	uint16_t		*port;
 	uint32_t		port_len;
 	bool			fast;
+	uint8_t			ttl;
+	uint16_t		win;
+	str				data;
+	int				source;
 } options;
 
 typedef struct host_and_ports {
@@ -213,10 +217,11 @@ options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_
 void		free_options(options *opts);
 
 // threads.c
-bool		threads(options *opt, struct timeval *before, struct timeval *after);
+t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
+uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-t_port_state_vector *main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
+t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
 
 // routine.c
 void		*routine(void *);
