@@ -1,32 +1,22 @@
 #include "ft_nmap.h"
 
-t_scan	main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan) {
-	t_port_state_vector *states;
-	t_scan result;
+int	main_thread(const uint16_t *ports, const uint32_t size, t_scan *scan) {
+	int ret;
 
 	// TODO Make me dynamic
-	char dev[] = "wlp0s20f3";
+	char dev[] = "eth0";
 
-	// TODO use create_port_state_vector
-	states = calloc(1, sizeof(t_port_state_vector));
-	if (!states)
-		return result;
-    states->ports = calloc(size, sizeof(t_port_state));
-	if (!states->ports) {
-		free(states);
-		return result;
+
+	scan->results = create_port_state_vector(ports, (size_t)size);
+	if (!scan->results) {
+		return -1;
+	}
+	
+    ret = listener(dev, *scan);
+	if (ret != 0) {
+		// TODO free scan in calling function
+		return -1;
 	}
 
-	for (int i = 0; i < (int)size; i++) {
-		states->ports[i].port = ports[i];
-		states->ports[i].state = NOTHING;
-	}
-    states->len = size;
-
-    listener(dev, scan, states);
-
-	result.results = states;
-	result.type = scan;
-
-	return result;
+	return 0;
 }

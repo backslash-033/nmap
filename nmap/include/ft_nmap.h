@@ -221,7 +221,7 @@ t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
+int		main_thread(const uint16_t *ports, const uint32_t size, t_scan *scan);
 
 // routine.c
 void		*routine(void *);
@@ -259,7 +259,7 @@ int    print_results(t_scan *scans, size_t len_scans);
 char *create_filter(int scan);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
-t_port_state_vector *create_port_state_vector(int *ports, size_t len);
+t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len);
 void free_port_state_vector(t_port_state_vector **vector);
 
 // parsing.c
@@ -278,5 +278,5 @@ void interpret_udp_scan(uint16_t state, char *results);
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 // listener.c
-int listener(char *interface, int scan, t_port_state_vector *states);
+int listener(char *interface, t_scan scan);
 #endif

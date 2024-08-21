@@ -16,7 +16,7 @@ static void handle_alarm(int sig) {
 }
 
 // TODO change scan and states to a t_scan
-int listener(char *interface, int scan, t_port_state_vector *states) {
+int listener(char *interface, t_scan scan) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
     pcap_if_t *device;
@@ -24,7 +24,6 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
     bpf_u_int32 net;
     bpf_u_int32 mask;
     const uint32_t timeout = 1;
-    (void) states;
 
     char *filter;
     struct bpf_program  compiled_filter;
@@ -64,7 +63,7 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
 
     g_handle = handle;
 
-    filter = create_filter(scan);
+    filter = create_filter(scan.type);
     if (!filter) {
         perror("malloc");
         return 1;
@@ -93,7 +92,8 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
 
     // Start capturing packets
     // states.len might be ambitious, back to -1 if necessary
-    pcap_loop(handle, states->len, packet_handler, (u_char *)states);
+	printf("Results: %p\n", scan.results);
+    pcap_loop(handle, scan.results->len, packet_handler, (u_char *)scan.results);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
 	pcap_freecode(&compiled_filter);

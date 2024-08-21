@@ -71,7 +71,9 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
-	t_scan		res;
+	t_scan		res = {
+		.type = scan
+	};
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
@@ -83,7 +85,10 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
 	}
 
-	res = main_thread(opt->port, opt->port_len, scan);
+	if (main_thread(opt->port, opt->port_len, &res) == - 1) {
+		exit(1);
+		// TODO handle better
+	}
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);

@@ -20,7 +20,7 @@ uint16_t random_uint16(uint16_t min, uint16_t max) {
 	return (rand() % diff) + min;
 }
 
-t_port_state_vector *create_port_state_vector(int *ports, size_t len) {
+t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len) {
 	t_port_state_vector *vector;
 	size_t				i;
 
