@@ -18,6 +18,7 @@ static inline void __set_port_state(uint8_t port_state, uint16_t port, t_port_st
 
 static inline void __handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *states) {
     puts("Going TCP");
+	// tcp_visualizer(tcph);
 	if (tcph->flags & RST) {
         __set_port_state(NEGATIVE, ntohs(tcph->src_port), states);
     } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {

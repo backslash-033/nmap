@@ -288,4 +288,11 @@ void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char
 
 // listener.c
 int listener(t_listener_in *data);
+
+// visualizers.c // TODO remove me
+void icmp_visualizer(icmpheader_t *icmph);
+void udp_visualizer(udpheader_t *udph);
+void tcp_visualizer(tcpheader_t *tcph);
+void ip_visualizer(ipheader_t *iph);
+
 #endif

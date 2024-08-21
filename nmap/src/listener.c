@@ -23,7 +23,7 @@ int listener(t_listener_in *listener_data) {
     pcap_t *handle;
     bpf_u_int32 net;
     bpf_u_int32 mask;
-    const uint32_t timeout = 1;
+    const uint32_t timeout = 2;
 
     char *filter;
     struct bpf_program  compiled_filter;
