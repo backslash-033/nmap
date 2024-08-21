@@ -224,10 +224,11 @@ options 	options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_
 void		free_options(options *opts);
 
 // threads.c
-bool		threads(options *opt, struct timeval *before, struct timeval *after);
+t_scan		*threads(options *opt, struct timeval *before, struct timeval *after);
+uint8_t		amount_of_scans(const uint8_t opt_scan);
 
 // main_thread.c
-t_port_state_vector *main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
+t_scan		main_thread(const uint16_t *ports, const uint32_t size, enum e_scans scan);
 
 // routine.c
 void		*routine(void *);
