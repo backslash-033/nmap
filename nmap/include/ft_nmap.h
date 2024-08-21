@@ -211,10 +211,10 @@ typedef struct          s_scan {
 
 typedef struct	s_listener_in {
 	t_scan	scan;
-	char	*dev;
 	pthread_mutex_t mutex;
 	pthread_cond_t	cond;
 	int		ready;
+	bool	is_lo;
 }				t_listener_in;
 
 ip_addr_t	**parse_ips(char **ips);

@@ -15,7 +15,6 @@ static void handle_alarm(int sig) {
         pcap_breakloop(g_handle);
 }
 
-// TODO change scan and states to a t_scan
 int listener(t_listener_in *listener_data) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_if_t *alldevs;
@@ -36,8 +35,7 @@ int listener(t_listener_in *listener_data) {
  
     // Use the first device
     device = alldevs;
-
-	if (listener_data.if_lo) {
+	if (listener_data->is_lo) {
 		for (; device != NULL; device = device->next) {
 			if (!strcmp(device->name, "lo"))
 				break;

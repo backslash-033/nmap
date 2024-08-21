@@ -121,7 +121,6 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	};
 	pthread_t		listener_id;
 	void			*listener_ret;
-	bool		is_lo; // TODO put in struct
 
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
@@ -130,7 +129,6 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	t_listener_in listener_data = {
 		.cond = PTHREAD_COND_INITIALIZER,
 		.mutex = PTHREAD_MUTEX_INITIALIZER,
-		.dev = strdup("lo"), // TODO NATHAN WHERE IS THE INTERFACE
 		.ready = 0,
 	};
 
@@ -144,7 +142,7 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 
 	struct sockaddr *ip = threads_input[0].hnp.host.info.ai_addr;
 
-	is_lo = ntohl(((struct sockaddr_in *)ip)->sin_addr.s_addr) >> 24 == 127; // TODO put in struct
+	listener_data.is_lo = ntohl(((struct sockaddr_in *)ip)->sin_addr.s_addr) >> 24 == 127;
 
 	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
 
@@ -167,7 +165,6 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	pthread_join(listener_id, &listener_ret);
 	printf("Listener ret %d\n", *(int *)listener_ret);
 	free(listener_ret);
-	free(listener_data.dev);
 	return res;
 }
 
