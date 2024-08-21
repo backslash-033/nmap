@@ -8,6 +8,7 @@
 #define ARGS_IP			4
 #define ARGS_TTL		5
 #define ARGS_WIN		6
+#define ARGS_DATA		7
 #define ARGS_SOURCE		8
 #define ARGS_HELP		11
 #define ARGS_FAST		10
@@ -32,6 +33,7 @@ static bool			opt_file(options *opts, str arg);
 static bool			opt_ip(options *opts, str arg);
 static bool			opt_ttl(options *opts, str arg);
 static bool			opt_win(options *opts, str arg);
+static bool			opt_data(options *opts, str arg);
 static bool			opt_source(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
@@ -68,7 +70,7 @@ static parsing_function handlers[9] = {
 	opt_ip,		// 4
 	opt_ttl,	// 5
 	opt_win,	// 6
-	0,// opt_data,
+	opt_data,	// 7
 	opt_source,	// 8
 };
 
@@ -166,6 +168,9 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 		exit(1);
 	}
 
+	if (res.data == NULL) {
+		res.data = calloc(1, 1); // "\0"
+	}
 
 	if (res.threads == 0)
 		res.threads = 1;
@@ -193,6 +198,9 @@ void	free_options(options *opts) {
 			free(opts->host[i].basename);
 		}
 		free(opts->host);
+	}
+	if (opts->data) {
+		free(opts->data);
 	}
 }
 
@@ -395,6 +403,22 @@ static bool opt_win(options *opts, str arg) {
 		fprintf(stderr, WARNING "win option `%s` is invalid, the range is 0-65535 included.\n", arg);
 	else
 		opts->win = (uint8_t)res;
+	return false;
+}
+
+static bool opt_data(options *opts, str arg) {
+
+	if (strlen(arg) > 500)
+		fprintf(stderr, WARNING "Data size need to be maximum 500 bytes.\n");
+	else {
+		if (opts->data)
+			free(opts->data);
+		opts->data = strndup(arg, 500);
+		if (opts->data == NULL) {
+			fprintf(stderr, ERROR "Could not allocate memory, aborting.\n");
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -695,6 +719,8 @@ static int	get_option(char const *arg) {
 			return ARGS_TTL;
 		if (!strncmp(arg, "win", 3))
 			return ARGS_WIN;
+		if (!strncmp(arg, "data", 4))
+			return ARGS_DATA;
 		if (!strncmp(arg, "source", 6))
 			return ARGS_SOURCE;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);

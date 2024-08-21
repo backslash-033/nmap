@@ -15,6 +15,8 @@ int main(int argc, char **argv) {
 
 	display_options(opt);
 
+	printf("\033[1;31m[%s]\033[0m\n", opt.data);
+
 	result = threads(&opt, &before, &after);
 	if (result == NULL) {
 		free_end_of_main(opt, addrinfo_to_free);
