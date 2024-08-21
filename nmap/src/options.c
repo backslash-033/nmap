@@ -7,6 +7,7 @@
 #define ARGS_FILE		3
 #define ARGS_IP			4
 #define ARGS_TTL		5
+#define ARGS_SOURCE		8
 #define ARGS_HELP		11
 #define ARGS_FAST		10
 #define SCAN_NOTHING	0
@@ -29,6 +30,7 @@ static bool			opt_ports(options *opts, str arg);
 static bool			opt_file(options *opts, str arg);
 static bool			opt_ip(options *opts, str arg);
 static bool			opt_ttl(options *opts, str arg);
+static bool			opt_source(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
 static uint16_t 	*range_values(str arg, uint32_t *size);
@@ -57,15 +59,15 @@ uint16_t top_100_ports[] = {
 };
 
 static parsing_function handlers[9] = {
-	opt_speed,
-	opt_scans,
-	opt_ports,
-	opt_file,
-	opt_ip,
-	opt_ttl,
+	opt_speed,	// 1
+	opt_scans,	// 1
+	opt_ports,	// 2
+	opt_file,	// 3
+	opt_ip,		// 4
+	opt_ttl,	// 5
 	0,// opt_win,
 	0,// opt_data,
-	0,// opt_source,
+	opt_source,	// 8
 };
 
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
@@ -369,6 +371,20 @@ static bool opt_ttl(options *opts, str arg) {
 	return false;
 }
 
+static bool opt_source(options *opts, str arg) {
+    uint32_t	ip_int;
+	int			result;
+
+	result = inet_pton(AF_INET, arg, &ip_int);
+    if (result == 1) {
+   		opts->source = ntohl(ip_int);
+    } else {
+		fprintf(stderr, WARNING "inet_pton wasnt able to parse the `%s` IP address, makes sure it follows a IPv4 address format.\n", arg);
+	}
+
+    return false;
+}
+
 static bool	add_hostname(options *opts, const str hostname) {
 	host_data	to_add;
 	host_data	*tmp;
@@ -430,7 +446,7 @@ static host_data	resolve_hostname(const str hostname) {
 		switch (result->ai_family) {
 		case AF_INET:
 			ptr = &((struct sockaddr_in *) result->ai_addr)->sin_addr;
-			break;
+				break;
         case AF_INET6:
 			ptr = &((struct sockaddr_in6 *) result->ai_addr)->sin6_addr;
 			break;
@@ -664,6 +680,8 @@ static int	get_option(char const *arg) {
 			return ARGS_FAST;
 		if (!strncmp(arg, "ttl", 3))
 			return ARGS_TTL;
+		if (!strncmp(arg, "source", 6))
+			return ARGS_SOURCE;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
