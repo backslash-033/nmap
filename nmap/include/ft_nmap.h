@@ -36,6 +36,7 @@ typedef struct options {
 	uint8_t			threads;
 	uint16_t		*port;
 	uint32_t		port_len;
+	bool			fast;
 } options;
 
 typedef struct host_and_ports {
@@ -105,9 +106,8 @@ enum e_scans_print_len {
 
 enum e_responses {
 	POSITIVE = 1,       // TCP Response, UDP Response
-	NEGATIVE = 1 << 1,  // TCP RST
-	BAD      = 1 << 2,  // ICMP Unreachable // TODO maybe NEGATVIE and BAD could be merged
-    NOTHING  = 1 << 3   // No response 
+	NEGATIVE = 1 << 1,  // TCP RST or ICMP Unreachable
+    NOTHING  = 1 << 2   // No response 
 };
 
 enum e_port_states {
@@ -203,16 +203,6 @@ typedef struct          s_scan {
     t_port_state_vector *results;
 }                       t_scan;
 
-
-
-// TODO maybe remove later
-#define PORTS_SCANNED 90
-#define IP_ADDRESS "127.0.0.1"
-#define TEST_ADDRESS "127.127.127.127"
-#define BUFFER_SIZE 4096
-#define DEBUG true
-#define NMAP_PORT "3490"
-
 ip_addr_t	**parse_ips(char **ips);
 
 // main.c
@@ -270,15 +260,6 @@ void free_port_state_vector(t_port_state_vector **vector);
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
 
-// TODO maybe unused
-void free_linked_list(t_list **list);
-
-// visualizers.c // TODO remove me
-void icmp_visualizer(icmpheader_t *icmph);
-void udp_visualizer(udpheader_t *udph);
-void tcp_visualizer(tcpheader_t *tcph);
-void ip_visualizer(ipheader_t *iph);
-
 // interpreters.c
 void interpret_syn_scan(uint16_t state, char *results);
 void interpret_null_scan(uint16_t state, char *results);
@@ -290,8 +271,6 @@ void interpret_udp_scan(uint16_t state, char *results);
 
 // packet_handler.c
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
-
-// show_results.c
 
 // listener.c
 int listener(char *interface, int scan, t_port_state_vector *states);

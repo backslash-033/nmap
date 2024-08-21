@@ -92,7 +92,7 @@ int listener(char *interface, int scan, t_port_state_vector *states) {
     alarm(timeout);
 
     // Start capturing packets
-    // TODO states.len might be ambitious, back to -1 if necessary
+    // states.len might be ambitious, back to -1 if necessary
     pcap_loop(handle, states->len, packet_handler, (u_char *)states);
     pcap_freealldevs(alldevs);
     pcap_close(handle);

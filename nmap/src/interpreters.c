@@ -6,7 +6,6 @@ void interpret_syn_scan(uint16_t state, char *results) {
 			strncat(results, "open    ", SYN_LEN);
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "closed  ", SYN_LEN);
 			break;
 		case NOTHING:
@@ -21,7 +20,6 @@ void interpret_null_scan(uint16_t state, char *results) {
 			// Not happening 
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "closed       ", NULL_LEN);
 			break;
 		case NOTHING:
@@ -36,7 +34,6 @@ void interpret_ack_scan(uint16_t state, char *results) {
 			// Not happening 
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "unfiltered", ACK_LEN);
 			break;
 		case NOTHING:
@@ -51,7 +48,6 @@ void interpret_fin_scan(uint16_t state, char *results) {
 			// Not happening 
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "closed       ", FIN_LEN);
 			break;
 		case NOTHING:
@@ -66,7 +62,6 @@ void interpret_xmas_scan(uint16_t state, char *results) {
 			// Not happening 
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "closed       ", XMAS_LEN);
 			break;
 		case NOTHING:
@@ -81,7 +76,6 @@ void interpret_udp_scan(uint16_t state, char *results) {
 			strncat(results, "open         ", UDP_LEN);
 			break;
 		case NEGATIVE:
-		case BAD:
 			strncat(results, "closed       ", UDP_LEN);
 			break;
 		case NOTHING:
