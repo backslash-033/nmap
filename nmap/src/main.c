@@ -26,12 +26,15 @@ int main(int argc, char **argv) {
 
 static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free) {
 	free_options(&opt);
+	printf("Addrinfo_to_free: %p\n", addrinfo_to_free);
 	if (addrinfo_to_free)
 		free_every_addrinfo(addrinfo_to_free);
 }
 
 static void	free_every_addrinfo(struct addrinfo **to_free) {
 	for (int i = 0; to_free[i]; i++) {
+		puts("Freeing in main");
+		free(to_free[i]->ai_addr);
 		freeaddrinfo(to_free[i]);
 	}
 	free(to_free);
