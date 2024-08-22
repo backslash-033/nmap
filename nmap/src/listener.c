@@ -41,7 +41,7 @@ int listener(t_listener_in *listener_data) {
 				break;
 		}
 	}
-
+	printf("Device is: %s\n", device->name);
     if (device == NULL) {
         fprintf(stderr, "No devices found.\n");
         return 1;

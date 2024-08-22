@@ -82,20 +82,23 @@ static inline const char *__compute_conclusion(t_results results) {
 			A padded string of length 14 representing the conclusion computed
 			on the different elements of the t_results argument
 	*/
-
+	// TODO test more thoroughly
 	if (results.syn == POSITIVE || results.udp == POSITIVE) {
 		return "open         ";
+	}
+	if (results.syn == NOTHING) {
+		return "filetered    ";
 	}
 	if (results.ack != 0) {
 		if (!(results.ack == NEGATIVE)) { // If it's unfiltered
 			if (results.null == NOTHING || results.fin == NOTHING || \
 				results.xmas == NOTHING || results.udp == NOTHING) {
-				return "open         ";
+				return "filtered     ";
 			}
 		} else { // If it's filtered
 			if (results.null == NOTHING || results.fin == NOTHING || \
 				results.xmas == NOTHING || results.udp == NOTHING) {
-				return "filtered     ";
+				return "open         ";
 			}
 		}
 	} else {
