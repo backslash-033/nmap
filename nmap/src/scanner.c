@@ -30,6 +30,10 @@ int    scanner(ip_addr_t **ip_list,
 	int dest_port;
 	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int, const options *) = NULL;
 
+
+	printf("SRC IP Address: %s\n", src_ip.printable);
+    printf("DEST IP Address: %s\n", (*ip_list)->printable);
+
 	if (scan != -1)
 		scanner_func = tcp_scan;
 	else

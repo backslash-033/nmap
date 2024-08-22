@@ -1,5 +1,6 @@
 #include "ft_nmap.h"
 
+// FIXME doesn't work for eth0
 void *routine(void * arg) {
 	tdata_in in = *(tdata_in *)arg;
 	int	*port_list = NULL;

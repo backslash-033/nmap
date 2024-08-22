@@ -8,10 +8,6 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 	tcpheader_t tcph;
 	char *packet;
 
-
-    printf("SRC IP Address: %s\n", src_ip.printable);
-	printf("DEST IP Address: %s\n", dest_ip.printable);
-
 	// Setup the IP Header
 	iph = setup_iph(src_ip.network, dest_ip.network, data_len, IPPROTO_TCP, opts);
 

@@ -109,6 +109,7 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 	return 0;
 }
 
+// FIXME bad resolution for eth0
 static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
