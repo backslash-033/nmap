@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
-static uint32_t random_uint32(uint32_t min, uint32_t max);
-static uint16_t random_uint16(uint16_t min, uint16_t max);
+static inline uint32_t random_uint32(uint32_t min, uint32_t max);
+static inline uint16_t random_uint16(uint16_t min, uint16_t max);
 
 ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol, const options *opts) {
     /*
@@ -70,10 +70,10 @@ udpheader_t setup_udph(int src_port, int dest_port, int data_len) {
     return udph;
 }
 
-static uint16_t random_uint16(uint16_t min, uint16_t max) {
+static inline uint16_t random_uint16(uint16_t min, uint16_t max) {
 	return min + (rand() % (max - min));
 }
 
-static uint32_t random_uint32(uint32_t min, uint32_t max) {
+static inline uint32_t random_uint32(uint32_t min, uint32_t max) {
 	return min + (rand() % (max - min));
 }
