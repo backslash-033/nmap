@@ -74,31 +74,6 @@ static parsing_function handlers[9] = {
 	opt_source,	// 8
 };
 
-//TODO remove me, for debug
-void print_resolved_ip(const host_data *ret) {
-	char ip_str[INET_ADDRSTRLEN];  // Buffer to hold the IPv4 address string
-
-	// Check if the ai_addr field is set
-	if (ret->info.ai_addr == NULL) {
-		printf("No IP address resolved.\n");
-		return;
-	}
-
-	// IPv4 address (AF_INET)
-	struct sockaddr_in *ipv4 = (struct sockaddr_in *)ret->info.ai_addr;
-	void *addr_ptr = &(ipv4->sin_addr);
-
-	// Convert the IP address to a string and print it
-	if (inet_ntop(AF_INET, addr_ptr, ip_str, sizeof(ip_str)) == NULL) {
-		perror("inet_ntop");
-		return;
-	}
-
-	printf("Resolved IP Address: %s\n", ip_str);
-}
-
-
-
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
 	options res;
 	uint8_t	addrinfo_amount = 0;
@@ -113,7 +88,6 @@ options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_f
 
 	// (*addrinfo_to_free) = calloc(addrinfo_amount, sizeof(struct addrinfo *)); // It's 0, I won't ask any questions CAUSES AN INVALID READ
 	(*addrinfo_to_free) = NULL;
-
 
 	for (int i = 1; i < argc; i++) {
 		if (args_status == ARGS_NOTHING) {
@@ -223,6 +197,7 @@ void	free_options(options *opts) {
 	if (opts->host) {
 		for (uint32_t i = 0; i < opts->host_len; i++) {
 			free(opts->host[i].basename);
+			free(opts->host[i].info.ai_addr);
 		}
 		free(opts->host);
 	}
@@ -473,9 +448,6 @@ static bool	add_hostname(options *opts, const str hostname) {
 	opts->host = tmp;
 	opts->host[opts->host_len] = to_add;
 	opts->host_len += 1;
-	printf("==================SO FAR: %s\n", tmp->basename);
-	printf("==================TO ADD: %s\n", to_add.info.ai_addr->sa_data);
-
 	return false;
 }
 
@@ -514,25 +486,17 @@ static host_data resolve_hostname(const str hostname) {
 		if (result->ai_family == AF_INET) { // We only care about IPv4
 			ptr = &((struct sockaddr_in *)result->ai_addr)->sin_addr;
 			inet_ntop(result->ai_family, ptr, buff, sizeof(buff));
-			printf("Resolved IP Address: %s\n", buff);
-
-			// Save the first resolved IP address (you can change logic as needed)
 			if (ret.info.ai_addr == NULL) {
-				ret.info = *result;  // shallow copy
-				ret.info.ai_addr = malloc(result->ai_addrlen);  // TODO protect me deep copy of sockaddr
+				ret.info = *result;
+				ret.info.ai_addr = malloc(result->ai_addrlen);  // TODO protect me
 				if (ret.info.ai_addr)
 					memcpy(ret.info.ai_addr, result->ai_addr, result->ai_addrlen);
-				print_resolved_ip(&ret);
 			}
 		}
 		result = result->ai_next;
 
 	}
-
-	freeaddrinfo(result_base);  // Free the linked list of addrinfo structures
-
-	printf("Ret basename is: %s\n", ret.basename);
-	print_resolved_ip(&ret);
+	freeaddrinfo(result_base);
 	return ret;
 }
 

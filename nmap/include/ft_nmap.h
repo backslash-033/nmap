@@ -19,6 +19,7 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <ifaddrs.h>
 
 #include "libft.h"
 

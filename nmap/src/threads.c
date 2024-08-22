@@ -164,7 +164,6 @@ static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_
 	}
 
 	pthread_join(listener_id, &listener_ret);
-	printf("Listener ret %d\n", *(int *)listener_ret);
 	free(listener_ret);
 	return res;
 }

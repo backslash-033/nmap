@@ -17,7 +17,6 @@ static inline void __set_port_state(uint8_t port_state, uint16_t port, t_port_st
 }
 
 static inline void __handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *states) {
-    puts("Going TCP");
 	// tcp_visualizer(tcph);
 	if (tcph->flags & RST) {
         __set_port_state(NEGATIVE, ntohs(tcph->src_port), states);
@@ -28,7 +27,6 @@ static inline void __handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *s
 }
 
 static inline void __handle_udp_packet(udpheader_t *udph, t_port_state_vector *states) {
-    puts("Going UDP");
     __set_port_state(POSITIVE, ntohs(udph->src_port), states);
 }
 
@@ -37,8 +35,6 @@ static inline void __handle_icmp_packet(void *proto_packet, t_port_state_vector 
     tcpheader_t *tcph;
     udpheader_t *udph;
     ipheader_t  *original_iph;
-
-    puts("Going ICMP");
 
     if (icmph->type == 3 && icmph->code == 3) {
         // Skip the ICMP Packet
@@ -61,7 +57,6 @@ static inline void __handle_icmp_packet(void *proto_packet, t_port_state_vector 
 
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)header;
-	puts("Found a packet");
     const ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP header
     t_port_state_vector *states = (t_port_state_vector *)user;

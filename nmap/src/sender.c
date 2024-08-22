@@ -79,16 +79,9 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data
         return NULL;
     }
 
-    // Set Source IP Address
-    if (inet_pton(AF_INET, "172.18.0.2", &iph->src_ip) != 1) {
-        perror("inet_pton - src_ip");
-        free(packet);
-        return NULL;
-    }
-
-    // // Set Destination IP Address (Google's IP)
-    // if (inet_pton(AF_INET, "142.250.190.14", &iph->dest_ip) != 1) {
-    //     perror("inet_pton - dest_ip");
+    // // Set Source IP Address
+    // if (inet_pton(AF_INET, "172.18.0.2", &iph->src_ip) != 1) {
+    //     perror("inet_pton - src_ip");
     //     free(packet);
     //     return NULL;
     // }
