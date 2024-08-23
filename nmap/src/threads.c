@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 static tdata_in			*build_threads_input(options *opt, uint8_t *th_amount, const host_data host);
-static t_scan 			launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
+static t_scan 			launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan, host_data dest_ip);
 static host_and_ports	*every_host_and_ports(options opt, uint8_t *th_amount, const host_data host);
 static host_and_ports	host_and_ports_one_thread(options opt, const uint32_t per_thread, const host_data host);
 static void				free_host_and_ports(host_and_ports h);
@@ -58,7 +58,7 @@ bool	threads(options *opt) {
 
 		for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
 			if (scan & opt->scans) {
-				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan));
+				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan), opt->host[h]);
 				i++;
 			}
 		}
@@ -132,7 +132,7 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 	return 0;
 }
 
-static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
+static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan, host_data dest_ip) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 	t_scan		res = {
@@ -153,6 +153,8 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 		.cond = PTHREAD_COND_INITIALIZER,
 		.mutex = PTHREAD_MUTEX_INITIALIZER,
 		.ready = 0,
+		.nb_ports = ports.len,
+		.dest_ip = dest_ip,
 	};
 
 	res.results = create_port_state_vector(ports.list, ports.len);

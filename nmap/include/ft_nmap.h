@@ -214,9 +214,11 @@ typedef struct	s_listener_in {
 	t_scan	scan;
 	pthread_mutex_t mutex;
 	pthread_cond_t	cond;
-	int		ready;
-	bool	is_lo;
-}				t_listener_in;
+	int				ready;
+	bool			is_lo;
+	size_t			nb_ports;
+	host_data		dest_ip;
+}					t_listener_in;
 
 ip_addr_t	**parse_ips(char **ips);
 
@@ -241,34 +243,34 @@ void		*routine(void *);
 int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
                 ip_addr_t src_ip, int src_port,
-                int scan, char *data, int data_len,
+                int scan, char *data, size_t data_len,
 				const options *opts);
 
 // sender.c
-char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len);
-char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len);
+char 		*create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, size_t data_len);
+char 		*create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, size_t data_len);
 int			send_packet(ipheader_t iph, char *packet, int dest_port);
 
 // setup.c
-ipheader_t	setup_iph(int src_ip, int dest_ip, int data_len, int protocol, const options *opts);
+ipheader_t	setup_iph(int src_ip, int dest_ip, size_t data_len, int protocol, const options *opts);
 tcpheader_t	setup_tcph(int src_port, int dest_port, const options *opts);
-udpheader_t setup_udph(int src_port, int dest_port, int data_len);
+udpheader_t setup_udph(int src_port, int dest_port, size_t data_len);
 
 // scans.c
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan,
-            char *data, int data_len, const options *opts);
+            char *data, size_t data_len, const options *opts);
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan __attribute__((unused)),
-            char *data, int data_len, const options *opts);
+            char *data, size_t data_len, const options *opts);
 
 // show_results.c
 int    print_results(t_scan *scans, size_t len_scans);
 
 // filter.c
-char *create_filter(int scan);
+char *create_filter(int scan, host_data dest_ip);
 // utils.c
 void 		free_formatted_ips(ip_addr_t **formatted_ips);
 t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len);
@@ -297,5 +299,6 @@ void icmp_visualizer(icmpheader_t *icmph);
 void udp_visualizer(udpheader_t *udph);
 void tcp_visualizer(tcpheader_t *tcph);
 void ip_visualizer(ipheader_t *iph);
+
 
 #endif

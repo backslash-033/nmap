@@ -15,7 +15,7 @@ static unsigned short checksum(void *b, int len) {
 	return result;
 }
 
-char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data_len) {
+char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, size_t data_len) {
 	char *packet;
 	int packet_size = sizeof(ipheader_t) + sizeof(udpheader_t) + data_len;
 
@@ -74,7 +74,7 @@ char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, int data
 }
 
 
-char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, int data_len) {
+char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, size_t data_len) {
 	char *packet;
 	int packet_size = sizeof(ipheader_t) + sizeof(tcpheader_t) + data_len;
 

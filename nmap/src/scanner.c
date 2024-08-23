@@ -3,7 +3,7 @@
 int    scanner(ip_addr_t **ip_list,
 				t_uint16_vector port_vector,
 				ip_addr_t src_ip, int src_port,
-				int scan, char *data, int data_len,
+				int scan, char *data, size_t data_len,
 				const options *opts) {
 	/*
 	Core function of the Nmap scanner. Calls the necessary functions to perform
@@ -20,7 +20,7 @@ int    scanner(ip_addr_t **ip_list,
 		int scan: the scan to be performed on the hosts and ports.
 		char *data: the data to transmit when sending a packet
 			Doesn't need to be \0 terminated.
-		int data_len: the length (in bytes) of the passed data
+		size_t data_len: the length (in bytes) of the passed data
 
 	Returns:
 		Nothing    
@@ -28,7 +28,7 @@ int    scanner(ip_addr_t **ip_list,
 	int ret;
 	ip_addr_t *dest_ip = *ip_list;
 	int dest_port;
-	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, int, const options *) = NULL;
+	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, size_t, const options *) = NULL;
 
 	if (scan != -1)
 		scanner_func = tcp_scan;

@@ -22,7 +22,7 @@ int listener(t_listener_in *listener_data) {
     pcap_t *handle;
     bpf_u_int32 net;
     bpf_u_int32 mask;
-    const uint32_t timeout = 2;
+    uint32_t timeout = listener_data->nb_ports * 2;
 
     char *filter;
     struct bpf_program  compiled_filter;
@@ -64,7 +64,7 @@ int listener(t_listener_in *listener_data) {
 
     g_handle = handle;
 
-    filter = create_filter(listener_data->scan.type);
+    filter = create_filter(listener_data->scan.type, listener_data->dest_ip);
     if (!filter) {
         perror("malloc");
         return 1;
@@ -97,7 +97,7 @@ int listener(t_listener_in *listener_data) {
 
     // Start capturing packets
     // states.len might be ambitious, back to -1 if necessary
-    pcap_loop(handle, -1, packet_handler, (u_char *)listener_data->scan.results);
+    pcap_loop(handle, listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
     pcap_freealldevs(alldevs);
     pcap_close(handle);
 	pcap_freecode(&compiled_filter);

@@ -3,14 +3,14 @@
 static inline uint32_t random_uint32(uint32_t min, uint32_t max);
 static inline uint16_t random_uint16(uint16_t min, uint16_t max);
 
-ipheader_t setup_iph(int src_ip, int dest_ip, int data_len, int protocol, const options *opts) {
+ipheader_t setup_iph(int src_ip, int dest_ip, size_t data_len, int protocol, const options *opts) {
     /*
     Setup basic parameters for the IP Header. Does NOT calculate the checksum.
 
     Args:
         int src_ip: source IP, result of inet_pton()
         int dest_ip: destination IP, result of inet_pton()
-		int data_len: the length (in bytes) of the data to be transmitted
+		size_t data_len: the length (in bytes) of the data to be transmitted
 		int protocol: the protocol used to transmit the packet (IPPROTO_TCP or IPPROTO_UDP)
     */
     ipheader_t iph;
@@ -60,7 +60,7 @@ tcpheader_t setup_tcph(int src_port, int dest_port, const options *opts) {
 	return tcph;
 }
 
-udpheader_t setup_udph(int src_port, int dest_port, int data_len) {
+udpheader_t setup_udph(int src_port, int dest_port, size_t data_len) {
     udpheader_t udph;
 
     udph.src_port = htons(src_port);

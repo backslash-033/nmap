@@ -3,7 +3,7 @@
 int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan,
-            char *data, int data_len, const options *opts) {
+            char *data, size_t data_len, const options *opts) {
 	ipheader_t iph;
 	tcpheader_t tcph;
 	char *packet;
@@ -30,7 +30,7 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
             int src_port, int dest_port,
 			int scan __attribute__((unused)),
-            char *data, int data_len, const options *opts) {
+            char *data, size_t data_len, const options *opts) {
 	ipheader_t iph;
 	udpheader_t udph;
 	char *packet;
