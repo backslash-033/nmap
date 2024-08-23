@@ -1,15 +1,38 @@
 #include "ft_nmap.h"
 
-static tdata_in			*build_threads_input(const options *opt, uint8_t *th_amount, const host_data host);
-static t_scan 			launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
-static host_and_ports	*every_host_and_ports(const options opt, uint8_t *th_amount, const host_data host);
-static host_and_ports	host_and_ports_one_thread(const options opt, const uint32_t per_thread, const host_data host);
+static tdata_in			*build_threads_input(options *opt, uint8_t *th_amount, const host_data host);
+static t_scan 			launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan);
+static host_and_ports	*every_host_and_ports(options opt, uint8_t *th_amount, const host_data host);
+static host_and_ports	host_and_ports_one_thread(options opt, const uint32_t per_thread, const host_data host);
 static void				free_host_and_ports(host_and_ports h);
 static void				free_host_and_ports_array(host_and_ports *array);
 static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
+
+uint32_t get_eth0_ip() {
+    struct ifaddrs *ifaddr, *ifa;
+    uint32_t ip_int = 0;
+
+    if (getifaddrs(&ifaddr) == -1) {
+        perror("getifaddrs");
+        return 0;
+    }
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        if (ifa->ifa_addr->sa_family == AF_INET && strcmp(ifa->ifa_name, "eth0") == 0) {
+            ip_int = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
+            break; // Found the IP address for eth0, no need to continue
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return ip_int;
+}
 
 bool	threads(options *opt) {
 	tdata_in		*threads_input = NULL;
@@ -109,8 +132,7 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 	return 0;
 }
 
-// FIXME bad resolution for eth0
-static t_scan	launch_threads(const options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
+static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan) {
 	pthread_t	tid[256];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 	t_scan		res = {
@@ -225,13 +247,20 @@ static uint16_t	assign_port(uint16_t *already_open_ports) {
 	}
 }
 
-static tdata_in	*build_threads_input(const options *opt, uint8_t *th_amount, const host_data host) {
+static tdata_in	*build_threads_input(options *opt, uint8_t *th_amount, const host_data host) {
 	tdata_in		*res;
 	host_and_ports	*every_hnp;
 
 	every_hnp = every_host_and_ports(*opt, th_amount, host);
 	if (every_hnp == NULL)
 		return NULL;
+
+	if (strcmp(host.basename, "localhost"))
+		opt->source = get_eth0_ip();
+	if (!opt->source) {
+		free_host_and_ports_array(every_hnp);
+		return NULL;
+	}
 
 	res = calloc(*th_amount, sizeof(tdata_in));
 	if (res == NULL) {
@@ -250,7 +279,7 @@ static tdata_in	*build_threads_input(const options *opt, uint8_t *th_amount, con
 	return res;
 }
 
-static host_and_ports *every_host_and_ports(const options opt, uint8_t *th_amount, const host_data host) {
+static host_and_ports *every_host_and_ports(options opt, uint8_t *th_amount, const host_data host) {
 	host_and_ports	*res;
 	uint32_t		per_thread;
 	uint8_t			more;
@@ -273,7 +302,7 @@ static host_and_ports *every_host_and_ports(const options opt, uint8_t *th_amoun
 	return res;
 }
 
-static host_and_ports host_and_ports_one_thread(const options opt, const uint32_t per_thread, const host_data host) {
+static host_and_ports host_and_ports_one_thread(options opt, const uint32_t per_thread, const host_data host) {
 	static uint32_t	port_index = 0;
 	host_and_ports	hnp;
 	uint32_t		loop_port_index = 0;
