@@ -24,7 +24,7 @@ uint32_t get_local_ip() {
         if (ifa->ifa_addr == NULL)
             continue;
 
-        if (ifa->ifa_addr->sa_family == AF_INET == 0) {
+        if (ifa->ifa_addr->sa_family == AF_INET) {
             ip_int = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
             break; // Found the IP address for eth0, no need to continue
         }

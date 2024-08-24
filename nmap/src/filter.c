@@ -1,9 +1,5 @@
 #include "ft_nmap.h"
 
-
-
-
-
 void addrinfo_to_ipv4_string(const struct addrinfo *addr, char *buffer, size_t buffer_size) {
 	// Ensure the address is IPv4
 	if (addr->ai_family == AF_INET) {
