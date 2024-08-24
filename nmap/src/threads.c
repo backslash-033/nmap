@@ -11,7 +11,7 @@ static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
 
-uint32_t get_eth0_ip() {
+uint32_t get_local_ip() {
     struct ifaddrs *ifaddr, *ifa;
     uint32_t ip_int = 0;
 
@@ -24,7 +24,7 @@ uint32_t get_eth0_ip() {
         if (ifa->ifa_addr == NULL)
             continue;
 
-        if (ifa->ifa_addr->sa_family == AF_INET && strcmp(ifa->ifa_name, "eth0") == 0) {
+        if (ifa->ifa_addr->sa_family == AF_INET == 0) {
             ip_int = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
             break; // Found the IP address for eth0, no need to continue
         }
@@ -258,7 +258,7 @@ static tdata_in	*build_threads_input(options *opt, uint8_t *th_amount, const hos
 		return NULL;
 
 	if (strcmp(host.basename, "localhost"))
-		opt->source = get_eth0_ip();
+		opt->source = get_local_ip();
 	if (!opt->source) {
 		free_host_and_ports_array(every_hnp);
 		return NULL;

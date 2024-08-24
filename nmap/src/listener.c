@@ -16,16 +16,18 @@ static void handle_alarm(int sig) {
 }
 
 int listener(t_listener_in *listener_data) {
-    char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_if_t *alldevs;
-    pcap_if_t *device;
-    pcap_t *handle;
-    bpf_u_int32 net;
-    bpf_u_int32 mask;
-    uint32_t timeout = listener_data->nb_ports * 2;
+    char				errbuf[PCAP_ERRBUF_SIZE];
+    pcap_if_t			*alldevs;
+    pcap_if_t			*device;
+    pcap_t				*handle;
+    bpf_u_int32			net;
+    bpf_u_int32			mask;
+    uint32_t			timeout;
+    char				*filter;
+    struct bpf_program	compiled_filter;
 
-    char *filter;
-    struct bpf_program  compiled_filter;
+	// Set a timeout depending on the scan and the number of ports
+	timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2); // TODO divide by the number of threads
 
     // Find all devices
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {

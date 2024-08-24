@@ -23,6 +23,7 @@ static inline void __handle_tcp_packet(tcpheader_t *tcph, t_port_state_vector *s
     } else if ((tcph->flags & SYN) && (tcph->flags & ACK)) {
         __set_port_state(POSITIVE, ntohs(tcph->src_port), states);
     }
+	// printf("SOURCE PORT: %d\n", ntohs(tcph->src_port));
     // else if so the response can remain NOTHING on no response case
 }
 
@@ -57,6 +58,8 @@ static inline void __handle_icmp_packet(void *proto_packet, t_port_state_vector 
 
 void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet) {
     (void)header;
+	static int test = 0;
+	// printf("Test is: %d\n", test++);
     const ipheader_t *iph = (ipheader_t *)(packet + 14); // Skip Ethernet header
     void *proto_packet = (void *)iph + iph->ihl * 4; // Skip IP header
     t_port_state_vector *states = (t_port_state_vector *)user;

@@ -21,3 +21,4 @@ test*
 
 # pcap_test
 pcap_test*
+packets.log
