@@ -22,12 +22,12 @@ int listener(t_listener_in *listener_data) {
     pcap_t				*handle;
     bpf_u_int32			net;
     bpf_u_int32			mask;
-    uint32_t			timeout;
+    uint32_t			timeout = 2;
     char				*filter;
     struct bpf_program	compiled_filter;
 
 	// Set a timeout depending on the scan and the number of ports
-	timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2); // TODO divide by the number of threads
+	// timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2); // TODO divide by the number of threads
 
     // Find all devices
     if (pcap_findalldevs(&alldevs, errbuf) == -1) {

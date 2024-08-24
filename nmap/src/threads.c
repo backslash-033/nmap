@@ -12,27 +12,33 @@ static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
 
 uint32_t get_local_ip() {
-    struct ifaddrs *ifaddr, *ifa;
-    uint32_t ip_int = 0;
+	struct ifaddrs *ifaddr, *ifa;
+	uint32_t ip_int = 0;
 
-    if (getifaddrs(&ifaddr) == -1) {
-        perror("getifaddrs");
-        return 0;
-    }
+	if (getifaddrs(&ifaddr) == -1) {
+		perror("getifaddrs");
+		return 0;
+	}
 
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL)
-            continue;
+	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
 
-        if (ifa->ifa_addr->sa_family == AF_INET) {
-            ip_int = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-            break; // Found the IP address for eth0, no need to continue
-        }
-    }
+		// Check for IPv4, non-loopback, and non-link-local address
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+			struct sockaddr_in *addr_in = (struct sockaddr_in *)ifa->ifa_addr;
+			if (addr_in->sin_addr.s_addr != htonl(INADDR_LOOPBACK) &&
+				addr_in->sin_addr.s_addr != htonl(INADDR_ANY)) {
+				ip_int = addr_in->sin_addr.s_addr;
+				break; // Found a valid IP address
+			}
+		}
+	}
 
-    freeifaddrs(ifaddr);
-    return ip_int;
+	freeifaddrs(ifaddr);
+	return ip_int;
 }
+
 
 bool	threads(options *opt) {
 	tdata_in		*threads_input = NULL;
