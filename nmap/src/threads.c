@@ -175,6 +175,8 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 
 	listener_data.is_lo = ntohl(((struct sockaddr_in *)ip)->sin_addr.s_addr) >> 24 == 127;
 
+	listener_data.timeout = opt->timeout;
+
 	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
 
 	pthread_mutex_lock(&listener_data.mutex);

@@ -10,6 +10,7 @@
 #define ARGS_WIN		6
 #define ARGS_DATA		7
 #define ARGS_SOURCE		8
+#define ARGS_TIMEOUT	9
 #define ARGS_HELP		11
 #define ARGS_FAST		10
 #define SCAN_NOTHING	0
@@ -35,6 +36,7 @@ static bool			opt_ttl(options *opts, str arg);
 static bool			opt_win(options *opts, str arg);
 static bool			opt_data(options *opts, str arg);
 static bool			opt_source(options *opts, str arg);
+static bool			opt_timeout(options *opts, str arg);
 static uint8_t		get_scan(str scan);
 static uint32_t		range_size(str arg);
 static uint16_t 	*range_values(str arg, uint32_t *size);
@@ -62,16 +64,17 @@ uint16_t top_100_ports[] = {
     10000, 31337, 49192, 515, 2223, 49181, 179, 1813, 120, 49152
 };
 
-static parsing_function handlers[9] = {
-	opt_speed,	// 1
-	opt_scans,	// 1
-	opt_ports,	// 2
-	opt_file,	// 3
-	opt_ip,		// 4
-	opt_ttl,	// 5
-	opt_win,	// 6
-	opt_data,	// 7
-	opt_source,	// 8
+static parsing_function handlers[10] = {
+	opt_speed,		// 0
+	opt_scans,		// 1
+	opt_ports,		// 2
+	opt_file,		// 3
+	opt_ip,			// 4
+	opt_ttl,		// 5
+	opt_win,		// 6
+	opt_data,		// 7
+	opt_source,		// 8
+	opt_timeout,	// 9
 };
 
 options options_handling(int argc, char **argv, struct addrinfo ***addrinfo_to_free) {
@@ -424,6 +427,19 @@ static bool opt_data(options *opts, str arg) {
 	return false;
 }
 
+static bool opt_timeout(options *opts, str arg) {
+	int	res;
+
+	res = atoi(arg);
+	if (res < 1 || res > 3600) {
+		fprintf(stderr, WARNING "Timeout must be between 1 and 3600 seconds included.\n");
+	}
+	else {
+		opts->timeout = res;
+	}
+	return false;
+}
+
 static bool	add_hostname(options *opts, const str hostname) {
 	host_data	to_add;
 	host_data	*tmp;
@@ -726,6 +742,8 @@ static int	get_option(char const *arg) {
 			return ARGS_DATA;
 		if (!strncmp(arg, "source", 6))
 			return ARGS_SOURCE;
+		if (!strncmp(arg, "timeout", 7))
+			return ARGS_TIMEOUT;
 		fprintf(stderr, WARNING "Could not reckognised option '%s'.\n", arg - 2);
 		return ARGS_NOTHING;
 	}
@@ -761,6 +779,7 @@ static options default_options() {
 	ret.win = UINT16_MAX;
 	ret.data = NULL;
 	ret.source = 16777343;
+	ret.timeout = 0;
 
 	return ret;
 }

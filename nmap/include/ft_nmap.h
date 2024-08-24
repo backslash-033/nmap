@@ -42,6 +42,7 @@ typedef struct options {
 	uint16_t		win;
 	str				data;
 	int				source;
+	uint16_t		timeout;
 } options;
 
 typedef struct host_and_ports {
@@ -218,6 +219,7 @@ typedef struct	s_listener_in {
 	bool			is_lo;
 	size_t			nb_ports;
 	host_data		dest_ip;
+	uint16_t		timeout;
 }					t_listener_in;
 
 ip_addr_t	**parse_ips(char **ips);
