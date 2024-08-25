@@ -139,7 +139,7 @@ static enum e_scans	convert_option_scan(uint8_t opt_scan) {
 }
 
 static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amount, enum e_scans scan, host_data dest_ip) {
-	pthread_t	tid[256];
+	pthread_t	tid[512];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 	t_scan		res = {
 		.type = scan
@@ -151,6 +151,7 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	pthread_t		listener_id;
 	void			*listener_ret;
 
+	bzero(tid, sizeof(pthread_t) * 512);
 	bzero(taken_ports, (PORT_RANGE + 1) * sizeof(uint16_t));
 	already_open_ports(taken_ports);
 	srand(time(0));
@@ -189,10 +190,14 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 		threads_input[i].port = assign_port(taken_ports);
 		threads_input[i].scans = scan;
 		pthread_create(&(tid[i]), NULL, routine, &(threads_input[i]));
+		if (scan == UDP_SCAN)
+			pthread_create(&(tid[i + amount]), NULL, routine, &(threads_input[i]));
 	}
 
 	for (uint8_t i = 0; i < amount; i++) {
 		pthread_join(tid[i], NULL);
+		if (scan == UDP_SCAN)
+			pthread_join(tid[i + amount], NULL);
 	}
 
 	pthread_join(listener_id, &listener_ret);

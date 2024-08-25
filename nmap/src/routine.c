@@ -1,7 +1,7 @@
 #include "ft_nmap.h"
 
 void *routine(void * arg) {
-	tdata_in in = *(tdata_in *)arg;
+	const tdata_in in = *(tdata_in *)arg;
 	int	*port_list = NULL;
 	t_uint16_vector port_vector = {
 		.list = NULL,
@@ -32,7 +32,6 @@ void *routine(void * arg) {
 
 	free(port_list);
 	free(ptr);
-
 
 	return NULL;
 }
