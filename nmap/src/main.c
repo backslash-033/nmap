@@ -9,6 +9,11 @@ int main(int argc, char **argv) {
 	struct addrinfo	**addrinfo_to_free;
 	bool	result;
 
+	if (geteuid() != 0) {
+		fprintf(stderr, ERROR "You are no running as root, the scans cannot work. Aborting.\n");
+		exit(1);
+	}
+
 	opt = options_handling(argc, argv, &addrinfo_to_free);
 
 	display_options(opt);
