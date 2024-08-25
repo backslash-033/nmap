@@ -12,6 +12,8 @@ static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
 static void				free_end_of_scan(const uint8_t scan_amout, const uint8_t th_amount, t_scan *out, tdata_in *threads_input);
 
+int	thread_errno = 0;
+
 uint32_t get_local_ip() {
 	struct ifaddrs *ifaddr, *ifa;
 	uint32_t ip_int = 0;
@@ -65,6 +67,7 @@ bool	threads(options *opt) {
 
 		for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
 			if (scan & opt->scans) {
+				thread_errno = 0;
 				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan), opt->host[h]);
 				if (out[i].error) {
 					free_end_of_scan(i + 1, th_amount, out, threads_input);
@@ -81,7 +84,7 @@ bool	threads(options *opt) {
 		printf("\n");
 		print_results(out, scan_amout);
 
-		if (h + 1!= (int)opt->host_len)
+		if (h + 1 != (int)opt->host_len)
 			printf("\n---\n\n");
 
 		free_end_of_scan(scan_amout, th_amount, out, threads_input);
@@ -175,9 +178,11 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	};
 
 	res.results = create_port_state_vector(ports.list, ports.len);
+	// TODO clear properly
 	if (!res.results) {
-		exit(1);
-		// TODO clear properly
+		res.error = true;
+		res.results = NULL;
+		return res;
 	}
 	res.type = scan;
 	listener_data.scan = res;
@@ -217,6 +222,10 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	}
 
 	pthread_join(listener_id, &listener_ret);
+
+	if (thread_errno == ECANCELED)
+		res.error = true;
+
 	return res;
 }
 
