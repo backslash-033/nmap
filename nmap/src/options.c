@@ -445,7 +445,7 @@ static bool	add_hostname(options *opts, const str hostname) {
 	host_data	*tmp;
 
 	to_add = resolve_hostname(hostname);
-	if (to_add.basename == NULL) {
+	if (to_add.basename == NULL || to_add.info.ai_addr == NULL) {
 		if (errno == ENOMEM)
 			return true;
 		return false;
@@ -504,9 +504,10 @@ static host_data resolve_hostname(const str hostname) {
 			inet_ntop(result->ai_family, ptr, buff, sizeof(buff));
 			if (ret.info.ai_addr == NULL) {
 				ret.info = *result;
-				ret.info.ai_addr = malloc(result->ai_addrlen);  // TODO protect me
+				ret.info.ai_addr = malloc(result->ai_addrlen);
 				if (ret.info.ai_addr)
 					memcpy(ret.info.ai_addr, result->ai_addr, result->ai_addrlen);
+				break;
 			}
 		}
 		result = result->ai_next;
