@@ -30,10 +30,10 @@ int    scanner(ip_addr_t **ip_list,
 	int dest_port;
 	int (*scanner_func)(ip_addr_t, ip_addr_t, int, int, int, char *, size_t, const options *) = NULL;
 
-	if (scan != -1)
-		scanner_func = tcp_scan;
-	else
+	if (scan == -1 || scan == 255)
 		scanner_func = udp_scan;
+	else
+		scanner_func = tcp_scan;
 
 	while (dest_ip) {
 		for (size_t j = 0; j < port_vector.len; j++) {
@@ -46,45 +46,3 @@ int    scanner(ip_addr_t **ip_list,
 	}
 	return 0;
 }
-
-void sigint_handler() {
-    exit(1);
-}
-
-// int main() {
-//     signal(SIGINT, sigint_handler);
-// 	char data[] = "HELLO\0";
-// 	size_t len_ports = 2;
-// 	int *ports = malloc(sizeof(int) * len_ports);
-// 	ports[0] = 80;
-// 	ports[1] = 443;
-// 	char **raw_ips_to_scan = ft_split("127.0.0.1\n", '\n');
-// 	char **raw_source_ips = ft_split("127.0.0.1\n", '\n');
-// 	ip_addr_t **ips_to_scan = parse_ips(raw_ips_to_scan);
-// 	ip_addr_t **source_ips = parse_ips(raw_source_ips);
-// 	ip_addr_t **copy_ips;
-// 	ip_addr_t *addr;
-// 	int scan = SYN_SCAN;
-
-// // 	if (!ips_to_scan || !source_ips) {
-// // 		fprintf(stderr, "Error parsing IPs\n");
-// // 		return 1;
-// // 	}
-// // 	copy_ips = ips_to_scan;
-// // 	addr = *ips_to_scan;
-// // 	while (addr) {
-// // 		printf("Printable is: %s\nInt is: %d\n", (*ips_to_scan)->printable, (*ips_to_scan)->network);
-// // 		addr = *(++ips_to_scan);
-// // 	}
-// // 	ips_to_scan = copy_ips;
-
-// 	scanner(ips_to_scan, ports, len_ports, **source_ips, 12345, scan, data, strlen(data));
-// 	printf("End of scan\n");
-// 	// free_formatted_ips(ips_to_scan);
-// 	// free_formatted_ips(source_ips);
-// 	free_darray((void **)ips_to_scan);
-// 	free_darray((void **)source_ips);
-// 	free(ports);
-// 	free_darray((void **)raw_ips_to_scan);
-// 	free_darray((void **)raw_source_ips);
-// }

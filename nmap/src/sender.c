@@ -21,7 +21,7 @@ char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, size_t d
 
 	packet = calloc(packet_size, sizeof(char));
 	if (!packet) {
-		perror("calloc");
+		perror(ERROR "calloc");
 		return NULL;
 	}
 
@@ -51,7 +51,7 @@ char *create_udp_packet(ipheader_t *iph, udpheader_t *udph, char *data, size_t d
 	int psize = sizeof(struct pseudo_header) + sizeof(udpheader_t) + data_len;
 	char *pseudogram = calloc(1, psize);
 	if (!pseudogram) {
-		perror("calloc");
+		perror(ERROR "calloc");
 		free(packet);
 		return NULL;
 	}
@@ -80,7 +80,7 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, size_t d
 
 	packet = calloc(packet_size, sizeof(char)); 
 	if (!packet) {
-		perror("calloc");
+		perror(ERROR "calloc");
 		return NULL;
 	}
 
@@ -111,7 +111,7 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, size_t d
 	int psize = sizeof(struct pseudo_header) + sizeof(tcpheader_t) + data_len; 
 	char *pseudogram = calloc(1, psize);
 	if (!pseudogram) {
-		perror("calloc");
+		perror(ERROR "calloc");
 		free(packet);
 		return NULL;
 	}
@@ -136,14 +136,13 @@ char *create_tcp_packet(ipheader_t *iph, tcpheader_t *tcph, char *data, size_t d
 int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	int sockfd = socket(PF_INET, SOCK_RAW, IPPROTO_RAW);
 	if (sockfd < 0) {
-		free(packet);
-		perror("socket");
+		perror(ERROR "socket");
 		return -1;
 	}
 
 	int opt = 1;
 	if (setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &opt, sizeof(opt)) < 0) {
-		perror("setsockopt IP_HDRINCL");
+		perror(ERROR "setsockopt IP_HDRINCL");
 		close(sockfd);
 		return -1;
 	}
@@ -154,9 +153,8 @@ int send_packet(ipheader_t iph, char *packet, int dest_port) {
 	dest.sin_port = htons(dest_port);
 
 	if (sendto(sockfd, packet, ntohs(iph.len), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
-		perror("sendto");
+		perror(ERROR "sendto");
 		close(sockfd);
-		free(packet);
 		return -1;
 	}
 
