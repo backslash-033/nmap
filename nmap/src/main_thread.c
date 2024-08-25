@@ -1,19 +1,6 @@
 #include "ft_nmap.h"
 
 void *main_thread(void *arg) {
-	int *ret = calloc(1, sizeof(int));
-	
-	if (!ret) {
-		return NULL;
-	}
-
-	t_listener_in *data = (t_listener_in *)arg;
-
-	
-    *ret = listener(data);
-	if (*ret != 0) {
-		// TODO free scan in calling function OR here if simpler
-	}
-	return ret;
-
+	listener((t_listener_in *)arg);
+	return NULL;
 }

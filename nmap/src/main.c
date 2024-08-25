@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 	result = threads(&opt);
 	if (result == true) {
 		free_end_of_main(opt, addrinfo_to_free);
-		fprintf(stderr, ERROR "Error creating thread data.\n");
+		fprintf(stderr, ERROR "Fatal error.\n");
 		exit(1);
 	}
 

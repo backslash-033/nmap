@@ -10,6 +10,7 @@ static void				already_open_ports(uint16_t *array);
 static uint16_t			assign_port(uint16_t *already_open_ports);
 static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
+static void				free_end_of_scan(const uint8_t scan_amout, const uint8_t th_amount, t_scan *out, tdata_in *threads_input);
 
 uint32_t get_local_ip() {
 	struct ifaddrs *ifaddr, *ifa;
@@ -65,6 +66,10 @@ bool	threads(options *opt) {
 		for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
 			if (scan & opt->scans) {
 				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan), opt->host[h]);
+				if (out[i].error) {
+					free_end_of_scan(i + 1, th_amount, out, threads_input);
+					return true;
+				}
 				i++;
 			}
 		}
@@ -79,20 +84,24 @@ bool	threads(options *opt) {
 		if (h + 1!= (int)opt->host_len)
 			printf("\n---\n\n");
 
-		for (int i = scan_amout - 1; (i + 1) != 0; i--) {
-			free(out[i].results->ports);
-			free(out[i].results);
-		}
-		free(out);
-		for (int i = 0; i < th_amount; i++) {
-			free(threads_input[i].hnp.ports);
-		}
-		free(threads_input);
+		free_end_of_scan(scan_amout, th_amount, out, threads_input);
 		out = NULL;
 	}
 
 	opt->threads = th_amount;
 	return false;
+}
+
+static void	free_end_of_scan(const uint8_t scan_amout, const uint8_t th_amount, t_scan *out, tdata_in *threads_input) {
+	for (int i = scan_amout - 1; (i + 1) != 0; i--) {
+		free(out[i].results->ports);
+		free(out[i].results);
+	}
+	free(out);
+	for (int i = 0; i < th_amount; i++) {
+		free(threads_input[i].hnp.ports);
+	}
+	free(threads_input);
 }
 
 static void	print_exec_time(struct timeval before, struct timeval after) {
@@ -142,7 +151,8 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	pthread_t	tid[512];
 	uint16_t	taken_ports[PORT_RANGE + 1];
 	t_scan		res = {
-		.type = scan
+		.type = scan,
+		.error = false,
 	};
 	t_uint16_vector ports = {
 		.len = (size_t)opt->port_len,
@@ -159,7 +169,7 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	t_listener_in listener_data = {
 		.cond = PTHREAD_COND_INITIALIZER,
 		.mutex = PTHREAD_MUTEX_INITIALIZER,
-		.ready = 0,
+		.ready = LISTENER_LOCKED,
 		.nb_ports = ports.len,
 		.dest_ip = dest_ip,
 	};
@@ -181,8 +191,14 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
 
 	pthread_mutex_lock(&listener_data.mutex);
-	while (listener_data.ready == 0) {
+	while (listener_data.ready == LISTENER_LOCKED) {
 		pthread_cond_wait(&listener_data.cond, &listener_data.mutex);
+	}
+	if (listener_data.ready != LISTENER_UNLOCKED) {
+		res.error = true;
+		pthread_join(listener_id, &listener_ret);
+		pthread_mutex_unlock(&listener_data.mutex);
+		return res;
 	}
 	pthread_mutex_unlock(&listener_data.mutex);
 
@@ -201,7 +217,6 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	}
 
 	pthread_join(listener_id, &listener_ret);
-	free(listener_ret);
 	return res;
 }
 
