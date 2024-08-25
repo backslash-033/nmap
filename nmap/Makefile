@@ -11,7 +11,6 @@ SRC	=	$(addsuffix .c,		\
 			listener		\
 			threads			\
 			packet_handler	\
-			main_thread		\
 			filter			\
 			routine			\
 			show_results	\

@@ -188,7 +188,7 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 
 	listener_data.timeout = opt->timeout;
 
-	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
+	pthread_create(&listener_id, NULL, listener, (void *)&listener_data);
 
 	pthread_mutex_lock(&listener_data.mutex);
 	while (listener_data.ready == LISTENER_LOCKED) {

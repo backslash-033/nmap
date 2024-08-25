@@ -18,7 +18,8 @@ static void handle_alarm(int sig) {
 		pcap_breakloop(g_handle);
 }
 
-int listener(t_listener_in *listener_data) {
+void	*listener(void *arg) {
+	t_listener_in		*listener_data = (t_listener_in *)arg;
 	char				errbuf[PCAP_ERRBUF_SIZE];
 	pcap_if_t			*alldevs = NULL;
 	pcap_if_t			*device = NULL;
@@ -41,7 +42,7 @@ int listener(t_listener_in *listener_data) {
 	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
 		fprintf(stderr, ERROR "Couldn't find default device: %s\n", errbuf);
 		leave_listener(LISTENER_ERR_DEVICE, listener_data, handle, alldevs, filter);
-		return LISTENER_ERR_DEVICE;
+		return NULL;
 	}
  
 	// Use the first device
@@ -56,7 +57,7 @@ int listener(t_listener_in *listener_data) {
 	if (device == NULL) {
 		fprintf(stderr, ERROR "No devices found.\n");
 		leave_listener(LISTENER_ERR_DEVICE, listener_data, handle, alldevs, filter);
-		return LISTENER_ERR_DEVICE;
+		return NULL;
 	}
 
 	// Get network number and mask
@@ -71,7 +72,7 @@ int listener(t_listener_in *listener_data) {
 	if (handle == NULL) {
 		fprintf(stderr, ERROR "Couldn't open device %s: %s\n", device->name, errbuf);
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 
 	g_handle = handle;
@@ -80,7 +81,7 @@ int listener(t_listener_in *listener_data) {
 	if (!filter) {
 		perror("create_filter");
 		leave_listener(LISTENER_ERR_ALLOC, listener_data, handle, alldevs, filter);
-		return 1;
+		return NULL;
 	}
 	printf("%s\n", filter);
 
@@ -88,13 +89,13 @@ int listener(t_listener_in *listener_data) {
 	if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
 		fprintf(stderr, ERROR "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 	if (pcap_setfilter(handle, &compiled_filter) == -1) {
 		fprintf(stderr, ERROR "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
 		pcap_freecode(&compiled_filter);
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 	free(filter);
 	filter = NULL;
@@ -109,7 +110,7 @@ int listener(t_listener_in *listener_data) {
 	pcap_loop(handle, listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
 	pcap_freecode(&compiled_filter);
 	leave_listener(0, NULL, handle, alldevs, filter);
-	return 0;
+	return NULL;
 }
 
 static void	leave_listener(const int exit_status, t_listener_in *listener_data, pcap_t *handle, pcap_if_t *alldevs, str filter) {
