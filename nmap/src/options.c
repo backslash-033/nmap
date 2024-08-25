@@ -473,12 +473,12 @@ static host_data resolve_hostname(const str hostname) {
 	*/
 	host_data ret;
 	struct addrinfo hints, *result, *result_base;
-	char buff[INET6_ADDRSTRLEN + 1];
+	char buff[INET_ADDRSTRLEN + 1];
 	void *ptr = NULL;
 
 	bzero(&ret, sizeof(host_data));
 	bzero(&hints, sizeof(struct addrinfo));
-	bzero(buff, INET6_ADDRSTRLEN + 1);
+	bzero(buff, INET_ADDRSTRLEN + 1);
 
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
