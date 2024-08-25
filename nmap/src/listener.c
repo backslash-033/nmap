@@ -32,7 +32,7 @@ void	*listener(void *arg) {
 
 	// Set a timeout depending on the scan and the number of ports
 	if (listener_data->timeout == 0)
-		timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2); // TODO divide by the number of threads
+		timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2) / listener_data->nb_threads;
 	else
 		timeout = listener_data->timeout;
 

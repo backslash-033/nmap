@@ -4,11 +4,6 @@ static void	display_options(options opt);
 static void	free_every_addrinfo(struct addrinfo **to_free);
 static void free_end_of_main(options opt, struct addrinfo **addrinfo_to_free);
 
-// TODO: Faut check que la réponse n’est pas « NOTHING » avant de réécrire un truc
-// Le nothing c’est la réponse par défaut
-// Genre si au premier scan le packet a eu une réponse et pas au 2e faut pas overwrite
-// Et faut faire la même chose dans l’interpréteur ICMP
-
 int main(int argc, char **argv) {
 	options 		opt;
 	struct addrinfo	**addrinfo_to_free;
@@ -23,7 +18,6 @@ int main(int argc, char **argv) {
 
 	display_options(opt);
 
-	// TODO: change this to bool
 	result = threads(&opt);
 	if (result == true) {
 		free_end_of_main(opt, addrinfo_to_free);

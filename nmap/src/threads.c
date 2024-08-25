@@ -175,10 +175,10 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 		.ready = LISTENER_LOCKED,
 		.nb_ports = ports.len,
 		.dest_ip = dest_ip,
+		.nb_threads = opt->threads,
 	};
 
 	res.results = create_port_state_vector(ports.list, ports.len);
-	// TODO clear properly
 	if (!res.results) {
 		res.error = true;
 		res.results = NULL;

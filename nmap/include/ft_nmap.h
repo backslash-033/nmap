@@ -207,7 +207,6 @@ typedef struct  s_port_state {
     u_int8_t    state; // see e_reponse
 }               t_port_state;
 
-// TODO init the port list with port state NOTHING
 typedef struct      s_port_state_vector {
     t_port_state    *ports;
     size_t          len;
@@ -229,6 +228,7 @@ typedef struct	s_listener_in {
 	size_t			nb_ports;
 	host_data		dest_ip;
 	uint16_t		timeout;
+	uint8_t			nb_threads;
 }					t_listener_in;
 
 ip_addr_t	**parse_ips(char **ips);
@@ -301,12 +301,5 @@ void	packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char
 
 // listener.c
 void	*listener(void *data);
-
-// visualizers.c // TODO remove me
-void	icmp_visualizer(icmpheader_t *icmph);
-void	udp_visualizer(udpheader_t *udph);
-void	tcp_visualizer(tcpheader_t *tcph);
-void	ip_visualizer(ipheader_t *iph);
-
 
 #endif
