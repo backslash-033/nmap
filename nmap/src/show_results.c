@@ -98,7 +98,8 @@ static inline const char *__compute_conclusion(t_results results) {
 		// There is not another scan
 		else
 			return "unfiltered   ";
-	} else // filtered
+	} 
+	else if (results.ack == NOTHING) // filtered
 		return "filtered     ";
 	return "closed       ";
 }
