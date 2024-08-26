@@ -755,8 +755,9 @@ static int	get_option(char const *arg) {
 static void print_help_message() {
 	puts("ft_nmap: help\n");
 	puts("Usage:");
-	puts("ft_nmap [--help] [--ports [NUMBER/RANGED]] --ip IP_ADDRESS [--speedup [NUMBER]] [--scan [TYPE]]");
-	puts("ft_nmap [--help] [--ports [NUMBER/RANGED]] --file FILE [--speedup [NUMBER]] [--scan [TYPE]]\n");
+	puts("ft_nmap [--ports NUMBER/RANGE] --ip IP_ADDRESS [--speedup NUMBER] [--scan TYPE] [--timeout SEC] [--source IP] [--win SIZE] [--ttl NUMBER] [--data DATA]");
+	puts("ft_nmap [--ports NUMBER/RANGE] --file FILE [--speedup NUMBER] [--scan TYPE] [--timeout SEC] [--source IP] [--win SIZE] [--ttl NUMBER] [--data DATA]\n");
+	puts("ft_nmap --help");
 	puts("Options:");
 	puts("--help         Shows this help message");
 	puts("--ports        Range of ports to scan");
@@ -764,6 +765,11 @@ static void print_help_message() {
 	puts("--ip           IP address or FQDN to scan");
 	puts("--speedup      Number of threads to use. Default: 1");
 	puts("--scan         Type of scan to use. Default: ALL");
+	puts("--timeout      Timeout in seconds for each scans.");
+	puts("--source       Source IP of the packet. Default: 127.0.0.1");
+	puts("--win          Window size of the packet. Default: 65535");
+	puts("--ttl          Time to liveof the packet. Default: 64");
+	puts("--data         Custom data of the packet. Default: Nothing");
 }
 
 static options default_options() {
