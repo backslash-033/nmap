@@ -82,8 +82,8 @@ typedef struct tdata_in {
 
 // listener
 
-#define	LISTENER_LOCKED		0
-#define LISTENER_UNLOCKED	1
+#define	COND_LOCKED		0
+#define COND_UNLOCKED	1
 #define LISTENER_ERR_DEVICE	-1
 #define LISTENER_ERR_ALLOC	-2
 #define LISTENER_ERR_PCAP	-3
@@ -218,12 +218,15 @@ typedef struct          s_scan {
 	bool				error;
 }                       t_scan;
 
+typedef struct s_thread_cond {
+	pthread_mutex_t	mutex;
+	pthread_cond_t	cond;
+	bool			ready;
+}					t_thread_cond;
 
 typedef struct	s_listener_in {
-	t_scan	scan;
-	pthread_mutex_t mutex;
-	pthread_cond_t	cond;
-	int				ready;
+	t_scan			scan;
+	t_thread_cond	listener_cond;
 	bool			is_lo;
 	size_t			nb_ports;
 	host_data		dest_ip;

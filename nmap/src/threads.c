@@ -170,9 +170,9 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	srand(time(0));
 
 	t_listener_in listener_data = {
-		.cond = PTHREAD_COND_INITIALIZER,
-		.mutex = PTHREAD_MUTEX_INITIALIZER,
-		.ready = LISTENER_LOCKED,
+		.listener_cond.cond = PTHREAD_COND_INITIALIZER,
+		.listener_cond.mutex = PTHREAD_MUTEX_INITIALIZER,
+		.listener_cond.ready = COND_LOCKED,
 		.nb_ports = ports.len,
 		.dest_ip = dest_ip,
 		.nb_threads = opt->threads,
@@ -195,18 +195,17 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 
 	pthread_create(&listener_id, NULL, listener, (void *)&listener_data);
 
-	pthread_mutex_lock(&listener_data.mutex);
-	while (listener_data.ready == LISTENER_LOCKED) {
-		pthread_cond_wait(&listener_data.cond, &listener_data.mutex);
+	pthread_mutex_lock(&listener_data.listener_cond.mutex);
+	while (listener_data.listener_cond.ready == COND_LOCKED) {
+		pthread_cond_wait(&listener_data.listener_cond.cond, &listener_data.listener_cond.mutex);
 	}
-	if (listener_data.ready != LISTENER_UNLOCKED) {
+	if (listener_data.listener_cond.ready != COND_UNLOCKED) {
 		res.error = true;
 		pthread_join(listener_id, &listener_ret);
-		pthread_mutex_unlock(&listener_data.mutex);
+		pthread_mutex_unlock(&listener_data.listener_cond.mutex);
 		return res;
 	}
-	pthread_mutex_unlock(&listener_data.mutex);
-
+	pthread_mutex_unlock(&listener_data.listener_cond.mutex);
 	for (uint8_t i = 0; i < amount; i++) {
 		threads_input[i].port = assign_port(taken_ports);
 		threads_input[i].scans = scan;
@@ -225,7 +224,6 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 
 	if (thread_errno == ECANCELED)
 		res.error = true;
-
 	return res;
 }
 

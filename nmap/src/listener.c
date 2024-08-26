@@ -97,7 +97,7 @@ void	*listener(void *arg) {
 	free(filter);
 	filter = NULL;
 
-	unlock_listener(LISTENER_UNLOCKED, listener_data);
+	unlock_listener(COND_UNLOCKED, listener_data);
 
 	signal(SIGALRM, handle_alarm);
 	alarm(timeout);
@@ -105,6 +105,7 @@ void	*listener(void *arg) {
 	// Start capturing packets
 	// states.len might be ambitious, back to -1 if necessary
 	pcap_loop(handle, listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
+
 	pcap_freecode(&compiled_filter);
 	leave_listener(0, NULL, handle, alldevs, filter);
 	return NULL;
@@ -123,9 +124,9 @@ static void	leave_listener(const int exit_status, t_listener_in *listener_data, 
 }
 
 static void	unlock_listener(const int exit_status, t_listener_in *listener_data) {
-	pthread_mutex_lock(&listener_data->mutex);
-	listener_data->ready = exit_status;
-	pthread_cond_signal(&listener_data->cond);
-	pthread_mutex_unlock(&listener_data->mutex);
+	pthread_mutex_lock(&listener_data->listener_cond.mutex);
+	listener_data->listener_cond.ready = exit_status;
+	pthread_cond_signal(&listener_data->listener_cond.cond);
+	pthread_mutex_unlock(&listener_data->listener_cond.mutex);
 }
 
