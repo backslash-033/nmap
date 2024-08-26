@@ -36,8 +36,6 @@ void	*listener(void *arg) {
 	else
 		timeout = listener_data->timeout;
 
-	printf("Timeout: %u\n", timeout);
-
 	// Find all devices
 	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
 		fprintf(stderr, ERROR "Couldn't find default device: %s\n", errbuf);
@@ -53,7 +51,7 @@ void	*listener(void *arg) {
 				break;
 		}
 	}
-	printf("Device is: %s\n", device->name);
+
 	if (device == NULL) {
 		fprintf(stderr, ERROR "No devices found.\n");
 		leave_listener(LISTENER_ERR_DEVICE, listener_data, handle, alldevs, filter);
@@ -83,7 +81,6 @@ void	*listener(void *arg) {
 		leave_listener(LISTENER_ERR_ALLOC, listener_data, handle, alldevs, filter);
 		return NULL;
 	}
-	printf("%s\n", filter);
 
 	// Compile and set the filter
 	if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
