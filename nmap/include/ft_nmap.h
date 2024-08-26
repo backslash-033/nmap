@@ -279,9 +279,10 @@ int			print_results(t_scan *scans, size_t len_scans);
 
 // filter.c
 char		*create_filter(int scan, host_data dest_ip);
+
 // utils.c
 t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len);
-void free_port_state_vector(t_port_state_vector **vector);
+void				free_port_state_vector(t_port_state_vector **vector);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
