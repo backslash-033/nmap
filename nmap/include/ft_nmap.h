@@ -280,7 +280,6 @@ int			print_results(t_scan *scans, size_t len_scans);
 // filter.c
 char		*create_filter(int scan, host_data dest_ip);
 // utils.c
-void 		free_formatted_ips(ip_addr_t **formatted_ips);
 t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len);
 void free_port_state_vector(t_port_state_vector **vector);
 
