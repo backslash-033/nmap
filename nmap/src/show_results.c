@@ -84,7 +84,7 @@ static inline const char *__compute_conclusion(t_results results) {
 	*/
 	if (results.syn == POSITIVE || results.udp == POSITIVE)
 		return "open         ";
-	if (results.syn == NOTHING)
+	if (results.syn == NOTHING && results.ack == 0)
 		return "filtered     ";
 	if (results.ack == 0 && \
 		(results.null == NOTHING || results.fin == NOTHING || \
