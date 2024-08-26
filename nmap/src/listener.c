@@ -103,8 +103,7 @@ void	*listener(void *arg) {
 	alarm(timeout);
 
 	// Start capturing packets
-	// states.len might be ambitious, back to -1 if necessary
-	pcap_loop(handle, listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
+	pcap_loop(handle, listener_data->is_lo ? -1 : (int)listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
 
 	pcap_freecode(&compiled_filter);
 	leave_listener(0, NULL, handle, alldevs, filter);
