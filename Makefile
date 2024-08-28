@@ -1,56 +1,90 @@
-# Build services
-build:
-	docker-compose build
+SRC	=	$(addsuffix .c,		\
+		$(addprefix src/,	\
+			main			\
+			options			\
+			scans			\
+			sender			\
+			parsing			\
+			utils			\
+			setup			\
+			scanner			\
+			listener		\
+			threads			\
+			packet_handler	\
+			filter			\
+			routine			\
+			show_results	\
+			interpreters	\
+		))
 
-build-no-cache:
-	docker-compose build --no-cache
+NAME	= ft_nmap
 
-# Start services in the foreground
-up:
-	docker-compose up
+SHELL	= /bin/zsh
 
-# Start services in the background
-up-detached:
-	docker-compose up -d
+OBJ		= ${SRC:src/%.c=.obj/%.o}
 
-# Stop services
-stop:
-	docker-compose stop
+CC		= gcc
 
-# Stop and remove containers, networks, volumes, and images created by 'up'
-down:
-	docker-compose down
+LIBFT	= libft/libft.a
 
-# View logs
-logs:
-	docker-compose logs
+INCLUDE = -Iinclude/ -Ilibft/include
 
-# Prune system - removes stopped containers, unused networks, dangling images, and build cache
-prune:
-	docker system prune -f
+CFLAGS	=  -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
 
-# Prune system including unused containers and images
-prune-all:
-	docker system prune -a -f
+all: __watermark ${LIBFT} ${NAME}
 
-# Prune volumes - removes unused volumes
-prune-volumes:
-	docker volume prune -f
 
-# Execute a command in a running container
-# Usage: make exec service=[service_name] cmd="[command]"
-exec:
-	docker-compose exec $(service) $(cmd)
+${LIBFT}:
+	@if [[ -f ${LIBFT} ]] ;	\
+		then; \
+			echo "libft already compiled"; \
+		else; \
+			echo "Compiling libft"; \
+			make --silent -C libft >/dev/null; \
+			echo "${LIBFT} compiled"; \
+	fi;
 
-access:
-	docker-compose exec nmap-container bash
 
-clear_volumes:
-	@echo "Removing all Docker volumes..."
-	docker volume rm $(shell docker volume ls -q | ft_nmap_ )
-	@echo "All volumes have been removed."
+.obj/%.o: src/%.c
+	@${CC} ${CFLAGS} -c $< -o ${<:src/%.c=.obj/%.o}
 
-start:
-	docker-compose up --build
 
-.PHONY: build up up-detached down stop logs prune prune-all prune-volumes exec clear_volumes start
+${NAME}: ${OBJ}
+	@echo "Compiling ${NAME}"
+	@${CC} ${OBJ} ${LIBFT} ${CFLAGS} -o ${NAME}
+	@echo "${NAME} compiled"
+
+
+__watermark:
+	@echo -e "\033[42m __   ____  _____  _____      \033[0m"
+	@echo -e "\033[42m \\ \\ |    \\ \\___ \\ \\___ \\     \033[0m"
+	@echo -e "\033[42m  \\ \\ \\ |\\ \\   _\\ \\   _\\ \\    \033[0m"
+	@echo -e "\033[42m   \\ \\ \\ \\\\\\ \\  \\__ \\  \\__ \\   \033[0m"
+	@echo -e "\033[42m    \\ \\ \\ \\| \\  __\\ \\  __\\ \\  \033[0m"
+	@echo -e "\033[42m     \\_\\ \\____| \\____\\ \\____\\ \033[0m"
+	@echo -e "\033[42m                              \033[0m\n"
+
+
+decoder:
+	@${CC} ${CFLAGS} -o decoder src/decoder.c
+
+
+clean:
+	@make --silent -C libft clean >/dev/null
+	@rm -rf ${OBJ}
+
+
+fclean:
+	@make --silent -C libft fclean >/dev/null
+	@rm -rf ${OBJ} ${NAME}
+
+
+__re_fclean:
+	@make --silent -C libft clean >/dev/null
+	@rm -rf ${OBJ} ${NAME}
+
+
+re: __re_fclean all
+
+
+.PHONY: all __watermark ${LIBFT} clean flcean __re_fclean re

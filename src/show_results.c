@@ -82,31 +82,25 @@ static inline const char *__compute_conclusion(t_results results) {
 			A padded string of length 14 representing the conclusion computed
 			on the different elements of the t_results argument
 	*/
-	// TODO test more thoroughly
-	if (results.syn == POSITIVE || results.udp == POSITIVE) {
+	if (results.syn == POSITIVE || results.udp == POSITIVE)
 		return "open         ";
-	}
-	if (results.syn == NOTHING) {
-		return "filetered    ";
-	}
-	if (results.ack != 0) {
-		if (!(results.ack == NEGATIVE)) { // If it's unfiltered
-			if (results.null == NOTHING || results.fin == NOTHING || \
-				results.xmas == NOTHING || results.udp == NOTHING) {
-				return "filtered     ";
-			}
-		} else { // If it's filtered
-			if (results.null == NOTHING || results.fin == NOTHING || \
-				results.xmas == NOTHING || results.udp == NOTHING) {
-				return "open         ";
-			}
-		}
-	} else {
+	if (results.syn == NOTHING && results.ack == 0)
+		return "filtered     ";
+	if (results.ack == 0 && \
+		(results.null == NOTHING || results.fin == NOTHING || \
+		results.xmas == NOTHING || results.udp == NOTHING))
+		return "open|filtered ";
+	if (results.ack == NEGATIVE) { // unfiltered
+		// There is another scan
 		if (results.null == NOTHING || results.fin == NOTHING || \
-			results.xmas == NOTHING || results.udp == NOTHING) {
-			return "open|filtered ";
-		}
-	}
+			results.xmas == NOTHING || results.udp == NOTHING)
+			return "open         ";
+		// There is not another scan
+		else
+			return "unfiltered   ";
+	} 
+	else if (results.ack == NOTHING) // filtered
+		return "filtered     ";
 	return "closed       ";
 }
 
@@ -227,11 +221,35 @@ int    print_results(t_scan *scans, size_t len_scans) {
 	return 0;
 }
 
+// void change_response(t_port_state_vector *vector, enum e_responses state) {
+// 	for (size_t i = 0; i < vector->len; i++) {
+// 		vector->ports[i].state = state;
+// 	}
+// }
+
+// void reset_scans(t_scan *scans, size_t len_scans) {
+// 	for (size_t i = 0; i < len_scans; i++) {
+// 		change_response(scans[i].results, NOTHING);
+// 	}
+// }
+
+// void set_6_scans(int syn, int null, int ack, int fin, int xmas, int udp, t_scan *scans, size_t len_scans) {
+// 	if (len_scans != 6) {
+// 		fprintf(stderr, "Error: must contain 6 scans in scans\n");
+// 	}
+// 	change_response(scans[0].results, syn);
+// 	change_response(scans[1].results, null != POSITIVE ? null : NOTHING); // To treat impossible cases
+// 	change_response(scans[2].results, ack != POSITIVE ? ack : NOTHING);
+// 	change_response(scans[3].results, fin != POSITIVE ? fin : NOTHING);
+// 	change_response(scans[4].results, xmas != POSITIVE ? xmas : NOTHING);
+// 	change_response(scans[5].results, udp);
+// }
+
 // int main() {
 //     size_t len_scans = 3;
 //     t_scan *scans;
 //     size_t len_ports = 10;
-//     int *ports = malloc(len_ports * sizeof(int));
+//     uint16_t *ports = malloc(len_ports * sizeof(int));
 
 //     ports[0] = 80;
 //     ports[1] = 443;
@@ -244,29 +262,59 @@ int    print_results(t_scan *scans, size_t len_scans) {
 //     ports[8] = 26214;
 //     ports[9] = 8567;
 
+// 	/* Test if one scanners work: conclusion matches well the only result */
+// 	// int scan_types[] = {SYN_SCAN, NULL_SCAN, ACK_SCAN, FIN_SCAN, XMAS_SCAN, UDP_SCAN};
+// 	// int responses[] = {POSITIVE, NEGATIVE, NOTHING};
+// 	// len_scans = 1;
+//     // scans = malloc(len_scans * sizeof(t_scan));
+//     // scans[0].results = create_port_state_vector(ports, len_ports);
 
-// 	// TODO Maybe all of the scans can point to the same int *?
+// 	// for (int i = 0; i < 6; i++) {
+//     // 	scans[0].type = scan_types[i];
+// 	// 	for (int j = 0; j < 3; j++) {
+// 	// 		change_response(scans[0].results, responses[j]);
+// 	// 		print_results(scans, len_scans);
+// 	// 	}
+// 	// }
+// 	// free_port_state_vector(&(scans[0].results));
+// 	// free(scans);
+
+// 	len_scans = 6;
 //     scans = malloc(len_scans * sizeof(t_scan));
 //     scans[0].type = SYN_SCAN;
 //     scans[0].results = create_port_state_vector(ports, len_ports);
-// 	scans[1].type = UDP_SCAN;
-// 	scans[1].results = create_port_state_vector(ports, len_ports);
-// 	scans[2].type = ACK_SCAN;
-// 	scans[2].results = create_port_state_vector(ports, len_ports);
+//     scans[1].type = NULL_SCAN;
+//     scans[1].results = create_port_state_vector(ports, len_ports);
+//     scans[2].type = ACK_SCAN;
+//     scans[2].results = create_port_state_vector(ports, len_ports);
+//     scans[3].type = FIN_SCAN;
+//     scans[3].results = create_port_state_vector(ports, len_ports);
+//     scans[4].type = XMAS_SCAN;
+//     scans[4].results = create_port_state_vector(ports, len_ports);
+//     scans[5].type = UDP_SCAN;
+//     scans[5].results = create_port_state_vector(ports, len_ports);
+// 	printf("=======================================\nALL AT NOTHING\n");
+// 	print_results(scans, len_scans);
+// 	reset_scans(scans, len_scans);
 
+// 	printf("=======================================\nSYN POSITIVE; REMAINDER NEGATIVE \n");
+// 	printf("SHOULD BE: open closed unfiltered closed closed closed open\n");
+// 	set_6_scans(POSITIVE, NEGATIVE, NEGATIVE, NEGATIVE, NEGATIVE, NEGATIVE, scans, len_scans);
+// 	print_results(scans, len_scans);
+// 	reset_scans(scans, len_scans);
 
-// 	// len_scans = 1;
-//     // scans = malloc(len_scans * sizeof(t_scan));
-//     // scans[0].type = SYN_SCAN;
-//     // scans[0].results = create_port_state_vector(ports, len_ports);
+// 	printf("=======================================\nSYN & ACK NEGATIVE; REMAINDER NOTHING \n");
+// 	printf("SHOULD BE: closed open|filetered unfiltered open|filetered open|filetered open|filetered open\n");
+// 	set_6_scans(NEGATIVE, NOTHING, NEGATIVE, NOTHING, NOTHING, NOTHING, scans, len_scans);
+// 	print_results(scans, len_scans);
+// 	reset_scans(scans, len_scans);
 
-// 	// change_response(scans[0].results, POSITIVE);
-// 	change_response(scans[2].results, NOTHING);
-
-//     print_results(scans, len_scans);
-// 	free(ports);
 // 	free_port_state_vector(&(scans[0].results));
 // 	free_port_state_vector(&(scans[1].results));
 // 	free_port_state_vector(&(scans[2].results));
+// 	free_port_state_vector(&(scans[3].results));
+// 	free_port_state_vector(&(scans[4].results));
+// 	free_port_state_vector(&(scans[5].results));
+// 	free(ports);
 // 	free(scans);
 // }
