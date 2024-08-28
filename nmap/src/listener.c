@@ -18,7 +18,8 @@ static void handle_alarm(int sig) {
 		pcap_breakloop(g_handle);
 }
 
-int listener(t_listener_in *listener_data) {
+void	*listener(void *arg) {
+	t_listener_in		*listener_data = (t_listener_in *)arg;
 	char				errbuf[PCAP_ERRBUF_SIZE];
 	pcap_if_t			*alldevs = NULL;
 	pcap_if_t			*device = NULL;
@@ -31,17 +32,15 @@ int listener(t_listener_in *listener_data) {
 
 	// Set a timeout depending on the scan and the number of ports
 	if (listener_data->timeout == 0)
-		timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2); // TODO divide by the number of threads
+		timeout = listener_data->nb_ports * (listener_data->scan.type == UDP_SCAN ? 4 : 2) / listener_data->nb_threads;
 	else
 		timeout = listener_data->timeout;
-
-	printf("Timeout: %u\n", timeout);
 
 	// Find all devices
 	if (pcap_findalldevs(&alldevs, errbuf) == -1) {
 		fprintf(stderr, ERROR "Couldn't find default device: %s\n", errbuf);
 		leave_listener(LISTENER_ERR_DEVICE, listener_data, handle, alldevs, filter);
-		return LISTENER_ERR_DEVICE;
+		return NULL;
 	}
  
 	// Use the first device
@@ -52,11 +51,11 @@ int listener(t_listener_in *listener_data) {
 				break;
 		}
 	}
-	printf("Device is: %s\n", device->name);
+
 	if (device == NULL) {
 		fprintf(stderr, ERROR "No devices found.\n");
 		leave_listener(LISTENER_ERR_DEVICE, listener_data, handle, alldevs, filter);
-		return LISTENER_ERR_DEVICE;
+		return NULL;
 	}
 
 	// Get network number and mask
@@ -71,7 +70,7 @@ int listener(t_listener_in *listener_data) {
 	if (handle == NULL) {
 		fprintf(stderr, ERROR "Couldn't open device %s: %s\n", device->name, errbuf);
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 
 	g_handle = handle;
@@ -80,36 +79,35 @@ int listener(t_listener_in *listener_data) {
 	if (!filter) {
 		perror("create_filter");
 		leave_listener(LISTENER_ERR_ALLOC, listener_data, handle, alldevs, filter);
-		return 1;
+		return NULL;
 	}
-	printf("%s\n", filter);
 
 	// Compile and set the filter
 	if (pcap_compile(handle, &compiled_filter, filter, 0, net) == -1) {
 		fprintf(stderr, ERROR "Couldn't parse filter %s: %s\n", filter, pcap_geterr(handle));
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 	if (pcap_setfilter(handle, &compiled_filter) == -1) {
 		fprintf(stderr, ERROR "Couldn't install filter %s: %s\n", filter, pcap_geterr(handle));
 		pcap_freecode(&compiled_filter);
 		leave_listener(LISTENER_ERR_PCAP, listener_data, handle, alldevs, filter);
-		return 2;
+		return NULL;
 	}
 	free(filter);
 	filter = NULL;
 
-	unlock_listener(LISTENER_UNLOCKED, listener_data);
+	unlock_listener(COND_UNLOCKED, listener_data);
 
 	signal(SIGALRM, handle_alarm);
 	alarm(timeout);
 
 	// Start capturing packets
-	// states.len might be ambitious, back to -1 if necessary
-	pcap_loop(handle, listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
+	pcap_loop(handle, listener_data->is_lo ? -1 : (int)listener_data->nb_ports, packet_handler, (u_char *)listener_data->scan.results);
+
 	pcap_freecode(&compiled_filter);
 	leave_listener(0, NULL, handle, alldevs, filter);
-	return 0;
+	return NULL;
 }
 
 static void	leave_listener(const int exit_status, t_listener_in *listener_data, pcap_t *handle, pcap_if_t *alldevs, str filter) {
@@ -125,9 +123,9 @@ static void	leave_listener(const int exit_status, t_listener_in *listener_data, 
 }
 
 static void	unlock_listener(const int exit_status, t_listener_in *listener_data) {
-	pthread_mutex_lock(&listener_data->mutex);
-	listener_data->ready = exit_status;
-	pthread_cond_signal(&listener_data->cond);
-	pthread_mutex_unlock(&listener_data->mutex);
+	pthread_mutex_lock(&listener_data->listener_cond.mutex);
+	listener_data->listener_cond.ready = exit_status;
+	pthread_cond_signal(&listener_data->listener_cond.cond);
+	pthread_mutex_unlock(&listener_data->listener_cond.mutex);
 }
 

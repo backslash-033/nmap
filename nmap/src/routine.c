@@ -1,5 +1,7 @@
 #include "ft_nmap.h"
 
+extern int	thread_errno;
+
 void *routine(void * arg) {
 	const tdata_in in = *(tdata_in *)arg;
 	int	*port_list = NULL;
@@ -28,7 +30,8 @@ void *routine(void * arg) {
 	src_ip.network = in.opts->source;
 	inet_ntop(AF_INET, &(src_ip.network), src_ip.printable, INET_ADDRSTRLEN);
 
-	scanner(ptr, port_vector, src_ip, in.port, in.scans, in.opts->data, strlen(in.opts->data), in.opts);
+	if (scanner(ptr, port_vector, src_ip, in.port, in.scans, in.opts->data, strlen(in.opts->data), in.opts) != 0)
+		thread_errno = ECANCELED;
 
 	free(port_list);
 	free(ptr);

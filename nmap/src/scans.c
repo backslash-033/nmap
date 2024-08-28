@@ -23,7 +23,7 @@ int tcp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 		free(packet);
 		return -1;
 	}
-	free(packet);	
+	free(packet);
 	return 0;
 }
 
@@ -47,6 +47,6 @@ int udp_scan(ip_addr_t src_ip, ip_addr_t dest_ip,
 		free(packet);
 		return -1;
 	}
-	free(packet);	
+	free(packet);
 	return 0;
 }

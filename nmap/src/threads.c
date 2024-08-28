@@ -12,6 +12,8 @@ static enum e_scans		convert_option_scan(uint8_t opt_scan);
 static void				print_exec_time(struct timeval before, struct timeval after);
 static void				free_end_of_scan(const uint8_t scan_amout, const uint8_t th_amount, t_scan *out, tdata_in *threads_input);
 
+int	thread_errno = 0;
+
 uint32_t get_local_ip() {
 	struct ifaddrs *ifaddr, *ifa;
 	uint32_t ip_int = 0;
@@ -65,6 +67,7 @@ bool	threads(options *opt) {
 
 		for (int scan = 0b00000001, i = 0; scan != 0b01000000; scan <<= 1) {
 			if (scan & opt->scans) {
+				thread_errno = 0;
 				out[i] = launch_threads(opt, threads_input, th_amount, convert_option_scan(scan), opt->host[h]);
 				if (out[i].error) {
 					free_end_of_scan(i + 1, th_amount, out, threads_input);
@@ -81,7 +84,7 @@ bool	threads(options *opt) {
 		printf("\n");
 		print_results(out, scan_amout);
 
-		if (h + 1!= (int)opt->host_len)
+		if (h + 1 != (int)opt->host_len)
 			printf("\n---\n\n");
 
 		free_end_of_scan(scan_amout, th_amount, out, threads_input);
@@ -167,17 +170,19 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	srand(time(0));
 
 	t_listener_in listener_data = {
-		.cond = PTHREAD_COND_INITIALIZER,
-		.mutex = PTHREAD_MUTEX_INITIALIZER,
-		.ready = LISTENER_LOCKED,
+		.listener_cond.cond = PTHREAD_COND_INITIALIZER,
+		.listener_cond.mutex = PTHREAD_MUTEX_INITIALIZER,
+		.listener_cond.ready = COND_LOCKED,
 		.nb_ports = ports.len,
 		.dest_ip = dest_ip,
+		.nb_threads = opt->threads,
 	};
 
 	res.results = create_port_state_vector(ports.list, ports.len);
 	if (!res.results) {
-		exit(1);
-		// TODO clear properly
+		res.error = true;
+		res.results = NULL;
+		return res;
 	}
 	res.type = scan;
 	listener_data.scan = res;
@@ -188,20 +193,19 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 
 	listener_data.timeout = opt->timeout;
 
-	pthread_create(&listener_id, NULL, main_thread, (void *)&listener_data);
+	pthread_create(&listener_id, NULL, listener, (void *)&listener_data);
 
-	pthread_mutex_lock(&listener_data.mutex);
-	while (listener_data.ready == LISTENER_LOCKED) {
-		pthread_cond_wait(&listener_data.cond, &listener_data.mutex);
+	pthread_mutex_lock(&listener_data.listener_cond.mutex);
+	while (listener_data.listener_cond.ready == COND_LOCKED) {
+		pthread_cond_wait(&listener_data.listener_cond.cond, &listener_data.listener_cond.mutex);
 	}
-	if (listener_data.ready != LISTENER_UNLOCKED) {
+	if (listener_data.listener_cond.ready != COND_UNLOCKED) {
 		res.error = true;
 		pthread_join(listener_id, &listener_ret);
-		pthread_mutex_unlock(&listener_data.mutex);
+		pthread_mutex_unlock(&listener_data.listener_cond.mutex);
 		return res;
 	}
-	pthread_mutex_unlock(&listener_data.mutex);
-
+	pthread_mutex_unlock(&listener_data.listener_cond.mutex);
 	for (uint8_t i = 0; i < amount; i++) {
 		threads_input[i].port = assign_port(taken_ports);
 		threads_input[i].scans = scan;
@@ -217,6 +221,9 @@ static t_scan	launch_threads(options *opt, tdata_in *threads_input, uint8_t amou
 	}
 
 	pthread_join(listener_id, &listener_ret);
+
+	if (thread_errno == ECANCELED)
+		res.error = true;
 	return res;
 }
 

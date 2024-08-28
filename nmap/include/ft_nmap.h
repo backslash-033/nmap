@@ -82,8 +82,8 @@ typedef struct tdata_in {
 
 // listener
 
-#define	LISTENER_LOCKED		0
-#define LISTENER_UNLOCKED	1
+#define	COND_LOCKED		0
+#define COND_UNLOCKED	1
 #define LISTENER_ERR_DEVICE	-1
 #define LISTENER_ERR_ALLOC	-2
 #define LISTENER_ERR_PCAP	-3
@@ -207,7 +207,6 @@ typedef struct  s_port_state {
     u_int8_t    state; // see e_reponse
 }               t_port_state;
 
-// TODO init the port list with port state NOTHING
 typedef struct      s_port_state_vector {
     t_port_state    *ports;
     size_t          len;
@@ -219,16 +218,20 @@ typedef struct          s_scan {
 	bool				error;
 }                       t_scan;
 
+typedef struct s_thread_cond {
+	pthread_mutex_t	mutex;
+	pthread_cond_t	cond;
+	bool			ready;
+}					t_thread_cond;
 
 typedef struct	s_listener_in {
-	t_scan	scan;
-	pthread_mutex_t mutex;
-	pthread_cond_t	cond;
-	int				ready;
+	t_scan			scan;
+	t_thread_cond	listener_cond;
 	bool			is_lo;
 	size_t			nb_ports;
 	host_data		dest_ip;
 	uint16_t		timeout;
+	uint8_t			nb_threads;
 }					t_listener_in;
 
 ip_addr_t	**parse_ips(char **ips);
@@ -243,9 +246,6 @@ void		free_options(options *opts);
 // threads.c
 bool		threads(options *opt);
 uint8_t		amount_of_scans(const uint8_t opt_scan);
-
-// main_thread.c
-void		*main_thread(void *arg);
 
 // routine.c
 void		*routine(void *);
@@ -282,34 +282,27 @@ int			print_results(t_scan *scans, size_t len_scans);
 
 // filter.c
 char		*create_filter(int scan, host_data dest_ip);
+
 // utils.c
-void 		free_formatted_ips(ip_addr_t **formatted_ips);
 t_port_state_vector *create_port_state_vector(const uint16_t *ports, size_t len);
-void free_port_state_vector(t_port_state_vector **vector);
+void				free_port_state_vector(t_port_state_vector **vector);
 
 // parsing.c
 ip_addr_t	**parse_ips(char **ips);
 
 // interpreters.c
-void interpret_syn_scan(uint16_t state, char *results);
-void interpret_null_scan(uint16_t state, char *results);
-void interpret_ack_scan(uint16_t state, char *results);
-void interpret_fin_scan(uint16_t state, char *results);
-void interpret_xmas_scan(uint16_t state, char *results);
-void interpret_udp_scan(uint16_t state, char *results);
+void	interpret_syn_scan(uint16_t state, char *results);
+void	interpret_null_scan(uint16_t state, char *results);
+void	interpret_ack_scan(uint16_t state, char *results);
+void	interpret_fin_scan(uint16_t state, char *results);
+void	interpret_xmas_scan(uint16_t state, char *results);
+void	interpret_udp_scan(uint16_t state, char *results);
 
 
 // packet_handler.c
-void packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
+void	packet_handler(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 // listener.c
-int listener(t_listener_in *data);
-
-// visualizers.c // TODO remove me
-void icmp_visualizer(icmpheader_t *icmph);
-void udp_visualizer(udpheader_t *udph);
-void tcp_visualizer(tcpheader_t *tcph);
-void ip_visualizer(ipheader_t *iph);
-
+void	*listener(void *data);
 
 #endif

@@ -11,12 +11,10 @@ SRC	=	$(addsuffix .c,		\
 			listener		\
 			threads			\
 			packet_handler	\
-			main_thread		\
 			filter			\
 			routine			\
 			show_results	\
 			interpreters	\
-			visualizers		\
 		))
 
 NAME	= ft_nmap
@@ -31,8 +29,7 @@ LIBFT	= libft/libft.a
 
 INCLUDE = -Iinclude/ -Ilibft/include
 
-# TODO add -Werror
-CFLAGS	=  -Wall -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
+CFLAGS	=  -Wall -Werror -Wextra -lpcap -lpthread -pipe ${INCLUDE} -O3 -g3 #-fsanitize=address
 
 all: __watermark ${LIBFT} ${NAME}
 
